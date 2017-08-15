@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>projects_folder_icon.png</file>
+        <file>frequest_icon.png</file>
+        <file>send_request_icon.png</file>
+        <file>minus.png</file>
+        <file>plus.png</file>
+        <file>clipboard_icon.png</file>
+    </qresource>
+</RCC>

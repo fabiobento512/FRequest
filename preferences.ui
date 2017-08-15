@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Preferences</class>
+ <widget class="QDialog" name="Preferences">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Preferences</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Preferences</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QCheckBox" name="cbProxyUseProxy">
+        <property name="text">
+         <string>Use proxy</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbProxy">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="title">
+         <string>Proxy</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <layout class="QFormLayout" name="formLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Proxy Type:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="cbProxyType">
+             <item>
+              <property name="text">
+               <string>Automatic</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Http Transparent Proxy</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Http Proxy</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Socks5 Proxy</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Hostname:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="leProxyHostname">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Port:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="leProxyPort">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Request timeout:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QTimeEdit" name="teRequestTimeout">
+          <property name="toolTip">
+           <string>Minutes - Seconds (00:00 means no timeout)</string>
+          </property>
+          <property name="displayFormat">
+           <string>mm:ss</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cbUseDefaultHeaders">
+        <property name="text">
+         <string>Use default headers</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbRequest">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Request</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QFormLayout" name="formLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Request type:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="cbRequestType">
+             <item>
+              <property name="text">
+               <string>GET</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>POST</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PUT</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>DELETE</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PATCH</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>HEAD</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>TRACE</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>OPTIONS</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="gbHeaders">
+           <property name="title">
+            <string>Headers</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Body Type:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cbRequestBodyType">
+                <item>
+                 <property name="text">
+                  <string>raw</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>form-data</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>x-form-www-urlencoded</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QTableWidget" name="twRequestBodyKeyValue">
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
+                <column>
+                 <property name="text">
+                  <string>Key</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Value</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <item>
+                 <widget class="QToolButton" name="tbRequestBodyKeyValueAdd">
+                  <property name="toolTip">
+                   <string>Add new row</string>
+                  </property>
+                  <property name="text">
+                   <string>...</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="tbRequestBodyKeyValueRemove">
+                  <property name="toolTip">
+                   <string>Remove selected rows</string>
+                  </property>
+                  <property name="text">
+                   <string>...</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cbAskOpenLastProject">
+        <property name="text">
+         <string>Ask to open last saved project at startup</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cbSaveWindowGeometryWhenExiting">
+        <property name="text">
+         <string>Save window geometry when exiting</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+     <zorder>cbAskOpenLastProject</zorder>
+     <zorder>cbSaveWindowGeometryWhenExiting</zorder>
+     <zorder>cbUseDefaultHeaders</zorder>
+     <zorder>gbRequest</zorder>
+     <zorder>gbProxy</zorder>
+     <zorder>cbProxyUseProxy</zorder>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Preferences</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Preferences</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

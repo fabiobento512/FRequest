@@ -1,0 +1,129 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    ui->leMainUrl->setText("http://google.pt");
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::on_pbSendRequest_clicked()
+{
+    // TODO: delete later
+    auto fTempSetMarkDataProxy = [](){
+        QNetworkProxy proxy;
+        proxy.setType(QNetworkProxy::HttpProxy);
+        proxy.setHostName("horizon.markdata.local");
+        proxy.setPort(3128);
+        QNetworkProxy::setApplicationProxy(proxy);
+
+        return proxy;
+    };
+
+    // Clear previous request data:
+    ui->pteResponseBody->clear();
+    ui->pteResponseHeaders->clear();
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    connect(manager, SIGNAL(finished(QNetworkReply*)),
+            this, SLOT(replyFinished(QNetworkReply*)));
+
+    manager->setProxy(fTempSetMarkDataProxy());
+
+    QNetworkReply *reply = getRequest(manager);
+    lastStartTime = QDateTime::currentDateTime();
+
+    checkForQNetworkAccessManagerTimeout(reply);
+
+    reply->deleteLater();
+    manager->deleteLater();
+}
+
+// Since QNetworkReply doesn't have a way to set a timeout we need implement it by ourselves
+// http://stackoverflow.com/a/13229926
+void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
+{
+    constexpr int secondsToTimeout = 10; // 10 seconds
+
+    // Since QNetworkReply doesn't have a way to set a timeout we need implement it by ourselves
+    // http://stackoverflow.com/a/13229926
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QEventLoop loop;
+    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    timer.start(secondsToTimeout * 1000);
+    loop.exec();
+
+    if(timer.isActive())
+    {
+        timer.stop();
+        if(reply->error() > 0) {
+          ui->lbStatus->setText(QString::number(reply->error()));
+        }
+    }
+    else
+    {
+       // timeout
+       qDebug() << "timeout";
+       disconnect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+       reply->abort();
+    }
+}
+
+void MainWindow::replyFinished(QNetworkReply *reply){
+
+    ui->lbStatus->setText(QString::number(reply->error()));
+    ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+
+    if(reply->error() != QNetworkReply::NoError){
+        qDebug() << "error";
+    }
+    else{
+
+        QString headersText;
+
+        for(const QNetworkReply::RawHeaderPair &currentPair : reply->rawHeaderPairs()){
+            headersText += currentPair.first + ": " + currentPair.second + "\n";
+        }
+
+        ui->pteResponseHeaders->document()->setPlainText(headersText);
+        ui->pteResponseBody->document()->setPlainText(reply->readAll());
+    }
+}
+
+void MainWindow::on_leMainUrl_textChanged(const QString &arg1)
+{
+    QString normalizedMainUrl = arg1;
+
+    if(!arg1.endsWith('/') && !ui->lePath->text().endsWith('/')){
+        normalizedMainUrl += '/';
+    }
+
+    ui->leFullPath->setText(normalizedMainUrl + ui->lePath->text());
+}
+
+void MainWindow::on_lePath_textChanged(const QString &arg1)
+{
+    QString normalizedMainUrl = ui->leMainUrl->text();
+
+    if(!arg1.endsWith('/') && !ui->leMainUrl->text().endsWith('/')){
+        normalizedMainUrl += '/';
+    }
+
+    ui->leFullPath->setText(normalizedMainUrl + arg1);
+}
+
+QNetworkReply* MainWindow::getRequest(QNetworkAccessManager * const manager)
+{
+    return manager->get(QNetworkRequest(QUrl(ui->leFullPath->text())));
+}
