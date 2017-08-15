@@ -1,0 +1,20 @@
+libs:
+json syntax highligher: https://github.com/isomoar/json-editor/blob/master/syntaxhighlightening/highlighter.cpp
+pugixml
+c++17 optional
+plog
+
+-----------
+
+icons:
+project folder:
+http://findicons.com/icon/173045/projects_folder
+
+frequest icon:
+http://findicons.com/icon/69518/web_search
+
+send icon:
+https://www.iconfinder.com/icons/1214637/email_envelope_letter_mail_message_send_sent_icon#size=128
+
+copy clipboard:
+https://www.iconfinder.com/icons/56070/clipboard_icon#size=32
