@@ -1,8 +1,10 @@
 ## FRequest <img src="images/frequest_icon.png" alt="download frequest" width="32" height="32">
 
-<img src="images/frequest-windows.png" alt="frequest windows" width="50%" height="50%">
+<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows" width="50%" height="50%"></a>
 
 FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
+
+<a href="https://github.com/random-guy/FRequest/releases"><b>Download page</b><img src="images/download.png" alt="download frequest"><a/>
 
 The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
@@ -25,24 +27,15 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ### Screenshots
 #### Windows main interface
-<img src="images/frequest-windows.png" alt="frequest windows" width="80%" height="80%">
+<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows" width="80%" height="80%"></a>
 
 #### MacOS main interface
-<img src="images/frequest-macos.png" alt="frequest macos" width="80%" height="80%">
+<a href="images/frequest-macos.png"><img src="images/frequest-macos.png" alt="frequest macos" width="80%" height="80%"></a>
 
 ### FRequest preferences interface
-<img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%">
+<a href="images/frequest-preferences-windows.png"><img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%"></a>
 
-### Download <img src="images/download.png" alt="download frequest">
-<img src="images/frequest-windows.png" alt="frequest windows" width="80%" height="80%">
-
-#### MacOS main interface
-<img src="images/frequest-macos.png" alt="frequest macos" width="80%" height="80%">
-
-### FRequest preferences interface
-<img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%">
-
-### Download <img src="images/download.png" alt="download frequest">
+### Download <a href="https://github.com/random-guy/FRequest/releases"><img src="images/download.png" alt="download frequest"><a/>
 
 You can download FRequest for Windows or MacOS <a href="https://github.com/random-guy/FRequest/releases">here<a/>.
 
