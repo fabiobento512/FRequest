@@ -34,6 +34,15 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 <img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%">
 
 ### Download <img src="images/download.png" alt="download frequest">
+<img src="images/frequest-windows.png" alt="frequest windows" width="80%" height="80%">
+
+#### MacOS main interface
+<img src="images/frequest-macos.png" alt="frequest macos" width="80%" height="80%">
+
+### FRequest preferences interface
+<img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%">
+
+### Download <img src="images/download.png" alt="download frequest">
 
 You can download FRequest for Windows or MacOS <a href="https://github.com/random-guy/FRequest/releases">here<a/>.
 
