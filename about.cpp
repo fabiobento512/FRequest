@@ -1,3 +1,22 @@
+/*
+ *
+Copyright (C) 2017  Fábio Bento (random-guy)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
+
 #include "about.h"
 #include "ui_about.h"
 
@@ -20,7 +39,21 @@ About::About(QWidget *parent) :
                          "Murakumon for project folder icon (found in findicons.com)<br />"
                          "Woothemes for application icon (found in findicons.com)<br />"
                          "ana nirwana for send request icon (found in iconfinder.com)<br />"
-                         "Omercetin for clipboard icon (found in iconfinder.com) <a href='https://creativecommons.org/licenses/by/3.0/'>(license)</a><br />"
+                         "Omercetin for clipboard icon (found in iconfinder.com) <a href='https://creativecommons.org/licenses/by/3.0/'>(license)</a>"
+                         + R"(<hr/>
+                         This program is free software: you can redistribute it and/or modify
+                         it under the terms of the GNU General Public License as published by
+                         the Free Software Foundation, either version 3 of the License, or
+                         (at your option) any later version.
+
+                         This program is distributed in the hope that it will be useful,
+                         but WITHOUT ANY WARRANTY; without even the implied warranty of
+                         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                         GNU General Public License for more details.
+
+                         You should have received a copy of the GNU General Public License
+                         along with this program.  If not, see <a href='http://www.gnu.org/licenses/'>http://www.gnu.org/licenses/</a>.
+                         )" +
                          "</p>"
                          "</html>"); // Don't use rich text in qtdesigner because it generates platform dependent code
 
