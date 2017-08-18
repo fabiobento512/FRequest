@@ -1,4 +1,6 @@
-## Welcome to FRequest website
+## FRequest <img src="/images/frequest_icon.png" alt="download frequest" width="32" height="32"></img>
+
+<img src="/images/frequest-windows.png" alt="frequest windows" width="50%" height="50%"></img>
 
 FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
