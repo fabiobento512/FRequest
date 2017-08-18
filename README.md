@@ -1,37 +1,40 @@
-## Welcome to GitHub Pages test
+## Welcome to FRequest website
 
-You can use the [editor on GitHub](https://github.com/random-guy/FRequest/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
+cross platform, lightweight, practical with a native look. Also it is important that project files can be 
+easily shared and work seamless with Source Code Management (SCM) for collaborative work.
 
-### Markdown
+The current features of FRequest are:
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+- Make GET / POST / PUT / DELETE / PATCH / HEAD / TRACE / OPTIONS HTTP(s) requests
+- Make HTTP requests with RAW / Form Data or X-Form-WWW-UrlEncoded body types
+- Analyse the request response body and headers
+- Requests are contained in a project, this project is then saved in XML file on user's desired location
+- Ability to override a project main url, so you can make requests to different domain name addresses within the same project
+- Ability to download files from the requests
+- Automatically beautify and provide syntax highlighting for JSON
+- The FRequest project files are stored in a way which allow easy collaboration via a SCM like Git, Svn or Team Foundation Server
+- Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or manually)
+- Network proxy support
 
-```markdown
-Syntax highlighted code block
+FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-# Header 1
-## Header 2
-### Header 3
+### Screenshots
+#### Windows main interface
+<img src="/images/frequest-windows.png" alt="frequest windows" width="80%" height="80%"></img>
 
-- Bulleted
-- List
+#### MacOS main interface
+<img src="/images/frequest-macos.png" alt="frequest macos" width="80%" height="80%"></img>
 
-1. Numbered
-2. List
+### FRequest preferences interface
+<img src="/images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%"></img>
 
-**Bold** and _Italic_ and `Code` text
+### Download <img src="/images/download.png" alt="download frequest"></img>
 
-[Link](url) and ![Image](src)
-```
+You can download FRequest for Windows or MacOS <a href="https://github.com/random-guy/FRequest/releases">here<a/>.
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Open Source
 
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/random-guy/FRequest/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+FRequest is open source, do you want to help? Visit our github page <a href="https://github.com/random-guy/FRequest">here<a/>.
