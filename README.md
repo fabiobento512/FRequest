@@ -6,7 +6,7 @@ FRequest is a fast, lightweight and opensource Windows / MacOS desktop program t
 
 <a href="https://github.com/random-guy/FRequest/releases"><b>Download page</b><img src="images/download.png" alt="download frequest"><a/>
 
-The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
+The main motivation for this HTTP client program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
 easily shared and work seamless with Source Code Management (SCM) for collaborative work.
 
