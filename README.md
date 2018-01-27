@@ -4,7 +4,7 @@
 
 FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
-<a href="https://github.com/random-guy/FRequest/releases"><b>Download page</b><img src="images/download.png" alt="download frequest"><a/>
+<a href="https://github.com/fabiobento512/FRequest/releases"><b>Download page</b><img src="images/download.png" alt="download frequest"><a/>
 
 The main motivation for this HTTP client program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
@@ -35,10 +35,10 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 ### FRequest preferences interface
 <a href="images/frequest-preferences-windows.png"><img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%"></a>
 
-### Download <a href="https://github.com/random-guy/FRequest/releases"><img src="images/download.png" alt="download frequest"><a/>
+### Download <a href="https://github.com/fabiobento512/FRequest/releases"><img src="images/download.png" alt="download frequest"><a/>
 
-You can download FRequest for Windows or MacOS <a href="https://github.com/random-guy/FRequest/releases">here<a/>.
+You can download FRequest for Windows or MacOS <a href="https://github.com/fabiobento512/FRequest/releases">here<a/>.
 
 ### Open Source
 
-FRequest is open source, do you want to help? Visit our github page <a href="https://github.com/random-guy/FRequest">here<a/>.
+FRequest is open source, do you want to help? Visit our github page <a href="https://github.com/fabiobento512/FRequest">here<a/>.
