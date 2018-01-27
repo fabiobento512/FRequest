@@ -42,13 +42,13 @@ Contacts:
 ----------------------------------
 
 Author:
-random-guy (https://github.com/random-guy)
+fabiobento512 (https://github.com/fabiobento512)
 
 Official page:
-https://random-guy.github.io/FRequest/
+https://fabiobento512.github.io/FRequest/
 
 GitHub code page:
-https://github.com/random-guy/FRequest
+https://github.com/fabiobento512/FRequest
 
 ----------------------------------
 Change Log:

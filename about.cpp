@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017-2018  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (fabiobento512)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ About::About(QWidget *parent) :
     ui->lbAbout->setText("<html>"
                          "<p style='font-size:x-large;'><b>" + GlobalVars::AppName + " " + GlobalVars::AppVersion + "</b></p>"
                          "<p style='font-size:large;line-height: 18px;'>"
-                         "Written by Fábio Bento <a href='https://github.com/random-guy'>(random-guy)</a><br /><br/>"
+                         "Written by Fábio Bento <a href='https://github.com/fabiobento512'>(fabiobento512)</a><br /><br/>"
                          "Build Date " + __DATE__ + " " + __TIME__ + "<br /><br />"
                          "Thanks to:<br/><br/>"
                          "Arseny Kapoulkine and the remaining contributors for pugixml library<br />"
@@ -66,8 +66,8 @@ About::About(QWidget *parent) :
     ui->lbCommunity->setText("<html>"
                                 "<p style='font-size:large;'>"
                                 "<center>"
-                                "Visit FRequest <a href='https://random-guy.github.io/FRequest/'>website</a><br />"
-                                "or the <a href='https://github.com/random-guy/FRequest'>github project</a><br />"
+                                "Visit FRequest <a href='https://fabiobento512.github.io/FRequest/'>website</a><br />"
+                                "or the <a href='https://github.com/fabiobento512/FRequest'>github project</a><br />"
                                 "</center>"
                                 "</p>"
                                 "</html>"
