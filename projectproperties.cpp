@@ -39,10 +39,10 @@ ProjectProperties::ProjectProperties(QWidget *parent, FRequestTreeWidgetProjectI
 	}
 
     if(ui->cbRequestType->currentText() == "Request Authentication"){
-        ui->lbProjectPropertiesNote->setVisible(true);
+        ui->saProjectPropertiesNote->setVisible(true);
     }
     else{
-        ui->lbProjectPropertiesNote->setVisible(false);
+        ui->saProjectPropertiesNote->setVisible(false);
     }
 
     ui->lbProjectPropertiesNote->setText(
@@ -79,11 +79,11 @@ ProjectProperties::~ProjectProperties()
 void ProjectProperties::on_cbRequestType_currentIndexChanged(const QString &arg1)
 {
     ui->cbRequestForAuthentication->setEnabled(false);
-    ui->lbProjectPropertiesNote->setVisible(false);
+    ui->saProjectPropertiesNote->setVisible(false);
 
     if(arg1 == "Request Authentication"){
         ui->cbRequestForAuthentication->setEnabled(true);
-        ui->lbProjectPropertiesNote->setVisible(true);
+        ui->saProjectPropertiesNote->setVisible(true);
     }
 }
 
