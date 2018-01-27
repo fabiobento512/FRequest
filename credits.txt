@@ -3,6 +3,7 @@ json syntax highligher: https://github.com/isomoar/json-editor/blob/master/synta
 pugixml
 c++17 optional
 plog
+basic xml highlighter (Dmitry Ivanov https://github.com/d1vanov/basic-xml-syntax-highlighter)
 
 -----------
 
@@ -18,3 +19,15 @@ https://www.iconfinder.com/icons/1214637/email_envelope_letter_mail_message_send
 
 copy clipboard:
 https://www.iconfinder.com/icons/56070/clipboard_icon#size=32
+
+files icon (modified):
+https://www.iconfinder.com/icons/905572/blanc_documents_file_page_plus_sheet_icon#size=32
+
+warning icon:
+https://www.iconfinder.com/icons/36026/error_hazard_pending_warning_icon#size=32
+
+abort icon (Aha-Soft Team, Freeware):
+http://findicons.com/icon/219146/close
+
+clone icon (see license here: https://icons8.com/license/):
+https://icons8.com/icon/set/sheep/all

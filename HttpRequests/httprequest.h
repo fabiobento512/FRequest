@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QNetworkRequest>
 #include <QNetworkAccessManager>
+#include <QHttpMultiPart>
 #include <QVector>
 #include <QUrlQuery>
+#include <QNetworkReply>
 
 #include "utilfrequest.h"
 #include <QBuffer>
@@ -46,22 +48,22 @@ public:
             const QString &fullPath,
             const QVector<UtilFRequest::HttpHeader> &requestHeaders
             );
-    virtual ~HttpRequest(); // needed to avoid undefined behaviour https://stackoverflow.com/a/22491471/1499019
+    virtual ~HttpRequest() = default; // needed to avoid undefined behaviour https://stackoverflow.com/a/22491471/1499019
 
     QNetworkReply* processRequest();
 private:
     const QString fullPath;
     const QVector<UtilFRequest::HttpHeader> requestHeaders;
-    const QString bodyType;
     const QString rawRequestBody;
 protected:
+	const QString bodyType;
     QNetworkAccessManager * const manager;
     QTableWidget * const twBodyFormKeyValue;
 protected:
     virtual QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data) = 0; // abstract funtion to be filled by subclasses
+    virtual QNetworkReply* sendFormRequest(QNetworkRequest &request);
     QNetworkReply* sendHttpCustomRequest(const QNetworkRequest &request, const QString &verb, const QByteArray &data);
-private:
-    QNetworkReply* sendFormRequest(QNetworkRequest &request);
+    QNetworkReply* sendHttpCustomRequest(const QNetworkRequest &request, const QString &verb, QHttpMultiPart &data);
 };
 
 #endif // HTTPREQUEST_H

@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,32 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QTreeWidgetItem>
 #include <cpp17optional/optional.hpp>
-
 #include "utilfrequest.h"
 
 class FRequestTreeWidgetItem : public QTreeWidgetItem
 {
 public:
-    FRequestTreeWidgetItem(const QStringList &list, const bool isProjectItem = false);
+    FRequestTreeWidgetItem(const QStringList &list, const bool isProjectItem);
     static FRequestTreeWidgetItem* fromQTreeWidgetItem(QTreeWidgetItem* widget);
-    bool hasUuid();
+    bool hasEmptyIcon();
 public:
-    struct RequestInfo{
-        bool bOverridesMainUrl = false;
-        QString overrideMainUrl;
-        QString name;
-        QString path;
-        UtilFRequest::RequestType requestType = UtilFRequest::RequestType::GET_OPTION;
-        UtilFRequest::BodyType bodyType = UtilFRequest::BodyType::RAW;
-        QString body;
-        QVector<UtilFRequest::HttpFormKeyValue> bodyForm;
-        QVector<UtilFRequest::HttpHeader> headers;
-        bool bDownloadResponseAsFile = false;
-        QString uuid;
-        unsigned long long int order = 0;
-    };
-public:
-    RequestInfo itemContent;
     const bool isProjectItem;
 };
 

@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 FRequestTreeWidgetItem::FRequestTreeWidgetItem(const QStringList &list, const bool isProjectItem)
     :QTreeWidgetItem(list), isProjectItem(isProjectItem)
 {
+	
 }
 
 FRequestTreeWidgetItem* FRequestTreeWidgetItem::fromQTreeWidgetItem(QTreeWidgetItem* widget){
@@ -41,6 +42,6 @@ FRequestTreeWidgetItem* FRequestTreeWidgetItem::fromQTreeWidgetItem(QTreeWidgetI
     return result;
 }
 
-bool FRequestTreeWidgetItem::hasUuid(){
-    return !this->itemContent.uuid.isEmpty();
+bool FRequestTreeWidgetItem::hasEmptyIcon(){
+    return this->icon(0).isNull();
 }

@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSTHTTPREQUEST_H
 #define POSTHTTPREQUEST_H
 
-#include "httprequest.h"
+#include "httprequestwithmultipart.h"
 
-class PostHttpRequest : public HttpRequest
+class PostHttpRequest : public HttpRequestWithMultiPart
 {
 public:
     PostHttpRequest(
@@ -35,6 +35,7 @@ public:
             );
 private:
     QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
+	QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data);
 };
 
 #endif // POSTHTTPREQUEST_H

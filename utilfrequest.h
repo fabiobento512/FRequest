@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,8 +26,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // https://github.com/SergiusTheBest/plog
 #include <plog/Log.h>
 #include <plog/Converters/NativeEOLConverter.h>
+#include <pugixml/pugixml.hpp>
+#include <cpp17optional/optional.hpp>
 
 #include <QComboBox>
+#include <QDateTime>
+#include <QMimeDatabase>
+#include <QJsonDocument>
+
+#include "Authentications/frequestauthentication.h"
+#include "utilglobalvars.h"
 
 namespace UtilFRequest{
 
@@ -36,24 +44,19 @@ struct HttpHeader{
     QString value;
 };
 
-struct HttpFormKeyValue{
-    QString key;
-    QString value;
-};
-
 // Update the vector bellow always that you update this enum
 enum class RequestType{
     GET_OPTION = 0,
-    POST_OPTION,
-    PUT_OPTION,
-    DELETE_OPTION,
-    PATCH_OPTION,
-    HEAD_OPTION,
-    TRACE_OPTION,
-    OPTIONS_OPTION
+    POST_OPTION = 1,
+    PUT_OPTION = 2,
+    DELETE_OPTION = 3,
+    PATCH_OPTION = 4,
+    HEAD_OPTION = 5,
+    TRACE_OPTION = 6,
+    OPTIONS_OPTION = 7
 };
 
-const QVector<UtilFRequest::RequestType> possibleRequestTypes = {
+const QVector<RequestType> possibleRequestTypes = {
     UtilFRequest::RequestType::GET_OPTION,
     UtilFRequest::RequestType::POST_OPTION,
     UtilFRequest::RequestType::PUT_OPTION,
@@ -66,14 +69,81 @@ const QVector<UtilFRequest::RequestType> possibleRequestTypes = {
 
 enum class BodyType{
     RAW = 0,
-    FORM_DATA,
-    X_FORM_WWW_URLENCODED
+    FORM_DATA = 1,
+    X_FORM_WWW_URLENCODED = 2
 };
 
+enum class FormKeyValueType{
+    TEXT = 0,
+    FILE = 1
+};
+
+enum class SerializationFormatType{
+	UNKNOWN = 0,
+	JSON = 1,
+	XML = 2
+};
+
+struct HttpFormKeyValueType{
+	
+	QString key;
+    QString value;
+	FormKeyValueType type;
+	
+	HttpFormKeyValueType(){}
+	
+	HttpFormKeyValueType(const QString &key, const QString &value, const FormKeyValueType type){
+		this->key = key;
+		this->value = value;
+		this->type = type;
+	}
+	
+};
+
+struct RequestInfo{
+	bool bOverridesMainUrl = false;
+	QString overrideMainUrl;
+	QString name;
+	QString path;
+	RequestType requestType = RequestType::GET_OPTION;
+	BodyType bodyType = BodyType::RAW;
+	QString body;
+	QVector<HttpFormKeyValueType> bodyForm;
+	QVector<HttpHeader> headers;
+	bool bDownloadResponseAsFile = false;
+	QString uuid;
+	unsigned long long int order = 0;
+};
+
+static QMimeDatabase mimeDatabase;
+
 QString getDocumentsFolder();
-RequestType getRequestTypeByText(const QString &currentRequestText);
 bool requestTypeMayHaveBody(RequestType currentRequestType);
-QString getRequestTypeText(const RequestType currentRequestType);
+RequestType getRequestTypeByString(const QString &currentRequestText);
+QString getRequestTypeString(const RequestType currentRequestType);
+
+FormKeyValueType getFormKeyTypeByString(const QString &currentFormKeyValueString);
+QString getFormKeyTypeString(const FormKeyValueType currentFormKeyValueType);
+
+BodyType getBodyTypeByString(const QString &currentBodyTypeText);
+QString getBodyTypeString(const BodyType currentBodyType);
+
+QString getDateTimeFormatForFilename(const QDateTime &currentDateTime);
+
+void addRequestFormBodyRow(QTableWidget * const myTable, const QString &key, const QString &value, const UtilFRequest::FormKeyValueType type);
+
+// Return original content in case of error
+QString getStringFormattedForSerializationType(const QString &content, const SerializationFormatType serializationType);
+SerializationFormatType getSerializationFormatTypeForString(const QString &content);
+
+// Simply ofuscation just to not store password string as plain text in project / configuration files
+// (it does not protect the password, just obfuscates so can't be read directly)
+//  Applies a simple xor with the given salt
+QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, const QString &input);
+
+// Replaces the textToReplace string with the actual username and password given (uses the FRequest Auth Placeholders for the replace)
+QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, const QString &username, const QString &password);
+
 }
 
 #endif // UTILFREQUEST_H

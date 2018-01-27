@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,8 +29,8 @@ HttpRequest::HttpRequest
         const QVector<UtilFRequest::HttpHeader> &requestHeaders
         )
     :fullPath(fullPath),
-      requestHeaders(requestHeaders), bodyType(bodyType),
-      rawRequestBody(rawRequestBody), manager(manager), twBodyFormKeyValue(twBodyFormKeyValue)
+      requestHeaders(requestHeaders), rawRequestBody(rawRequestBody), 
+	  bodyType(bodyType), manager(manager), twBodyFormKeyValue(twBodyFormKeyValue)
 {
 
 }
@@ -46,11 +46,7 @@ HttpRequest::HttpRequest
       manager(manager),
       twBodyFormKeyValue(nullptr)
 {
-
-}
-
-HttpRequest::~HttpRequest(){
-
+	
 }
 
 QNetworkReply* HttpRequest::processRequest(){
@@ -58,9 +54,12 @@ QNetworkReply* HttpRequest::processRequest(){
     QNetworkRequest request(QUrl(this->fullPath));
 
     for(const UtilFRequest::HttpHeader &currentHeader : this->requestHeaders){
-        request.setRawHeader(currentHeader.name.toUtf8(), currentHeader.value.toUtf8());
+		// If multipart, don't add the multipart/form-data header, it is added automatically by HttpRequestWithMultiPart subclass
+		if(!(currentHeader.name == "Content-type" && currentHeader.value == "multipart/form-data")){
+			request.setRawHeader(currentHeader.name.toUtf8(), currentHeader.value.toUtf8());
+		}
     }
-
+	
     if(!bodyType.isEmpty()){
         if(this->bodyType == "raw"){
             return sendRequest(request, this->rawRequestBody.toUtf8());
@@ -84,18 +83,20 @@ QNetworkReply* HttpRequest::processRequest(){
 }
 
 QNetworkReply* HttpRequest::sendFormRequest(QNetworkRequest &request){
-    QUrlQuery params;
+
+	QUrlQuery params;
 
     for(int i = 0; i < this->twBodyFormKeyValue->rowCount(); i++){
         params.addQueryItem(this->twBodyFormKeyValue->item(i,0)->text(), this->twBodyFormKeyValue->item(i,1)->text());
     }
 
     return sendRequest(request, params.toString(QUrl::FullyEncoded).toUtf8());
+
 }
 
 QNetworkReply* HttpRequest::sendHttpCustomRequest(const QNetworkRequest &request, const QString &verb, const QByteArray &data){
-
-    // Based from here:
+	
+	// Based from here:
     // https://stackoverflow.com/a/34065736/1499019
     QBuffer *buffer=new QBuffer();
     if(!data.isNull() && !data.isEmpty()){
@@ -103,6 +104,10 @@ QNetworkReply* HttpRequest::sendHttpCustomRequest(const QNetworkRequest &request
         buffer->write(data);
         buffer->seek(0);
     }
+	
+    return this->manager->sendCustomRequest(request, verb.toUtf8(), buffer);
+}
 
-    return this->manager->sendCustomRequest(request, QSTR_TO_CSTR(verb), buffer);
+QNetworkReply* HttpRequest::sendHttpCustomRequest(const QNetworkRequest &request, const QString &verb, QHttpMultiPart &data){
+    return this->manager->sendCustomRequest(request, verb.toUtf8(), &data);
 }

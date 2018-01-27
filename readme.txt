@@ -1,6 +1,6 @@
 readme.txt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FRequest v1.0
+FRequest v1.1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ----------------------------------
@@ -11,18 +11,21 @@ FRequest is a fast, lightweight and opensource Windows / MacOS desktop program t
 
 The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
-easily shared and work seamless with Source Code Management (SCM) for collaborative work.
+easily shared and work seamless with Version Control System (VCS) for collaborative work.
 
 The current features of FRequest are:
 
 - Make GET / POST / PUT / DELETE / PATCH / HEAD / TRACE / OPTIONS HTTP(s) requests
 - Make HTTP requests with RAW / Form Data or X-Form-WWW-UrlEncoded body types
-- Analyse the request response body and headers
+- Send file uploads over the HTTP body type Form Data
+- Analyze the requests response body and headers
 - Requests are contained in a project, this project is then saved in XML file on user's desired location
 - Ability to override a project main url, so you can make requests to different domain name addresses within the same project
 - Ability to download files from the requests
-- Automatically beautify and provide syntax highlighting for JSON
-- The FRequest project files are stored in a way which allow easy collaboration via a SCM like Git, Svn or Team Foundation Server
+- Automatically beautify and provide syntax highlighting for JSON and XML
+- Support for authentication (HTTP Basic authentication and Request based authentication) which can be saved either in the
+program configuration file (for private use) or the project file itself (for shared use)
+- The FRequest project files are stored in a way which allow easy collaboration via a VCS like Git, Svn or Team Foundation Server
 - Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or manually)
 - Network proxy support
 
@@ -50,5 +53,28 @@ https://github.com/random-guy/FRequest
 ----------------------------------
 Change Log:
 ----------------------------------
+1.1, 27-01-2018
+- Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data
+- Now when the data is bigger than 200 kb only the first 200 kb are displayed in the interface, the remaining data is 
+written to the disk if the request is marked to download (avoids slowdowns and possible crashes)
+- Fixed bug where if the first request being loaded had overridden url the url didn't loaded
+- Fixed bug where timeout 0 instead of mean no timeout, meant instant timeout
+- Fixed bug where the first item loaded, if changed and then the project was saved, it wouldn't get properly saved
+- Fixed bug where form-data were sending data in the format of x-www-form-urlencoded instead of form-data
+- Now it is possible to cancel a running request
+- Added icons for request types
+- Some code refactoring
+- Added icon to clone context menu
+- Now when the project is selected in the requests tree the number of the requests for that project is displayed in 
+the status bar
+- Added support for file uploads
+- Upgraded to Qt 5.10.0
+- Now TRACE method should allow send of form and raw content
+- Added support for XML highlighting
+- Now cookies received by each request are saved by default (so they may be sent in next requests)
+- Added requests filter so you can quickly find your requests
+- Added authentication support (starting with Request authentication and HTTP Basic Authentication)
+- Fixed the save of proxy settings
+----------------------------------
 1.0, 18-08-2017
--Initial Version
+- Initial Version

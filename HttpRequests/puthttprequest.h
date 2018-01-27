@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PUTHTTPREQUEST_H
 #define PUTHTTPREQUEST_H
 
-#include "httprequest.h"
+#include "httprequestwithmultipart.h"
 
-class PutHttpRequest : public HttpRequest
+class PutHttpRequest : public HttpRequestWithMultiPart
 {
 public:
     PutHttpRequest(
@@ -35,6 +35,7 @@ public:
             );
 private:
     QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
+	QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data);
 };
 
 #endif // PUTHTTPREQUEST_H

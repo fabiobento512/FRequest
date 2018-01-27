@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,20 +29,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include <QTreeWidgetItem>
 #include <QStringBuilder>
-#include <QJsonDocument>
 #include <QUrlQuery>
 #include <QClipboard>
 #include <QUuid>
+#include <QProgressBar>
+#include <QToolButton>
+#include <QLabel>
+#include <QPainter>
+#include <QMap>
 
 #include <jsonhighlighter/highlighter.h>
+#include <BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.h>
 #include <pugixml/pugixml.hpp>
+#include <ConditionalSemaphore/conditionalsemaphore.h>
 
 #include "about.h"
 #include "preferences.h"
+#include "projectproperties.h"
 #include "utilfrequest.h"
-#include "utilglobalvars.h"
-#include "configfilefrequest.h"
-#include "Widgets/frequesttreewidgetitem.h"
+#include "Widgets/frequesttreewidgetprojectitem.h"
+
+#include "XmlParsers/projectfilefrequest.h"
+#include "XmlParsers/configfilefrequest.h"
 
 #include "HttpRequests/posthttprequest.h"
 #include "HttpRequests/puthttprequest.h"
@@ -68,10 +76,10 @@ public:
 private slots:
 
     void applicationHasLoaded();
+	
+	void saveProjectProperties();
 
     void on_pbSendRequest_clicked();
-
-    void on_leMainUrl_textChanged(const QString &arg1);
 
     void on_lePath_textChanged(const QString &arg1);
 
@@ -145,29 +153,46 @@ private slots:
 
     void on_actionFormat_Request_body_triggered();
 
+    void on_tbRequestBodyFile_clicked();
+
+    void tbAbortRequest_clicked();
+
+    void on_actionShow_Request_Types_Icons_triggered(bool checked);
+
+    void on_leRequestsFilter_textChanged(const QString &arg1);
+	
+	void on_actionProject_Properties_triggered();
+
 signals:
     void signalAppIsLoaded();
+	void signalRequestFinishedAndProcessed();
 
 private:
     void showEvent(QShowEvent *e);
     void checkForQNetworkAccessManagerTimeout(QNetworkReply *reply);
-    QNetworkReply* processHttpRequest(QNetworkAccessManager * const manager, UtilFRequest::RequestType requestType);
+    QNetworkReply* processHttpRequest(
+            const UtilFRequest::RequestType requestType,
+            const QString &fullPath,
+            const QString &bodyType,
+            const QString &requestBody,
+            const QVector<UtilFRequest::HttpHeader>& requestHeaders
+    );
     QString getDownloadFileName(const QNetworkReply * const reply);
     void updateWindowTitle();
     void setNewProject();
     void saveProjectState(const QString &filePath);
     void loadProjectState(const QString &filePath);
-    void updateTreeWidgetItemContent(FRequestTreeWidgetItem * const requestItem);
-    void reloadRequest(FRequestTreeWidgetItem * const item);
-    FRequestTreeWidgetItem *addProjectItem(const QString &projectName);
-    FRequestTreeWidgetItem *addRequestItem(const QString &requestName, FRequestTreeWidgetItem * const currentProject);
+    void updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * const requestItem);
+    void reloadRequest(FRequestTreeWidgetRequestItem * const item);
+    FRequestTreeWidgetProjectItem *addProjectItem(const QString &projectName, const QString &projectUuid);
+    FRequestTreeWidgetRequestItem *addRequestItem(const QString &requestName, const QString &projectUuid, FRequestTreeWidgetProjectItem * const currentProject);
     void closeEvent(QCloseEvent *event);
     void loadRecentProjects();
     void addNewRecentProject(const QString &filePath);
     void reloadRecentProjectsMenu();
     void saveRecentProjects();
     QVector<UtilFRequest::HttpHeader> getRequestHeaders();
-    QVector<UtilFRequest::HttpFormKeyValue> getRequestForm();
+    QVector<UtilFRequest::HttpFormKeyValueType> getRequestForm();
     void buildFullPath();
     void setProjectHasChanged();
     QMessageBox::StandardButton askToSaveCurrentProject();
@@ -176,24 +201,36 @@ private:
     void clearEverything();
     void addDefaultHeaders();
     void setRequestType(UtilFRequest::RequestType requestType);
-    void setFormatRequestAndResponseBodies();
+    void formatRequestBody(const UtilFRequest::SerializationFormatType serializationType);
+	void formatResponseBody(const UtilFRequest::SerializationFormatType serializationType);
     bool loadAndValidateFRequestProjectFile(const QString &filePath, pugi::xml_document &doc);
-    pugi::xml_attribute createOrGetPugiXmlAttribute(pugi::xml_node &mainNode, const char *name);
+    void setIconForRequest(FRequestTreeWidgetRequestItem * const item);
+    void setAllRequestIcons(bool showIcon);
+	ProjectFileFRequest::ProjectData fetchCurrentProjectData();
+	bool formKeyValueInBodyIsValid();
+	bool formKeyValueInBodyHasFiles();
+	void removeAllFilesRowsFromFormKeyValueInBody();
+	UtilFRequest::SerializationFormatType getRequestCurrentSerializationFormatType();
+	UtilFRequest::SerializationFormatType getResponseCurrentSerializationFormatType();
+	QString getNewUuid();
+    QString getFullPathFromMainUrlAndPath(const QString & mainUrl, const QString & path);
+	void applyRequestAuthentication();
+	void openProjectProperties();
 
 public:
     static constexpr int recentProjectsMaxSize=6;
-
+	
 private:
     Ui::MainWindow *ui;
     QDateTime lastStartTime;
-    FRequestTreeWidgetItem *currentProjectItem = nullptr;
-    FRequestTreeWidgetItem *currentItem = nullptr;
+    FRequestTreeWidgetProjectItem *currentProjectItem = nullptr;
+    FRequestTreeWidgetRequestItem *currentItem = nullptr;
     QSet<QString> uuidsInUse;
     QVector<QString> uuidsToCleanUp; // this vector stores the uuids of deleted items in the application, its used to clean them in the project file
     bool applicationIsFullyLoaded = false;
     bool unsavedChangesExist = false;
-    // aux boolean to indicate that the current changes are to ignore (used when changing items in the treeview or when program starts up)
-    bool ignoreAnyChangesToProject = true;
+    // This conditional semaphore allow us to tell to the interface to ignore changes (not mark project as unsaved) within some time interval
+	Cosemaphore::ConditionalSemaphore ignoreAnyChangesToProject;
     QString lastProjectFilePath;
     QList<QString> recentProjectsList;
     QString lastResponseFileName;
@@ -202,8 +239,22 @@ private:
     ConfigFileFRequest::Settings currentSettings;
     const QSize auxMinimumSize = QSize(0,0);
     const QSize auxMaximumSize = QSize(16777215,16777215);
-    Highlighter requestBodyHighligher;
-    Highlighter responseBodyHighligher;
+    QProgressBar pbRequestProgress;
+    QToolButton tbAbortRequest;
+    QLabel lbRequestInfo;
+    QLabel lbProjectInfo;
+    std::experimental::optional<QNetworkReply*> currentReply;
+    QMap<UtilFRequest::RequestType, QIcon> generatedIconCache;
+    QNetworkAccessManager networkAccessManager;
+	
+	// Requests Highlighters
+	Highlighter jsonRequestBodyHighligher;
+    Highlighter jsonResponseBodyHighligher;
+	BasicXMLSyntaxHighlighter xmlRequestBodyHighligher;
+	BasicXMLSyntaxHighlighter xmlResponseBodyHighligher;
+    bool currentProjectAuthenticationWasMade = false;
+	bool authenticationIsRunning = false;
+
 };
 
 #endif // MAINWINDOW_H

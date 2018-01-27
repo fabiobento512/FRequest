@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,16 +22,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 PostHttpRequest::PostHttpRequest
 (
         QNetworkAccessManager * const manager,
-        QTableWidget * const twBodyFormKeyValue,
-        const QString &fullPath,
-        const QString &bodyType,
-        const QString &rawRequestBody,
-        const QVector<UtilFRequest::HttpHeader> &requestHeaders
+		QTableWidget * const twBodyFormKeyValue,
+		const QString &fullPath,
+		const QString &bodyType,
+		const QString &rawRequestBody,
+		const QVector<UtilFRequest::HttpHeader> &requestHeaders
  )
-    :HttpRequest(manager, twBodyFormKeyValue, fullPath, bodyType, rawRequestBody, requestHeaders)
+    :HttpRequestWithMultiPart(manager, twBodyFormKeyValue, fullPath, bodyType, rawRequestBody, requestHeaders)
 {
 }
 
 QNetworkReply* PostHttpRequest::sendRequest(const QNetworkRequest &request, const QByteArray &data){
     return this->manager->post(request, data);
+}
+
+QNetworkReply* PostHttpRequest::sendRequest(const QNetworkRequest &request, QHttpMultiPart &data){
+    return this->manager->post(request, &data);
 }

@@ -17,15 +17,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 
-#ifndef OPTIONSHTTPREQUEST_H
-#define OPTIONSHTTPREQUEST_H
+#ifndef HTTPREQUESTWITHMULTIPART_H
+#define HTTPREQUESTWITHMULTIPART_H
 
-#include "httprequestwithmultipart.h"
+#include "httprequest.h"
 
-class OptionsHttpRequest : public HttpRequestWithMultiPart
+class HttpRequestWithMultiPart : public HttpRequest
 {
 public:
-    OptionsHttpRequest(
+    HttpRequestWithMultiPart(
             QNetworkAccessManager * const manager,
             QTableWidget * const twBodyFormKeyValue,
             const QString &fullPath,
@@ -33,9 +33,20 @@ public:
             const QString &rawRequestBody,
             const QVector<UtilFRequest::HttpHeader> &requestHeaders
             );
+			
+	// This constructor is not used for HttpRequestWithMultiPart classes
+	HttpRequestWithMultiPart
+    (
+            QNetworkAccessManager * const manager,
+            const QString &fullPath,
+            const QVector<UtilFRequest::HttpHeader> &requestHeaders
+            ) = delete;
+			
+	virtual ~HttpRequestWithMultiPart() = default; // needed to avoid undefined behaviour https://stackoverflow.com/a/22491471/1499019
+protected:
+	virtual QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data) = 0; // abstract funtion to be filled by subclasses
 private:
-    QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
-	QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data);
+	QNetworkReply* sendFormRequest(QNetworkRequest &request);
 };
 
-#endif // OPTIONSHTTPREQUEST_H
+#endif // HTTPREQUESTWITHMULTIPART_H

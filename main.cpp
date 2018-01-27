@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,11 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include <QApplication>
 
+#include "utilfrequest.h"
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
+    a.setStyleSheet("QStatusBar::item { border: 0px; }"); //hide borders in status bar //http://qt-project.org/forums/viewthread/18743
 
     return a.exec();
 }

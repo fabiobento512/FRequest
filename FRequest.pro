@@ -30,7 +30,6 @@ SOURCES += main.cpp\
     utilfrequest.cpp \
     about.cpp \
     preferences.cpp \
-    configfilefrequest.cpp \
     HttpRequests/deletehttprequest.cpp \
     HttpRequests/httprequest.cpp \
     HttpRequests/posthttprequest.cpp \
@@ -40,7 +39,16 @@ SOURCES += main.cpp\
     HttpRequests/headhttprequest.cpp \
     HttpRequests/tracehttprequest.cpp \
     HttpRequests/optionshttprequest.cpp \
-    Widgets/frequesttreewidgetitem.cpp
+    Widgets/frequesttreewidgetitem.cpp \
+    XmlParsers/configfilefrequest.cpp \
+    XmlParsers/projectfilefrequest.cpp \
+    HttpRequests/httprequestwithmultipart.cpp \
+    projectproperties.cpp \
+    Authentications/frequestauthentication.cpp \
+    Authentications/basicauthentication.cpp \
+    Authentications/requestauthentication.cpp \
+    Widgets/frequesttreewidgetprojectitem.cpp \
+    Widgets/frequesttreewidgetrequestitem.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -48,7 +56,6 @@ HEADERS  += mainwindow.h \
     utilfrequest.h \
     about.h \
     preferences.h \
-    configfilefrequest.h \
     HttpRequests/deletehttprequest.h \
     HttpRequests/httprequest.h \
     HttpRequests/posthttprequest.h \
@@ -58,12 +65,22 @@ HEADERS  += mainwindow.h \
     HttpRequests/headhttprequest.h \
     HttpRequests/tracehttprequest.h \
     HttpRequests/optionshttprequest.h \
-    Widgets/frequesttreewidgetitem.h
+    Widgets/frequesttreewidgetitem.h \
+    XmlParsers/configfilefrequest.h \
+    XmlParsers/projectfilefrequest.h \
+    HttpRequests/httprequestwithmultipart.h \
+    projectproperties.h \
+    Authentications/frequestauthentication.h \
+    Authentications/basicauthentication.h \
+    Authentications/requestauthentication.h \
+    Widgets/frequesttreewidgetprojectitem.h \
+    Widgets/frequesttreewidgetrequestitem.h
 
 
 FORMS    += mainwindow.ui \
     about.ui \
-    preferences.ui
+    preferences.ui \
+    projectproperties.ui
 
 RESOURCES += \
     resources.qrc

@@ -6,5 +6,9 @@
         <file>minus.png</file>
         <file>plus.png</file>
         <file>clipboard_icon.png</file>
+        <file>plus_file.png</file>
+        <file>warning_icon.png</file>
+        <file>abort.png</file>
+        <file>clone_icon.png</file>
     </qresource>
 </RCC>

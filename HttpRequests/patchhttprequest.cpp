@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,10 +28,14 @@ PatchHttpRequest::PatchHttpRequest
         const QString &rawRequestBody,
         const QVector<UtilFRequest::HttpHeader> &requestHeaders
  )
-    :HttpRequest(manager, twBodyFormKeyValue, fullPath, bodyType, rawRequestBody, requestHeaders)
+    :HttpRequestWithMultiPart(manager, twBodyFormKeyValue, fullPath, bodyType, rawRequestBody, requestHeaders)
 {
 }
 
 QNetworkReply* PatchHttpRequest::sendRequest(const QNetworkRequest &request, const QByteArray &data){
     return sendHttpCustomRequest(request, "PATCH", data);
+}
+
+QNetworkReply* PatchHttpRequest::sendRequest(const QNetworkRequest &request, QHttpMultiPart &data){
+	return sendHttpCustomRequest(request, "PATCH", data);
 }

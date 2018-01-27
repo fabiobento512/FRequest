@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,13 +31,21 @@ MainWindow::MainWindow(QWidget *parent) :
     plog::init(plog::info, &fileAppender);
 
     this->currentSettings = this->configFileManager.getCurrentSettings();
+
+    this->ignoreAnyChangesToProject.SetCondition();
     ui->setupUi(this);
+
+    // show request types icons or not?
+    ui->actionShow_Request_Types_Icons->setChecked(this->currentSettings.showRequestTypesIcons);
 
     // Disable drop of items outside of the project folder
     // Thanks to "p.i.g.": http://stackoverflow.com/a/30580654
     ui->treeWidget->invisibleRootItem()->setFlags(
                 ui->treeWidget->invisibleRootItem()->flags() ^ Qt::ItemIsDropEnabled
                 );
+
+    // Set max icon size in tree widget
+    ui->treeWidget->setIconSize(QSize(32,16));
 
     setNewProject();
     // Set our desired proportion for the projects tree widget and remaining interface
@@ -54,20 +62,55 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pbSendRequest->setToolTip(ui->pbSendRequest->toolTip() + " (Ctrl + Enter)");
 #endif
 
-    // json highlighters
-    setFormatRequestAndResponseBodies();
-
     loadRecentProjects();
 
+    // Hide response warning messages and icons for now
+    ui->lbResponseBodyWarningIcon->hide();
+    ui->lbResponseBodyWarningMessage->hide();
+    ui->lbResponseBodyWarningIcon->setMaximumSize(0,0);
+    ui->lbResponseBodyWarningMessage->setMaximumSize(0,0);
+    ui->lbResponseBodyWarningMessage->setToolTip(ui->lbResponseBodyWarningMessage->text());
+
     // Hide key value table for now (the raw textedit is displayed by default)
+    ui->twRequestBodyKeyValue->setMaximumSize(0,0);
+    ui->tbRequestBodyKeyValueAdd->setMaximumSize(0,0);
+    ui->tbRequestBodyFile->setMaximumSize(0,0);
+    ui->tbRequestBodyKeyValueRemove->setMaximumSize(0,0);
+
     ui->twRequestBodyKeyValue->hide();
     ui->tbRequestBodyKeyValueAdd->hide();
+    ui->tbRequestBodyFile->hide();
     ui->tbRequestBodyKeyValueRemove->hide();
 
     // We will also set their size to the normal size (we start with size 0 so vertical splitter divide the area in equal space (for header and response), kinda hacky)
     ui->twRequestBodyKeyValue->setMaximumSize(this->auxMaximumSize);
     ui->tbRequestBodyKeyValueAdd->setMaximumSize(this->auxMaximumSize);
+    ui->tbRequestBodyFile->setMaximumSize(this->auxMaximumSize);
     ui->tbRequestBodyKeyValueRemove->setMaximumSize(this->auxMaximumSize);
+    ui->lbResponseBodyWarningIcon->setMaximumSize(16, 16);
+    ui->lbResponseBodyWarningMessage->setMaximumSize(this->auxMaximumSize);
+
+    // Scretch middle column (value one) for form key value request body
+    QHeaderView *twRequestBodyKeyValueHeaderView = ui->twRequestBodyKeyValue->horizontalHeader();
+    twRequestBodyKeyValueHeaderView->setSectionResizeMode(1, QHeaderView::Stretch);
+
+    // Progress indicator and abort button (for the request being made)
+    this->pbRequestProgress.setTextVisible(false); //hides text
+    this->pbRequestProgress.setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Fixed);
+    this->pbRequestProgress.setMinimumWidth(150);
+    this->pbRequestProgress.setMaximum(0);
+    ui->statusBar->addWidget(&this->lbProjectInfo);
+    ui->statusBar->addPermanentWidget(&this->lbRequestInfo);
+    ui->statusBar->addPermanentWidget(&this->pbRequestProgress); //this adds automatically in right
+    this->tbAbortRequest.setIcon(QIcon(":/icons/abort.png"));
+    this->tbAbortRequest.setAutoRaise(true);
+    this->tbAbortRequest.setToolTip("Abort current request");
+    connect(&this->tbAbortRequest , SIGNAL (clicked()), this, SLOT(tbAbortRequest_clicked())); // connect button click to our slot function
+    connect(&this->networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+    ui->statusBar->addPermanentWidget(&this->tbAbortRequest);
+    this->lbRequestInfo.hide();
+    this->pbRequestProgress.hide();
+    this->tbAbortRequest.hide();
 
     // Restore geometry if it exists
     if(this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting){
@@ -98,6 +141,8 @@ MainWindow::MainWindow(QWidget *parent) :
         // center window if we are not restoring geometry
         this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),qApp->desktop()->availableGeometry()));
     }
+
+    ui->treeWidget->setFocus();
 }
 
 void MainWindow::showEvent(QShowEvent *e)
@@ -118,8 +163,7 @@ void MainWindow::applicationHasLoaded(){
     LOG_INFO << GlobalVars::AppName + " " + GlobalVars::AppVersion + " started";
 
     this->applicationIsFullyLoaded = true;
-
-    this->ignoreAnyChangesToProject = false;
+    this->ignoreAnyChangesToProject.UnsetCondition();
 
     if(this->currentSettings.askToOpenLastProject && this->currentSettings.recentProjectsPaths.size() > 0){
         QString lastSavedProject = this->currentSettings.recentProjectsPaths[0];
@@ -141,101 +185,228 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pbSendRequest_clicked()
 {
-    // Disable until this request is finished
-    ui->pbSendRequest->setEnabled(false);
+	
+    if(formKeyValueInBodyIsValid()){
+		
+		 // Disable until this request is finished
+        ui->pbSendRequest->setEnabled(false);
+        this->lbRequestInfo.show();
+        this->pbRequestProgress.show();
+        this->tbAbortRequest.show();
+        this->pbRequestProgress.setValue(0);
+		ui->gbProject->setEnabled(false);
+        ui->gbRequest->setEnabled(false);
+		
+		// Apply proxy type
+		if(this->currentSettings.useProxy){
+            QNetworkProxy proxy;
 
-    // Clear previous request data:
-    clearOlderResponse();
+            switch (this->currentSettings.proxySettings.type) {
+            case ConfigFileFRequest::ProxyType::AUTOMATIC:
+            {
+                QNetworkProxyFactory::setUseSystemConfiguration(true);
+                break;
+            }
+            case ConfigFileFRequest::ProxyType::HTTP_TRANSPARENT:
+            {
+                proxy.setType(QNetworkProxy::HttpProxy);
+                break;
+            }
+            case ConfigFileFRequest::ProxyType::HTTP:
+            {
+                proxy.setType(QNetworkProxy::HttpCachingProxy);
+                break;
+            }
+            case ConfigFileFRequest::ProxyType::SOCKS5:
+            {
+                proxy.setType(QNetworkProxy::Socks5Proxy);
+                break;
+            }
+            default:
+            {
+                QString errorMessage = "Unknown proxy type set! '" + QString::number(static_cast<unsigned int>(this->currentSettings.proxySettings.type)) + "'. Check the proxy settings.";
+                Util::Dialogs::showError(errorMessage);
+                LOG_ERROR << errorMessage;
+                Util::StatusBar::showError(ui->statusBar, errorMessage);
+                return;
+            }
+            }
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    connect(manager, SIGNAL(finished(QNetworkReply*)),
-            this, SLOT(replyFinished(QNetworkReply*)));
+            if(this->currentSettings.proxySettings.type != ConfigFileFRequest::ProxyType::AUTOMATIC){
+                QNetworkProxyFactory::setUseSystemConfiguration(false);
+                proxy.setHostName(this->currentSettings.proxySettings.hostName);
+                proxy.setPort(this->currentSettings.proxySettings.portNumber);
+                QNetworkProxy::setApplicationProxy(proxy);
+                this->networkAccessManager.setProxy(proxy);
+            }
+        }
+        else{
+            QNetworkProxy proxy;
+            proxy.setType(QNetworkProxy::NoProxy);
+            this->networkAccessManager.setProxy(proxy);
+        }
+		
+		QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
+		
+		// Attempt to authenticate if we have authentication and its the first request in this project
+        if(this->currentProjectItem->authData != nullptr){
+				
+			// We only apply the authentication to urls of the project, overriden urls don't have the auth applied
+			if(!ui->cbRequestOverrideMainUrl->isChecked()){
+				switch(this->currentProjectItem->authData->type){
+					case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
+					{
+						if(!this->currentProjectAuthenticationWasMade)
+						{
+							this->lbRequestInfo.setText("Authenticating using the request provided...");
 
-    if(this->currentSettings.useProxy){
-        QNetworkProxy proxy;
+							applyRequestAuthentication();
+							
+							// If there was an error with the authorization don't proceed
+							if(!this->currentProjectAuthenticationWasMade){
+								return;
+							}
+						}
+						break;
+					}
+					case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
+					{
+						const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
+						
+						UtilFRequest::HttpHeader currentHeader;
 
-        switch (this->currentSettings.proxySettings.type) {
-        case ConfigFileFRequest::ProxyType::AUTOMATIC:
-        {
-            QNetworkProxyFactory::setUseSystemConfiguration(true);
-            break;
-        }
-        case ConfigFileFRequest::ProxyType::HTTP_TRANSPARENT:
-        {
-            proxy.setType(QNetworkProxy::HttpProxy);
-            break;
-        }
-        case ConfigFileFRequest::ProxyType::HTTP:
-        {
-            proxy.setType(QNetworkProxy::HttpCachingProxy);
-            break;
-        }
-        case ConfigFileFRequest::ProxyType::SOCKS5:
-        {
-            proxy.setType(QNetworkProxy::Socks5Proxy);
-            break;
-        }
-        default:
-        {
-            QString errorMessage = "Unknown proxy type set! '" + QString::number(static_cast<unsigned int>(this->currentSettings.proxySettings.type)) + "'. Check the proxy settings.";
-            Util::Dialogs::showError(errorMessage);
-            LOG_ERROR << errorMessage;
-            Util::StatusBar::showError(ui->statusBar, errorMessage);
-            return;
-        }
-        }
+						currentHeader.name = "Authorization";
+						currentHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
+						
+						requestFinalHeaders.append(currentHeader);
+						
+						break;
+					}
+					default:
+					{
+						QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(this->currentProjectItem->authData->type)) + "'. Program can't proceed.";
+						Util::Dialogs::showError(errorMessage);
+						LOG_FATAL << errorMessage;
+						exit(1);
+					}
+				}	
+			}
+		}
+		
+        this->ignoreAnyChangesToProject.SetCondition();
+        formatRequestBody(getRequestCurrentSerializationFormatType());
+        this->ignoreAnyChangesToProject.UnsetCondition();
 
-        if(this->currentSettings.proxySettings.type != ConfigFileFRequest::ProxyType::AUTOMATIC){
-            QNetworkProxyFactory::setUseSystemConfiguration(false);
-            proxy.setHostName(this->currentSettings.proxySettings.hostName);
-            proxy.setPort(this->currentSettings.proxySettings.portNumber);
-            QNetworkProxy::setApplicationProxy(proxy);
-            manager->setProxy(proxy);
-        }
+        // Display info about when request was started
+        this->lbRequestInfo.setText("Requested started at " + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+
+        // Clear previous request data:
+        clearOlderResponse();
+		
+        this->currentReply = processHttpRequest
+                (
+                    UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText()),
+                    ui->leFullPath->text(),
+                    ui->cbBodyType->currentText(),
+                    ui->pteRequestBody->toPlainText(),
+                    requestFinalHeaders
+                    );
+
+        lastStartTime = QDateTime::currentDateTime();
+
+        checkForQNetworkAccessManagerTimeout(this->currentReply.value());
     }
-    else{
-        QNetworkProxy proxy;
-        proxy.setType(QNetworkProxy::NoProxy);
-        QNetworkProxy::setApplicationProxy(proxy);
-    }
+}
 
-    QNetworkReply *reply;
+void MainWindow::applyRequestAuthentication(){
+	
+	std::shared_ptr<FRequestAuthentication> authData = this->currentProjectItem->authData;
 
-    reply = processHttpRequest(manager, UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText()));
 
-    lastStartTime = QDateTime::currentDateTime();
+	if(authData->type != FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION)
+	{
+		QString errorMessage = "Authentication is not a REQUEST_AUTHENTICATION. Please report this error.";
+		Util::Dialogs::showError(errorMessage);
+		LOG_ERROR << errorMessage;
+		return;
+	}
+	
+	this->authenticationIsRunning = true;
+	
+	const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(authData.get());
 
-    checkForQNetworkAccessManagerTimeout(reply);
+	const FRequestTreeWidgetRequestItem * const authRequestItem =
+			this->currentProjectItem->getChildRequestByUuid(concreteAuthData->requestForAuthenticationUuid);
 
-    reply->deleteLater();
-    manager->deleteLater();
+	QString mainUrl;
+
+	if(authRequestItem->itemContent.bOverridesMainUrl){
+		mainUrl = authRequestItem->itemContent.overrideMainUrl;
+	}
+	else{
+		mainUrl = this->currentProjectItem->projectMainUrl;
+	}
+
+	// Wait for authentication request synchronously
+	// https://stackoverflow.com/a/5496468/1499019
+	QEventLoop loop;
+	connect(this, SIGNAL(signalRequestFinishedAndProcessed()), &loop, SLOT(quit()));
+	
+	QVector<UtilFRequest::HttpHeader> finalAuthRequestHeaders = authRequestItem->itemContent.headers;
+	
+	// Apply auth data to headers if it the placeholder fields are found
+	for(UtilFRequest::HttpHeader &currentHeader : finalAuthRequestHeaders){
+		currentHeader.name = UtilFRequest::replaceFRequestAuthenticationPlaceholders(currentHeader.name, concreteAuthData->username, concreteAuthData->password);
+        currentHeader.value = UtilFRequest::replaceFRequestAuthenticationPlaceholders(currentHeader.value, concreteAuthData->username, concreteAuthData->password);
+	}
+	
+	this->currentReply = processHttpRequest(
+				authRequestItem->itemContent.requestType,
+				getFullPathFromMainUrlAndPath(mainUrl, UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.path, concreteAuthData->username, concreteAuthData->password)),
+				UtilFRequest::getBodyTypeString(authRequestItem->itemContent.bodyType),
+				UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.body, concreteAuthData->username, concreteAuthData->password),
+				finalAuthRequestHeaders
+                );
+				
+	// checkForQNetworkAccessManagerTimeout(this->currentReply.value()); // TODO: check why this is causing problems
+				
+	loop.exec();
 }
 
 // Since QNetworkReply doesn't have a way to set a timeout we need implement it by ourselves
 // http://stackoverflow.com/a/13229926
 void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
 {
-    // Since QNetworkReply doesn't have a way to set a timeout we need implement it by ourselves
-    // http://stackoverflow.com/a/13229926
     QTimer timer;
     timer.setSingleShot(true);
 
     QEventLoop loop;
     connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
     timer.start(this->currentSettings.requestTimeout * 1000);
     loop.exec();
 
-    if(timer.isActive())
+    if(timer.isActive() || timer.interval() == 0) // if request timeout is 0 don't timeout
     {
         timer.stop();
     }
     else
     {
         // timeout
-        ui->lbStatus->setText("-1");
-        ui->lbDescription->setText("Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds");
-        ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+		
+		QString errorMessage = "Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds";
+		
+		if(this->authenticationIsRunning){
+			Util::Dialogs::showError(errorMessage);
+		}
+		else{
+			ui->lbStatus->setText("-1");
+			ui->lbDescription->setText(errorMessage);
+			ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+		}
+		
+		LOG_ERROR << errorMessage;
 
         this->lastReplyStatusError = -1;
 
@@ -247,128 +418,200 @@ void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
 
 void MainWindow::replyFinished(QNetworkReply *reply){
 
-    // -1 means we have set a custom error, we don't want to override that one
-    if(this->lastReplyStatusError != -1 && reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()){
-        ui->lbStatus->setText(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
-        ui->lbDescription->setText(reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+	QString requestReturnCode;
+	QString requestReturnMessage;
+	bool isError = false;
+	bool isToRetryWithAuthentication = false;
+	
+	// -1 means we have set a custom error, we don't want to override that one
+    if(this->lastReplyStatusError != -1 && reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()){ // sucess request
+		requestReturnCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
+		requestReturnMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
     }
     else if(this->lastReplyStatusError == 0 && reply->error() != QNetworkReply::NoError){
-        ui->lbStatus->setText("N/A");
-        ui->lbDescription->setText(reply->errorString() + " - Error " + QString::number(reply->error()));
+		requestReturnCode = "N/A";
+		requestReturnMessage = reply->errorString() + " - Error " + QString::number(reply->error());
+		isError = true;
     }
+	
+	if(!this->authenticationIsRunning){
+		ui->lbStatus->setText(requestReturnCode);
+		ui->lbDescription->setText(requestReturnMessage);
+	}
 
-    ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
-
+	if(!this->authenticationIsRunning){
+		ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+	}
+	
     if(reply->error() == QNetworkReply::NoError)
     {
-        QString headersText;
+		if(!this->authenticationIsRunning){
+			// TODO: Add an option for this and clean up this code
+			// If greater than 200 KB only give the option to download the file
+			constexpr int maxBytesForBufferAndDisplay = 200*1024;
+			QString headersText;
+			QByteArray totalLoadedData;
+			QByteArray currentData;
 
-        for(const QNetworkReply::RawHeaderPair &currentPair : reply->rawHeaderPairs()){
-            headersText += currentPair.first + ": " + currentPair.second + "\n";
-        }
+			// Read the bytes to display
+			totalLoadedData = reply->read(maxBytesForBufferAndDisplay);
 
-        QByteArray responseData = reply->readAll();
+			for(const QNetworkReply::RawHeaderPair &currentPair : reply->rawHeaderPairs()){
+				headersText += currentPair.first + ": " + currentPair.second + "\n";
+			}
 
-        ui->pteResponseHeaders->document()->setPlainText(headersText);
+			ui->pteResponseHeaders->document()->setPlainText(headersText);
 
-        if(ui->actionFormat_Response_Body->isChecked()){
+			UtilFRequest::SerializationFormatType serializationType = UtilFRequest::getSerializationFormatTypeForString(totalLoadedData);
 
-            // Try to parse the response as json, if it fails show the raw data instead
+			if(ui->actionFormat_Response_Body->isChecked()){
+				ui->pteResponseBody->document()->setPlainText(UtilFRequest::getStringFormattedForSerializationType(totalLoadedData, serializationType));
+				formatResponseBody(serializationType);
+			}
+			else{
+				ui->pteResponseBody->document()->setPlainText(totalLoadedData);
+			}
 
-            QJsonParseError parseError;
+			// Check if there are more bytes to read
+			// (they will not be displayed on the interface, but they can be saved to a file and a warning in the interface will be displayed)
+			currentData = reply->read(maxBytesForBufferAndDisplay);
+			if(currentData.size() > 0){
+				totalLoadedData.append(currentData);
+				ui->lbResponseBodyWarningIcon->show();
+				ui->lbResponseBodyWarningMessage->show();
+			}
 
-            QJsonDocument auxJsonDoc = QJsonDocument::fromJson(responseData, &parseError);
+			if(ui->cbDownloadResponseAsFile->isChecked())
+			{
 
+				QString filePath;
+				QString fileName;
 
-            if(parseError.error == QJsonParseError::NoError){
+				if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
+				{
+					fileName = this->lastResponseFileName;
+					filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
+				}
+				else
+				{
+					fileName = getDownloadFileName(reply);
+					filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
+															this->currentSettings.lastResponseFilePath + "/" + fileName);
+				}
 
-                ui->pteResponseBody->document()->setPlainText(auxJsonDoc.toJson());
+				if(!filePath.isEmpty())
+				{
+					this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
+					this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
 
-            }
+					QFile file(filePath);
 
-            else{
+					if (file.open(QIODevice::WriteOnly)) {
+						file.write(totalLoadedData);
 
-                ui->pteResponseBody->document()->setPlainText(responseData);
+						// Load remaining data using a buffer
+						do{
+							currentData = reply->read(maxBytesForBufferAndDisplay);
+							file.write(currentData);
+						}while(currentData.size() > 0);
 
-            }
+						file.close();
 
-        }
-        else{
-            ui->pteResponseBody->document()->setPlainText(responseData);
-        }
+						if(ui->actionOpen_file_after_download->isChecked()){
+							if(!QDesktopServices::openUrl("file:///"+filePath)){
+								QString errorMessage = "Could not open downloaded file: " + filePath;
+								Util::Dialogs::showError(errorMessage);
+								LOG_ERROR << errorMessage;
+								Util::StatusBar::showError(ui->statusBar, errorMessage);
+							}
+						}
 
-        if(ui->cbDownloadResponseAsFile->isChecked())
-        {
-
-            QString filePath;
-            QString fileName;
-
-            if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
-            {
-                fileName = this->lastResponseFileName;
-                filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
-            }
-            else
-            {
-                fileName = getDownloadFileName(reply);
-                filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
-                                                        this->currentSettings.lastResponseFilePath + "/" + fileName);
-            }
-
-            if(!filePath.isEmpty())
-            {
-                this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
-                this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
-
-                QFile file(filePath);
-
-                if (file.open(QIODevice::WriteOnly)) {
-                    file.write(responseData);
-                    file.close();
-
-                    if(ui->actionOpen_file_after_download->isChecked()){
-                        if(!QDesktopServices::openUrl("file:///"+filePath)){
-                            QString errorMessage = "Could not open downloaded file: " + filePath;
-                            Util::Dialogs::showError(errorMessage);
-                            LOG_ERROR << errorMessage;
-                            Util::StatusBar::showError(ui->statusBar, errorMessage);
-                        }
-                    }
-
-                    Util::StatusBar::showSuccess(ui->statusBar, "File saved with sucess.");
-                }
-                else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
-                    QString errorMessage = "Could not open file for writing: " + filePath;
-                    Util::Dialogs::showError(errorMessage);
-                    Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
-                    LOG_ERROR << errorMessage;
-                }
-            }
-        }
-        else{
-            Util::StatusBar::showSuccess(ui->statusBar, "Request performed with sucess.");
-        }
-    }
+						Util::StatusBar::showSuccess(ui->statusBar, "File saved with sucess.");
+					}
+					else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
+						QString errorMessage = "Could not open file for writing: " + filePath;
+						Util::Dialogs::showError(errorMessage);
+						Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
+						LOG_ERROR << errorMessage;
+					}
+				}
+			}
+			else{
+				QString successMessage = "Request performed with sucess.";
+				
+				if(this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked()){
+					successMessage += " Since this was an url overriden request, the authentication was not applied.";
+				}
+				
+				Util::StatusBar::showSuccess(ui->statusBar, successMessage);
+			}
+		}
+		else{
+			Util::StatusBar::showSuccess(ui->statusBar, "Authenticated with success.");
+		}
+	}
+    else if(reply->error() == QNetworkReply::OperationCanceledError){ /* ignore user aborted */ }
     else{
+		
+		// If we receive 401 and if we have an authentication and if we are allowed to retry to authenticate again, repeat the request
+		if
+		(
+			requestReturnCode == "401" && this->currentProjectItem->authData != nullptr && 
+			this->currentProjectItem->authData->retryLoginIfError401 &&
+			this->currentProjectItem->authData->type == FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION && 
+			this->currentProjectAuthenticationWasMade
+		){
+			isToRetryWithAuthentication = true;
+		}
+		
+		if(!isToRetryWithAuthentication){
+			
+			QString requestType;
+			bool overridenRequest = !this->authenticationIsRunning && this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked();
+			
+			if(this->authenticationIsRunning){
+				requestType = "Authentication";
+			}
+			else{
+				requestType = "Request";
+			}
+			
+			LOG_ERROR << requestReturnMessage;
 
-        QString errorMessage = ui->lbDescription->text();
+			Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
+			Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with sucess." + 
+			(overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : ""));
+		}
+		
+		isError = true;
 
-        LOG_ERROR << errorMessage;
-
-        Util::Dialogs::showError("An error occurred while performing the request.\n" + errorMessage);
-        Util::StatusBar::showError(ui->statusBar, "Request was not performed with sucess.");
     }
 
-    ui->pbSendRequest->setEnabled(true);
-}
-
-void MainWindow::on_leMainUrl_textChanged(const QString &)
-{
-    setProjectHasChanged();
-
-    if(!ui->cbRequestOverrideMainUrl->isChecked()){
-        buildFullPath();
-    }
+    this->lbRequestInfo.hide();
+	this->pbRequestProgress.hide();
+	this->tbAbortRequest.hide();
+	ui->pbSendRequest->setEnabled(true);
+	ui->gbRequest->setEnabled(true);
+	ui->gbProject->setEnabled(true);
+	this->currentReply.reset();
+	reply->deleteLater();
+	
+	if(this->authenticationIsRunning){
+		this->authenticationIsRunning = false;
+		
+		if(!isError){
+			this->currentProjectAuthenticationWasMade = true;
+		}
+		
+	}
+	
+	emit signalRequestFinishedAndProcessed();
+	
+	if(isToRetryWithAuthentication){
+		this->currentProjectAuthenticationWasMade = false;
+		on_pbSendRequest_clicked();
+	}
+	
 }
 
 void MainWindow::on_leRequestOverrideMainUrl_textChanged(const QString &)
@@ -388,14 +631,22 @@ void MainWindow::buildFullPath(){
         normalizedMainUrl = ui->leRequestOverrideMainUrl->text();
     }
     else{
-        normalizedMainUrl = ui->leMainUrl->text();
+        if(this->currentProjectItem != nullptr){
+            normalizedMainUrl = this->currentProjectItem->projectMainUrl;
+        }
     }
 
-    if(!normalizedMainUrl.endsWith('/') && !ui->lePath->text().startsWith('/')){
+    ui->leFullPath->setText(getFullPathFromMainUrlAndPath(normalizedMainUrl, ui->lePath->text()));
+}
+
+QString MainWindow::getFullPathFromMainUrlAndPath(const QString & mainUrl, const QString & path){
+    QString normalizedMainUrl = mainUrl;
+
+    if(!normalizedMainUrl.endsWith('/') && !path.startsWith('/')){
         normalizedMainUrl += '/';
     }
 
-    ui->leFullPath->setText(normalizedMainUrl + ui->lePath->text());
+    return normalizedMainUrl + path;
 }
 
 void MainWindow::on_lePath_textChanged(const QString &)
@@ -405,58 +656,60 @@ void MainWindow::on_lePath_textChanged(const QString &)
     buildFullPath();
 }
 
-QNetworkReply* MainWindow::processHttpRequest(QNetworkAccessManager * const manager, UtilFRequest::RequestType requestType)
+QNetworkReply* MainWindow::processHttpRequest
+(
+        const UtilFRequest::RequestType requestType,
+        const QString &fullPath,
+        const QString &bodyType,
+        const QString &requestBody,
+        const QVector<UtilFRequest::HttpHeader>& requestHeaders
+        )
 {
     std::unique_ptr<HttpRequest> httpRequest = nullptr;
-
-    QString fullPath = ui->leFullPath->text();
-    QString bodyType = ui->cbBodyType->currentText();
-    QString requestBody = ui->pteRequestBody->toPlainText();
-    QVector<UtilFRequest::HttpHeader> requestHeaders = getRequestHeaders();
 
     switch(requestType){
     case UtilFRequest::RequestType::GET_OPTION:
     {
-        httpRequest = std::make_unique<GetHttpRequest>(manager, fullPath, requestHeaders);
+        httpRequest = std::make_unique<GetHttpRequest>(&this->networkAccessManager, fullPath, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::POST_OPTION:
     {
-        httpRequest = std::make_unique<PostHttpRequest>(manager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
+        httpRequest = std::make_unique<PostHttpRequest>(&this->networkAccessManager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::PUT_OPTION:
     {
-        httpRequest = std::make_unique<PutHttpRequest>(manager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
+        httpRequest = std::make_unique<PutHttpRequest>(&this->networkAccessManager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::DELETE_OPTION:
     {
-        httpRequest = std::make_unique<DeleteHttpRequest>(manager, fullPath, requestHeaders);
+        httpRequest = std::make_unique<DeleteHttpRequest>(&this->networkAccessManager, fullPath, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::PATCH_OPTION:
     {
-        httpRequest = std::make_unique<PatchHttpRequest>(manager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
+        httpRequest = std::make_unique<PatchHttpRequest>(&this->networkAccessManager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::HEAD_OPTION:
     {
-        httpRequest = std::make_unique<HeadHttpRequest>(manager, fullPath, requestHeaders);
+        httpRequest = std::make_unique<HeadHttpRequest>(&this->networkAccessManager, fullPath, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::TRACE_OPTION:
     {
-        httpRequest = std::make_unique<TraceHttpRequest>(manager, fullPath, requestHeaders);
+        httpRequest = std::make_unique<TraceHttpRequest>(&this->networkAccessManager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
         break;
     }
     case UtilFRequest::RequestType::OPTIONS_OPTION:
     {
-        httpRequest = std::make_unique<OptionsHttpRequest>(manager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
+        httpRequest = std::make_unique<OptionsHttpRequest>(&this->networkAccessManager, ui->twRequestBodyKeyValue, fullPath , bodyType, requestBody, requestHeaders);
         break;
     }
     default:{
-        QString errorMessage = "Request type unknown: '" + ui->cbRequestType->currentText() + "'. Program can't proceed.";
+        QString errorMessage = "Request type unknown: '" + ui->cbRequestType->currentText() + "'. Application must exit.";
         Util::Dialogs::showError(errorMessage);
         LOG_FATAL << errorMessage;
         exit(1);
@@ -501,48 +754,57 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
     QList<int> selectedRows = QList<int>();
 
-    foreach(QModelIndex rowItem, myTree->selectionModel()->selectedRows()){
+    for(const QModelIndex &rowItem : myTree->selectionModel()->selectedRows()){
         selectedRows << rowItem.row();
     }
 
     std::unique_ptr<QMenu> menu = std::make_unique<QMenu>();
-    std::unique_ptr<QAction> openProjectLocation = nullptr;
 
-    if(ui->treeWidget->currentItem() == this->currentProjectItem){
+    // Project actions only
+    std::unique_ptr<QAction> openProjectLocation = nullptr;
+    std::unique_ptr<QAction> projectProperties = nullptr;
+
+    // Requests actions only
+    std::unique_ptr<QAction> cloneRequest = nullptr;
+    std::unique_ptr<QAction> moveRequestUp = nullptr;
+    std::unique_ptr<QAction> moveRequestDown = nullptr;
+    std::unique_ptr<QAction> deleteRequest = nullptr;
+
+    // Common actions
+    std::unique_ptr<QAction> addNewRequest = std::make_unique<QAction>("Add new request", myTree);
+
+    if(ui->treeWidget->currentItem() == this->currentProjectItem){ // Project
         openProjectLocation = std::make_unique<QAction>("Open project location", myTree);
         menu->addAction(openProjectLocation.get());
         menu->addSeparator();
+        menu->addAction(addNewRequest.get());
+        menu->addSeparator();
+        projectProperties = std::make_unique<QAction>("Project properties", myTree);
+        menu->addAction(projectProperties.get());
     }
+    else{ // Requests
+        menu->addAction(addNewRequest.get());
+        cloneRequest =  std::make_unique<QAction>(QIcon(":/icons/clone_icon.png"), "Clone request", myTree);
+        menu->addAction(cloneRequest.get());
+        menu->addSeparator();
+        moveRequestUp =  std::make_unique<QAction>("Move up", myTree);
+        menu->addAction(moveRequestUp.get());
+        moveRequestDown =  std::make_unique<QAction>("Move down", myTree);
+        menu->addAction(moveRequestDown.get());
+        menu->addSeparator();
+        deleteRequest =  std::make_unique<QAction>("Delete request", myTree);
+        menu->addAction(deleteRequest.get());
 
-    std::unique_ptr<QAction> addNewRequest =  std::make_unique<QAction>("Add new request", myTree);
-    menu->addAction(addNewRequest.get());
-    std::unique_ptr<QAction> cloneRequest =  std::make_unique<QAction>("Clone request", myTree);
-    menu->addAction(cloneRequest.get());
-    menu->addSeparator();
-    std::unique_ptr<QAction> moveRequestUp =  std::make_unique<QAction>("Move up", myTree);
-    menu->addAction(moveRequestUp.get());
-    std::unique_ptr<QAction> moveRequestDown =  std::make_unique<QAction>("Move down", myTree);
-    menu->addAction(moveRequestDown.get());
-    menu->addSeparator();
-    std::unique_ptr<QAction> deleteRequest =  std::make_unique<QAction>("Delete request", myTree);
-    menu->addAction(deleteRequest.get());
-
-    // Necessary to got to treeWidget->currentItem because our global variable doesn't get updated for the project item
-    if(ui->treeWidget->currentItem() == this->currentProjectItem){
-        deleteRequest->setEnabled(false);
-        moveRequestDown->setEnabled(false);
-        moveRequestUp->setEnabled(false);
-        cloneRequest->setEnabled(false);
-    }
-    else if(this->currentProjectItem->childCount() == 1){
-        moveRequestDown->setEnabled(false);
-        moveRequestUp->setEnabled(false);
-    }
-    else if(ui->treeWidget->itemAbove(ui->treeWidget->currentItem()) == this->currentProjectItem){
-        moveRequestUp->setEnabled(false);
-    }
-    else if(ui->treeWidget->itemBelow(ui->treeWidget->currentItem()) == nullptr){
-        moveRequestDown->setEnabled(false);
+        if(this->currentProjectItem->childCount() == 1){
+            moveRequestDown->setEnabled(false);
+            moveRequestUp->setEnabled(false);
+        }
+        else if(ui->treeWidget->itemAbove(ui->treeWidget->currentItem()) == this->currentProjectItem){
+            moveRequestUp->setEnabled(false);
+        }
+        else if(ui->treeWidget->itemBelow(ui->treeWidget->currentItem()) == nullptr){
+            moveRequestDown->setEnabled(false);
+        }
     }
 
     // Disable show in explorer if we don't have any project saved to disk
@@ -551,6 +813,11 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
     }
 
     QAction* selectedOption = menu->exec(myTree->viewport()->mapToGlobal(pos));
+
+    // if none selected just return
+    if(selectedOption == nullptr){
+        return;
+    }
 
     // Index delta is the difference between the current index and the new one
     auto fMoveQTreeWidgetItem = [](QTreeWidgetItem *item, int indexDelta){
@@ -567,10 +834,10 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
     if(selectedOption == addNewRequest.get()){
 
-        this->ignoreAnyChangesToProject = true;
+        this->ignoreAnyChangesToProject.SetCondition();
         this->unsavedChangesExist = true;
 
-        FRequestTreeWidgetItem *newRequest = addRequestItem("New Request", this->currentProjectItem);
+        FRequestTreeWidgetItem *newRequest = addRequestItem("New Request", getNewUuid(), this->currentProjectItem);
         ui->treeWidget->clearSelection();
         newRequest->setSelected(true);
 
@@ -586,15 +853,14 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
             addDefaultHeaders();
         }
 
-        this->ignoreAnyChangesToProject = false;
+        this->ignoreAnyChangesToProject.UnsetCondition();
     }
     else if(selectedOption == cloneRequest.get()){
-        this->ignoreAnyChangesToProject = true;
         this->unsavedChangesExist = true;
 
-        const FRequestTreeWidgetItem * const itemToClone = FRequestTreeWidgetItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
+        const FRequestTreeWidgetRequestItem * const itemToClone = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
 
-        FRequestTreeWidgetItem *newRequest = addRequestItem(itemToClone->text(0), this->currentProjectItem);
+        FRequestTreeWidgetRequestItem *newRequest = addRequestItem(itemToClone->text(0), getNewUuid(), this->currentProjectItem);
         ui->treeWidget->clearSelection();
         newRequest->setSelected(true);
 
@@ -602,8 +868,6 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         ui->treeWidget->setCurrentItem(newRequest);
 
         this->currentItem = newRequest;
-
-        this->ignoreAnyChangesToProject = false;
     }
     else if(openProjectLocation != nullptr && selectedOption == openProjectLocation.get()){
         QDesktopServices::openUrl(QUrl("file:///" + QFileInfo(this->lastProjectFilePath).absoluteDir().absolutePath()));
@@ -618,23 +882,32 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
     }
     else if(selectedOption == deleteRequest.get()){
 
-        if(Util::Dialogs::showQuestion(this, "Remove the request '" + this->currentItem->text(0) + "'?")){
+        FRequestTreeWidgetRequestItem * const itemToDelete = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
 
-            QString uuidToRemove = this->currentItem->itemContent.uuid;
+        if(Util::Dialogs::showQuestion(this, "Remove the request '" + itemToDelete->text(0) + "'?")){
 
-            this->currentProjectItem->removeChild(this->currentItem);
+            QString uuidToRemove = itemToDelete->itemContent.uuid;
+
+            this->currentProjectItem->removeChild(itemToDelete);
+
             this->uuidsToCleanUp.append(uuidToRemove);
             this->uuidsInUse.remove(uuidToRemove);
 
             if(ui->treeWidget->currentItem() != this->currentProjectItem){
-                this->currentItem = FRequestTreeWidgetItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
+                this->currentItem = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
             }
             else{
                 this->currentItem = nullptr;
             }
 
+            // We need to call this event manually when a item is removed (it is not called automatically in this case)
+            on_treeWidget_currentItemChanged(ui->treeWidget->currentItem(), nullptr);
+
             setProjectHasChanged();
         }
+    }
+    else if(selectedOption == projectProperties.get()){
+		openProjectProperties();
     }
 }
 
@@ -647,6 +920,11 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
 
     if(current != nullptr){
         currentFRequestItem = FRequestTreeWidgetItem::fromQTreeWidgetItem(current);
+
+        // Add the icon if necessary
+        if(ui->actionShow_Request_Types_Icons->isChecked() && !currentFRequestItem->isProjectItem && currentFRequestItem->hasEmptyIcon()){
+            setIconForRequest(static_cast<FRequestTreeWidgetRequestItem*>(currentFRequestItem));
+        }
     }
 
     if(previous != nullptr){
@@ -654,9 +932,9 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
     }
 
     // Save previous item
-    if(previousFRequestItem != nullptr && previousFRequestItem != this->currentProjectItem)
+    if(previousFRequestItem != nullptr && !previousFRequestItem->isProjectItem)
     {
-        updateTreeWidgetItemContent(previousFRequestItem);
+        updateTreeWidgetItemContent(static_cast<FRequestTreeWidgetRequestItem*>(previousFRequestItem));
     }
 
     // Update window for new item
@@ -664,16 +942,30 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
 
         if(!currentFRequestItem->isProjectItem){
 
-            this->currentItem = currentFRequestItem;
+            this->currentItem = static_cast<FRequestTreeWidgetRequestItem*>(currentFRequestItem);
 
-            if(!this->ignoreAnyChangesToProject){
-                reloadRequest(currentFRequestItem);
+            if(!this->ignoreAnyChangesToProject.ConditionIsSet()){
+                reloadRequest(this->currentItem);
             }
 
+            // Hide project requests number if project item hasn't selected
+            if(!this->lbProjectInfo.text().isEmpty()){
+                this->lbProjectInfo.setText(QString());
+            }
+        }
+        else{
+            // If is the project display the number of requests that this has in status bar
+            const int projectRequestsNumber = this->currentProjectItem->childCount();
+
+            // Singular ? Plural ?
+            const QString requestText = projectRequestsNumber == 1 ? " request" : " requests";
+
+            this->lbProjectInfo.setText(this->currentProjectItem->projectName + " has a total of " + QString::number(projectRequestsNumber) + requestText);
         }
 
         updateWindowTitle();
     }
+
 }
 
 // This signal is emitted when the contents of the column in the specified item changes.
@@ -688,16 +980,25 @@ void MainWindow::on_treeWidget_itemChanged(QTreeWidgetItem *item, int)
     // Only necessary to create if the item exists (project requests are only created in on_treeWidget_currentItemChanged)
 
     // If name had changed update the project requests
-    if(item->text(0) != newItem->itemContent.name){
 
-        if(!newItem->isProjectItem){
-            updateTreeWidgetItemContent(newItem);
+    if(!newItem->isProjectItem){ // Request
+
+        FRequestTreeWidgetRequestItem * const newItemRequest = static_cast<FRequestTreeWidgetRequestItem*>(newItem);
+
+        if(item->text(0) != newItemRequest->itemContent.name){
+            updateTreeWidgetItemContent(newItemRequest); // update request content
+            updateInterface = true;
+        }
+    }
+    else{ // Project
+
+        FRequestTreeWidgetProjectItem * const newItemProject = static_cast<FRequestTreeWidgetProjectItem*>(newItem);
+
+        if(item->text(0) != newItemProject->projectName){
+            newItemProject->projectName = item->text(0); // update project name
+            updateInterface = true;
         }
 
-        updateInterface = true;
-    }
-    else if(newItem->isProjectItem){ // if it is the project, we must update the interface
-        updateInterface = true;
     }
 
     if(updateInterface){
@@ -721,9 +1022,7 @@ void MainWindow::updateWindowTitle(){
         fRequestTitle = fRequestTitle % Util::FileSystem::cutNameWithoutBackSlash(this->lastProjectFilePath);
     }
 
-    if(this->currentProjectItem != nullptr){
-        fRequestTitle = fRequestTitle % " - " % this->currentProjectItem->text(0);
-    }
+    fRequestTitle = fRequestTitle % " - " % this->currentProjectItem->projectName;
 
     if(this->currentItem != nullptr){
         fRequestTitle = fRequestTitle % "/" % this->currentItem->text(0);
@@ -738,8 +1037,8 @@ void MainWindow::updateWindowTitle(){
     setWindowTitle(fRequestTitle);
 }
 
-FRequestTreeWidgetItem* MainWindow::addProjectItem(const QString &projectName){
-    FRequestTreeWidgetItem *projectFolder = new FRequestTreeWidgetItem(QStringList() << projectName, true);
+FRequestTreeWidgetProjectItem* MainWindow::addProjectItem(const QString &projectName, const QString &projectUuid){
+    FRequestTreeWidgetProjectItem *projectFolder = new FRequestTreeWidgetProjectItem(QStringList() << projectName, projectUuid);
     projectFolder->setIcon(0, QIcon(":/icons/projects_folder_icon.png"));
     projectFolder->setToolTip(0, projectFolder->text(0));
     projectFolder->setFlags(projectFolder->flags() | Qt::ItemIsEditable);
@@ -749,13 +1048,86 @@ FRequestTreeWidgetItem* MainWindow::addProjectItem(const QString &projectName){
     return projectFolder;
 }
 
-FRequestTreeWidgetItem* MainWindow::addRequestItem(const QString &requestName, FRequestTreeWidgetItem * const currentProject){
-    FRequestTreeWidgetItem *newRequest = new FRequestTreeWidgetItem(QStringList() << requestName);
+FRequestTreeWidgetRequestItem* MainWindow::addRequestItem(const QString &requestName, const QString &projectUuid, FRequestTreeWidgetProjectItem * const currentProject){
+    FRequestTreeWidgetRequestItem *newRequest = new FRequestTreeWidgetRequestItem(QStringList() << requestName, projectUuid);
     newRequest->setToolTip(0, newRequest->text(0));
     newRequest->setFlags((newRequest->flags() | Qt::ItemIsEditable) ^ Qt::ItemIsDropEnabled); // don't allow drop inside another items
     currentProject->addChild(newRequest);
 
     return newRequest;
+}
+
+void MainWindow::setIconForRequest(FRequestTreeWidgetRequestItem * const item){
+
+    if(this->generatedIconCache.contains(item->itemContent.requestType)){
+        item->setIcon(0, this->generatedIconCache.value(item->itemContent.requestType));
+    }
+    else{ // generate the necessary icon and add it to our cache
+        QPixmap myIcon(32,16);
+        myIcon.fill(Qt::transparent);
+
+        QPainter painter( &myIcon );
+        painter.setFont(item->font(0));
+
+        QString textToDraw;
+        std::unique_ptr<QPen> colorToDraw;
+
+        switch(item->itemContent.requestType){
+        case UtilFRequest::RequestType::GET_OPTION:{
+            textToDraw = "GET";
+            colorToDraw = std::make_unique<QPen>(Qt::blue);
+            break;
+        }
+        case UtilFRequest::RequestType::POST_OPTION:{
+            textToDraw = "POST";
+            colorToDraw = std::make_unique<QPen>(Qt::darkGreen);
+            break;
+        }
+        case UtilFRequest::RequestType::PUT_OPTION:{
+            textToDraw = "PUT";
+            colorToDraw = std::make_unique<QPen>(0xFFAD00);
+            break;
+        }
+        case UtilFRequest::RequestType::DELETE_OPTION:{
+            textToDraw = "DEL";
+            colorToDraw = std::make_unique<QPen>(Qt::red);
+            break;
+        }
+        case UtilFRequest::RequestType::PATCH_OPTION:{
+            textToDraw = "PTCH";
+            colorToDraw = std::make_unique<QPen>(Qt::magenta);
+            break;
+        }
+        case UtilFRequest::RequestType::HEAD_OPTION:{
+            textToDraw = "HEAD";
+            colorToDraw = std::make_unique<QPen>(0x4EC995);
+            break;
+        }
+        case UtilFRequest::RequestType::TRACE_OPTION:{
+            textToDraw = "TRCE";
+            colorToDraw = std::make_unique<QPen>(Qt::darkYellow);
+            break;
+        }
+        case UtilFRequest::RequestType::OPTIONS_OPTION:{
+            textToDraw = "OPT";
+            colorToDraw = std::make_unique<QPen>(Qt::darkGray);
+            break;
+        }
+        default:{
+            QString errorMessage = "Couldn't set icon for request " + item->text(0) +
+                    " unknown request type: " + QString::number(static_cast<int>(item->itemContent.requestType));
+            LOG_ERROR << errorMessage;
+            Util::Dialogs::showError(errorMessage);
+            return;
+        }
+        }
+
+        painter.setPen(*colorToDraw);
+        painter.drawText( QRect(0, 0, myIcon.width(), myIcon.height()), Qt::AlignCenter, textToDraw );
+
+        item->setIcon(0, *this->generatedIconCache.insert(item->itemContent.requestType, QIcon(myIcon)));
+    }
+
 }
 
 void MainWindow::setNewProject(){
@@ -767,15 +1139,19 @@ void MainWindow::setNewProject(){
         }
     }
 
+    this->ignoreAnyChangesToProject.SetCondition();
+
     clearEverything();
 
-    FRequestTreeWidgetItem *projectFolder = addProjectItem("New Project");
-    FRequestTreeWidgetItem *newRequest = addRequestItem("New Request", projectFolder);
+    FRequestTreeWidgetProjectItem *projectFolder = addProjectItem("New Project", getNewUuid());
+    FRequestTreeWidgetRequestItem *newRequest = addRequestItem("New Request", getNewUuid(), projectFolder);
 
     newRequest->setSelected(true);
 
     this->currentProjectItem = projectFolder;
     this->currentItem = newRequest;
+
+    this->currentProjectItem->projectName = projectFolder->text(0);
 
     // Necessary in order to currentIndexChanged to work correctly (select it is not enough)
     ui->treeWidget->setCurrentItem(newRequest);
@@ -788,6 +1164,10 @@ void MainWindow::setNewProject(){
 
     this->unsavedChangesExist = false;
     updateWindowTitle(); // it doesn't get called automatically here
+
+    this->ignoreAnyChangesToProject.UnsetCondition();
+	
+	
 }
 
 QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
@@ -807,16 +1187,18 @@ QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
     return requestHeaders;
 }
 
-QVector<UtilFRequest::HttpFormKeyValue> MainWindow::getRequestForm(){
+QVector<UtilFRequest::HttpFormKeyValueType> MainWindow::getRequestForm(){
 
-    QVector<UtilFRequest::HttpFormKeyValue> requestForm;
+    QVector<UtilFRequest::HttpFormKeyValueType> requestForm;
 
     for(int i = 0; i < ui->twRequestBodyKeyValue->rowCount(); i++){
 
-        UtilFRequest::HttpFormKeyValue currentFormKeyValue;
-
-        currentFormKeyValue.key = ui->twRequestBodyKeyValue->item(i, 0)->text();
-        currentFormKeyValue.value = ui->twRequestBodyKeyValue->item(i, 1)->text();
+        // TODO use enum for index
+        UtilFRequest::HttpFormKeyValueType currentFormKeyValue(
+                    ui->twRequestBodyKeyValue->item(i, 0)->text(),
+                    ui->twRequestBodyKeyValue->item(i, 1)->text(),
+                    UtilFRequest::getFormKeyTypeByString(ui->twRequestBodyKeyValue->item(i, 2)->text())
+                    );
 
         requestForm.append(currentFormKeyValue);
     }
@@ -825,7 +1207,7 @@ QVector<UtilFRequest::HttpFormKeyValue> MainWindow::getRequestForm(){
 }
 
 
-void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetItem * const requestItem){
+void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * const requestItem){
     requestItem->itemContent.name = requestItem->text(0);
     requestItem->itemContent.path = ui->lePath->text();
 
@@ -834,38 +1216,38 @@ void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetItem * const requ
 
     requestItem->itemContent.headers = getRequestHeaders();
 
-    // if it is a new request get a uuid for it
-    if(!requestItem->hasUuid()){
-
-        QString generatedUuid;
-
-        // make sure we get a unique identifier (while very small, there it is still possible to exist collisions,
-        // plus the xml uuid can be edited by hand by anyone)
-        do
-        {
-            generatedUuid = QUuid::createUuid().toString();
-        } while( this->uuidsInUse.contains(generatedUuid) );
-
-        this->uuidsInUse.insert(generatedUuid);
-        requestItem->itemContent.uuid = generatedUuid;
-    }
-
     requestItem->itemContent.order = requestItem->parent()->indexOfChild(requestItem);
 
-    if(ui->cbBodyType->currentText() == "raw"){
-        requestItem->itemContent.bodyType = UtilFRequest::BodyType::RAW;
+    requestItem->itemContent.bodyType = UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText());
+
+    switch(requestItem->itemContent.bodyType){
+    case UtilFRequest::BodyType::RAW:
+    {
         requestItem->itemContent.body = ui->pteRequestBody->toPlainText();
+        break;
     }
-    else if(ui->cbBodyType->currentText() == "form-data"){
-        requestItem->itemContent.bodyType = UtilFRequest::BodyType::FORM_DATA;
+        break;
+    case UtilFRequest::BodyType::FORM_DATA:
+    {
         requestItem->itemContent.bodyForm = getRequestForm();
+        break;
     }
-    else if(ui->cbBodyType->currentText() == "x-form-www-urlencoded"){
-        requestItem->itemContent.bodyType = UtilFRequest::BodyType::X_FORM_WWW_URLENCODED;
+        break;
+    case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
+    {
         requestItem->itemContent.bodyForm = getRequestForm();
+        break;
+    }
+    default:
+    {
+        QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(requestItem->itemContent.bodyType)) + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
     }
 
-    requestItem->itemContent.requestType = UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText());
+    requestItem->itemContent.requestType = UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText());
 
     requestItem->itemContent.bDownloadResponseAsFile = ui->cbDownloadResponseAsFile->isChecked();
 }
@@ -878,135 +1260,26 @@ void MainWindow::saveProjectState(const QString &filePath)
         updateTreeWidgetItemContent(this->currentItem);
     }
 
-    pugi::xml_document doc;
-    pugi::xml_node rootNode;
+    try{
+        ProjectFileFRequest::saveProjectDataToFile(filePath, fetchCurrentProjectData(), this->uuidsToCleanUp);
 
-    bool isNewFile = !QFileInfo(filePath).exists();
+        this->currentSettings.lastProjectPath = QFileInfo(filePath).absoluteDir().path();
 
-    // If file already exists try to read the project file
-    if(!isNewFile){
-        if(!loadAndValidateFRequestProjectFile(filePath, doc)){
-            QString errorMessage = "Couldn't load project file. Save aborted.";
-            LOG_ERROR << errorMessage;
-            Util::Dialogs::showError(errorMessage);
-            Util::StatusBar::showError(ui->statusBar, "Couldn't save project file.");
-            return;
-        }
+        this->lastProjectFilePath = filePath;
+        this->uuidsToCleanUp.clear();
+        this->unsavedChangesExist = false;
+        addNewRecentProject(filePath);
 
-        // Try to clear deleted items from projects file if they exist
-        for(const QString &currentDeletedItemUuid : this->uuidsToCleanUp){
-            pugi::xml_node nodeToDelete = doc.select_node(QSTR_TO_CSTR("/FRequestProject/Request[@uuid='" + currentDeletedItemUuid + "']")).node();
+        updateWindowTitle();
 
-            if(!nodeToDelete.empty()){
-                nodeToDelete.parent().remove_child(nodeToDelete);
-            }
-        }
-
-        rootNode = doc.child("FRequestProject");
+        Util::StatusBar::showSuccess(ui->statusBar, "Project saved with sucess!");
     }
-    else{
-        rootNode = doc.append_child("FRequestProject"); // create
-    }
-
-    createOrGetPugiXmlAttribute(rootNode, "frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersion));
-    createOrGetPugiXmlAttribute(rootNode, "name").set_value(QSTR_TO_CSTR(this->currentProjectItem->text(0)));
-    createOrGetPugiXmlAttribute(rootNode, "mainUrl").set_value(QSTR_TO_CSTR(ui->leMainUrl->text()));
-
-    // Save by the current tree order
-    for(int i=0; i<this->currentProjectItem->childCount(); i++){
-
-        FRequestTreeWidgetItem::RequestInfo &currentRequest = FRequestTreeWidgetItem::fromQTreeWidgetItem(this->currentProjectItem->child(i))->itemContent;
-
-        currentRequest.order = i;
-
-        pugi::xml_node requestNode;
-
-        pugi::xpath_node xpathRequestNode = doc.select_node(QSTR_TO_CSTR("/FRequestProject/Request[@uuid='" + currentRequest.uuid + "']"));
-
-        // if it doesn't exist yet create it
-        if(xpathRequestNode.node().empty()){
-            requestNode = rootNode.append_child("Request");
-        }
-        else{ // otherwise use the existing one
-            requestNode = xpathRequestNode.node();
-        }
-
-        createOrGetPugiXmlAttribute(requestNode, "name").set_value(QSTR_TO_CSTR(currentRequest.name));
-        createOrGetPugiXmlAttribute(requestNode, "uuid").set_value(QSTR_TO_CSTR(currentRequest.uuid));
-        createOrGetPugiXmlAttribute(requestNode, "order").set_value(i);
-        createOrGetPugiXmlAttribute(requestNode, "bOverridesMainUrl").set_value(currentRequest.bOverridesMainUrl);
-        createOrGetPugiXmlAttribute(requestNode, "overrideMainUrl").set_value(QSTR_TO_CSTR(currentRequest.overrideMainUrl));
-        createOrGetPugiXmlAttribute(requestNode, "path").set_value(QSTR_TO_CSTR(currentRequest.path));
-        createOrGetPugiXmlAttribute(requestNode, "type").set_value(static_cast<int>(currentRequest.requestType));
-        createOrGetPugiXmlAttribute(requestNode, "bDownloadResponseAsFile").set_value(currentRequest.bDownloadResponseAsFile);
-
-        // remove body if exists, we will rebuild it
-        requestNode.remove_child("Body");
-
-        pugi::xml_node bodyNode = requestNode.append_child("Body");
-
-        bodyNode.append_attribute("type").set_value(static_cast<int>(currentRequest.bodyType));
-
-        // Aux lambda to avoid duplicated code for FORM_DATA / X_FORM_WWW_URLENCODED
-        auto fSaveFormKeyValues = [](const QVector<UtilFRequest::HttpFormKeyValue> &bodyForm, pugi::xml_node &bodyNode){
-            for(const UtilFRequest::HttpFormKeyValue &currentKeyValue : bodyForm){
-                pugi::xml_node currentFormKeyValueNode = bodyNode.append_child("FormKeyValue");
-
-                currentFormKeyValueNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentKeyValue.key));
-                currentFormKeyValueNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentKeyValue.value));
-            }
-        };
-
-        switch (currentRequest.bodyType) {
-        case UtilFRequest::BodyType::RAW:
-        {
-            bodyNode.append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequest.body));
-        }
-            break;
-        case UtilFRequest::BodyType::FORM_DATA:
-        {
-            fSaveFormKeyValues(currentRequest.bodyForm, bodyNode);
-        }
-            break;
-        case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
-        {
-            fSaveFormKeyValues(currentRequest.bodyForm, bodyNode);
-        }
-            break;
-        default:
-            break;
-        }
-
-        // remove headers if exists, we will rebuild it
-        requestNode.remove_child("Headers");
-
-        pugi::xml_node headersNode = requestNode.append_child("Headers");
-
-        for(const UtilFRequest::HttpHeader &currentHeader : currentRequest.headers){
-            pugi::xml_node currentHeaderNode = headersNode.append_child("Header");
-
-            currentHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.name));
-            currentHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.value));
-        }
-    }
-
-    if(!doc.save_file(filePath.toUtf8().constData(), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-        QString errorMessage = "An error ocurred while trying to save the project file. Please try another path.";
+    catch(const std::exception& e){
+        QString errorMessage = QString("Couldn't save project file. Save aborted.\n") + e.what();
         LOG_ERROR << errorMessage;
         Util::Dialogs::showError(errorMessage);
-        return;
+        Util::StatusBar::showError(ui->statusBar, "Couldn't save project file.");
     }
-
-    this->currentSettings.lastProjectPath = QFileInfo(filePath).absoluteDir().path();
-
-    this->lastProjectFilePath = filePath;
-    this->uuidsToCleanUp.clear();
-    this->unsavedChangesExist = false;
-    addNewRecentProject(filePath);
-
-    updateWindowTitle();
-
-    Util::StatusBar::showSuccess(ui->statusBar, "Project saved with sucess!");
 }
 
 void MainWindow::loadProjectState(const QString &filePath)
@@ -1019,177 +1292,103 @@ void MainWindow::loadProjectState(const QString &filePath)
         }
     }
 
-    QString statusError = "Couldn't load project.";
-
-    pugi::xml_document doc;
-
-    if(!loadAndValidateFRequestProjectFile(filePath, doc)){
-        QString errorMessage = "Couldn't load project file.";
-        LOG_ERROR << errorMessage;
-        Util::Dialogs::showError(errorMessage);
-        Util::StatusBar::showError(ui->statusBar, "Couldn't load project.");
-        return;
-    }
-
-    // After the initial validations begin loading the project data
-
-    this->ignoreAnyChangesToProject = true;
-
-    clearEverything();
+    // Prepare for project loading
+    this->ignoreAnyChangesToProject.SetCondition();
 
     try{
-        ui->leMainUrl->setText(doc.select_node("/FRequestProject/@mainUrl").attribute().value());
+        std::unique_ptr<ProjectFileFRequest::ProjectData> projectData =
+                std::make_unique<ProjectFileFRequest::ProjectData>(ProjectFileFRequest::readProjectDataFromFile(filePath));
 
-        // Add project item
-        this->currentProjectItem = addProjectItem(QString(doc.select_node("/FRequestProject/@name").attribute().value()));
+        clearEverything();
 
-        // Add request items
-
-        pugi::xpath_node_set requestNodes = doc.select_nodes("/FRequestProject/Request");
-
-        // Aux lambda to avoid duplicated code for FORM_DATA / X_FORM_WWW_URLENCODED
-        auto fGetBodyForm = [](pugi::xml_node &bodyNode) -> QVector<UtilFRequest::HttpFormKeyValue>
-        {
-            QVector<UtilFRequest::HttpFormKeyValue> bodyForm;
-
-            for(const pugi::xml_node &currentFormKeyValueNode : bodyNode.children()){
-                UtilFRequest::HttpFormKeyValue currentFormKeyValue;
-
-                currentFormKeyValue.key = currentFormKeyValueNode.child("Key").child_value();
-                currentFormKeyValue.value = currentFormKeyValueNode.child("Value").child_value();
-
-                bodyForm.append(currentFormKeyValue);
-            }
-
-            return bodyForm;
-        };
-
-        QList<FRequestTreeWidgetItem::RequestInfo> loadedRequestInfo;
-
-        for(size_t i=0; i < requestNodes.size(); i++){
-
-            pugi::xml_node currNode = requestNodes[i].node();
-
-            FRequestTreeWidgetItem::RequestInfo currentRequestInfo;
-
-            currentRequestInfo.path = currNode.attribute("path").as_string();
-            currentRequestInfo.requestType = static_cast<UtilFRequest::RequestType>(currNode.attribute("type").as_int());
-
-            pugi::xml_node bodyNode = currNode.child("Body");
-
-            currentRequestInfo.bodyType = static_cast<UtilFRequest::BodyType>(bodyNode.attribute("type").as_int());
-
-            switch (currentRequestInfo.bodyType) {
-            case UtilFRequest::BodyType::RAW:
-            {
-                currentRequestInfo.body = bodyNode.child_value();
-            }
-                break;
-            case UtilFRequest::BodyType::FORM_DATA:
-            {
-                currentRequestInfo.bodyForm = fGetBodyForm(bodyNode);
-            }
-                break;
-            case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
-            {
-                currentRequestInfo.bodyForm = fGetBodyForm(bodyNode);
-            }
-                break;
-            default:
-                break;
-            }
-
-            QVector<UtilFRequest::HttpHeader> requestHeaders;
-
-            for(const pugi::xml_node &currentHeaderNode : currNode.child("Headers").children()){
-                UtilFRequest::HttpHeader currentHeader;
-
-                currentHeader.name = QString(currentHeaderNode.child("Key").child_value());
-                currentHeader.value = currentHeaderNode.child("Value").child_value();
-
-                requestHeaders.append(currentHeader);
-            }
-
-            currentRequestInfo.headers = requestHeaders;
-
-            currentRequestInfo.bOverridesMainUrl = currNode.attribute("bOverridesMainUrl").as_bool();
-            currentRequestInfo.overrideMainUrl = currNode.attribute("overrideMainUrl").value();
-            currentRequestInfo.bDownloadResponseAsFile = currNode.attribute("bDownloadResponseAsFile").as_bool();
-            currentRequestInfo.name = requestNodes[i].node().attribute("name").value();
-            currentRequestInfo.uuid = requestNodes[i].node().attribute("uuid").value();
-            this->uuidsInUse.insert(currentRequestInfo.uuid);
-            currentRequestInfo.order = requestNodes[i].node().attribute("order").as_ullong();
-
-            // insert loaded request into our temp vector
-            loadedRequestInfo.append(currentRequestInfo);
-        }
+        this->currentProjectItem = addProjectItem(projectData->projectName, projectData->projectUuid);
+        this->currentProjectItem->projectName = projectData->projectName;
+        this->currentProjectItem->projectMainUrl = projectData->mainUrl;
+        this->currentProjectItem->authData = projectData->authData;
 
         // Order them by the correct order
         std::sort(
-                    loadedRequestInfo.begin(),
-                    loadedRequestInfo.end(),
-                    [](const FRequestTreeWidgetItem::RequestInfo &first, const FRequestTreeWidgetItem::RequestInfo &second){ return first.order < second.order; }
+                    projectData->projectRequests.begin(),
+                    projectData->projectRequests.end(),
+                    [](const UtilFRequest::RequestInfo &first, const UtilFRequest::RequestInfo &second){ return first.order < second.order; }
         );
 
         // Now the items are in the correct order, we can now load them in the interface
-        for(int i=0; i<loadedRequestInfo.size(); i++){
+        for(int i=0; i<projectData->projectRequests.size(); i++){
 
-            FRequestTreeWidgetItem::RequestInfo &currentRequestInfo = loadedRequestInfo[i];
+            UtilFRequest::RequestInfo &currentRequestInfo = projectData->projectRequests[i];
 
             // fix order
             currentRequestInfo.order = i;
 
-            FRequestTreeWidgetItem *currRequest = addRequestItem(currentRequestInfo.name, this->currentProjectItem);
+            FRequestTreeWidgetRequestItem *currRequest = addRequestItem(currentRequestInfo.name, currentRequestInfo.uuid, this->currentProjectItem);
             currRequest->itemContent = currentRequestInfo;
+
+            if(ui->actionShow_Request_Types_Icons->isChecked()){
+                setIconForRequest(currRequest);
+            }
 
             // Load first request
             if(i==0){
-
-                ui->lePath->setText(currentRequestInfo.path);
-
-                setRequestType(currentRequestInfo.requestType);
-
-                ui->pteRequestBody->setPlainText(currentRequestInfo.body);
-
-                for(const UtilFRequest::HttpHeader &currentHeader : currentRequestInfo.headers){
-                    Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << currentHeader.name << currentHeader.value);
-                }
-
-                ui->cbDownloadResponseAsFile->setChecked(currentRequestInfo.bDownloadResponseAsFile);
-
-                currRequest->setSelected(true);
-
-                this->currentItem = currRequest;
-
-                // Necessary in order to currentIndexChanged to work correctly (select it is not enough)
+                reloadRequest(currRequest);
                 ui->treeWidget->setCurrentItem(currRequest);
-
-                updateWindowTitle(); // it doesn't get called automatically here
+                this->currentItem = currRequest;
             }
 
         }
+
+        // All items loaded, finally check if we don't have an authentication yet.
+        // If we don't, check if it is present in config file and load it from there
+
+        if(this->currentProjectItem->authData == nullptr &&
+                this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.contains(this->currentProjectItem->getUuid())){
+            // Project has auth data in config file, load it
+
+            this->currentProjectItem->authData = this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.value(this->currentProjectItem->getUuid()).authData;
+        }
+
+        this->currentSettings.lastProjectPath = QFileInfo(filePath).absoluteDir().path();
+
+        this->lastProjectFilePath = filePath;
+        this->unsavedChangesExist = false;
+
+        this->currentProjectAuthenticationWasMade = false;
+
+        addNewRecentProject(filePath);
+
+        updateWindowTitle();
+
+        Util::StatusBar::showSuccess(ui->statusBar, "Project loaded successfully.");
     }
     catch(const std::exception& e){
         QString errorMessage = "Couldn't load the FRequest project. Error: " + QString(e.what());
         LOG_ERROR << errorMessage;
         Util::Dialogs::showError(errorMessage);
-        Util::StatusBar::showError(ui->statusBar, statusError);
-        this->ignoreAnyChangesToProject = false;
-        return;
+        Util::StatusBar::showError(ui->statusBar, "Couldn't load project.");
     }
 
-    this->currentSettings.lastProjectPath = QFileInfo(filePath).absoluteDir().path();
+    this->ignoreAnyChangesToProject.UnsetCondition();
+}
 
-    this->lastProjectFilePath = filePath;
-    this->unsavedChangesExist = false;
+ProjectFileFRequest::ProjectData MainWindow::fetchCurrentProjectData(){
+    ProjectFileFRequest::ProjectData currentProjectData;
 
-    this->ignoreAnyChangesToProject = false;
+    currentProjectData.projectName = this->currentProjectItem->projectName;
+    currentProjectData.mainUrl = this->currentProjectItem->projectMainUrl;
+    currentProjectData.projectUuid = this->currentProjectItem->getUuid();
+    currentProjectData.authData = this->currentProjectItem->authData;
 
-    addNewRecentProject(filePath);
+    // Save by the current tree order
+    for(int i=0; i<this->currentProjectItem->childCount(); i++){
 
-    updateWindowTitle();
+        UtilFRequest::RequestInfo &currentRequest = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(this->currentProjectItem->child(i))->itemContent;
 
-    Util::StatusBar::showSuccess(ui->statusBar, "Project loaded sucessfully.");
+        currentRequest.order = i;
+
+        currentProjectData.projectRequests.append(currentRequest);
+    }
+
+    return currentProjectData;
 }
 
 void MainWindow::on_actionNew_Project_triggered()
@@ -1271,19 +1470,21 @@ void MainWindow::on_actionProject6_triggered()
 
 void MainWindow::on_actionFormat_Response_Body_triggered()
 {
-    setFormatRequestAndResponseBodies();
+    formatResponseBody(getResponseCurrentSerializationFormatType());
 }
 
 void MainWindow::on_actionFormat_Request_body_triggered()
 {
-    setFormatRequestAndResponseBodies();
+    this->ignoreAnyChangesToProject.SetCondition();
+    formatRequestBody(getRequestCurrentSerializationFormatType());
+    this->ignoreAnyChangesToProject.UnsetCondition();
 }
 
-void MainWindow::reloadRequest(FRequestTreeWidgetItem* const item){
+void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
 
-    this->ignoreAnyChangesToProject = true;
+    this->ignoreAnyChangesToProject.SetCondition();
 
-    FRequestTreeWidgetItem::RequestInfo info = item->itemContent;
+    UtilFRequest::RequestInfo info = item->itemContent;
 
     // Clear old contents
     clearRequestAndResponse();
@@ -1295,36 +1496,44 @@ void MainWindow::reloadRequest(FRequestTreeWidgetItem* const item){
     setRequestType(info.requestType);
 
     // Aux lambda to avoid duplicated code for FORM_DATA / X_FORM_WWW_URLENCODED
-    auto fFillRequestBodyKeyValueTable = [](const QVector<UtilFRequest::HttpFormKeyValue> &bodyForm, QTableWidget * const table){
-        for(const UtilFRequest::HttpFormKeyValue &currFormKeyValue : bodyForm){
-            Util::TableWidget::addRow(table, QStringList() << currFormKeyValue.key << currFormKeyValue.value);
+    auto fFillRequestBodyKeyValueTable = [](const QVector<UtilFRequest::HttpFormKeyValueType> &bodyForm, QTableWidget * const table){
+        for(const UtilFRequest::HttpFormKeyValueType &currFormKeyValue : bodyForm){
+            UtilFRequest::addRequestFormBodyRow(table, currFormKeyValue.key, currFormKeyValue.value, currFormKeyValue.type);
         }
     };
+
+    ui->cbBodyType->setCurrentText(UtilFRequest::getBodyTypeString(info.bodyType));
 
     switch(info.bodyType){
     case UtilFRequest::BodyType::RAW:
     {
-        ui->cbBodyType->setCurrentText("raw");
         ui->pteRequestBody->setPlainText(info.body);
+        break;
     }
         break;
     case UtilFRequest::BodyType::FORM_DATA:
     {
-        ui->cbBodyType->setCurrentText("form-data");
         fFillRequestBodyKeyValueTable(info.bodyForm, ui->twRequestBodyKeyValue);
+        break;
     }
         break;
     case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
     {
-        ui->cbBodyType->setCurrentText("x-form-www-urlencoded");
         fFillRequestBodyKeyValueTable(info.bodyForm, ui->twRequestBodyKeyValue);
+        break;
     }
-        break;
     default:
-        break;
+    {
+        QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(info.bodyType)) + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
     }
 
     ui->pteRequestBody->setPlainText(info.body);
+
+    formatRequestBody(getRequestCurrentSerializationFormatType());
 
     for(const UtilFRequest::HttpHeader &currentHeader : info.headers){
         Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << currentHeader.name << currentHeader.value);
@@ -1334,11 +1543,13 @@ void MainWindow::reloadRequest(FRequestTreeWidgetItem* const item){
 
     clearOlderResponse();
 
-    this->ignoreAnyChangesToProject = false;
+    this->ignoreAnyChangesToProject.UnsetCondition();
 }
 
 void MainWindow::clearOlderResponse(){
     this->lastReplyStatusError = 0;
+    ui->lbResponseBodyWarningIcon->hide();
+    ui->lbResponseBodyWarningMessage->hide();
     ui->pteResponseBody->clear();
     ui->pteResponseHeaders->clear();
     ui->lbStatus->clear();
@@ -1371,7 +1582,7 @@ void MainWindow::clearEverything(){
     this->currentItem = nullptr;
     this->currentProjectItem = nullptr;
     ui->treeWidget->clear();
-    ui->leMainUrl->clear();
+	ui->leRequestsFilter->clear();
     clearRequestAndResponse();
 }
 
@@ -1380,6 +1591,9 @@ void MainWindow::on_cbResponseChooseHeader_currentIndexChanged(const QString &ar
 
     if(arg1 == "Content-type: application/json"){
         Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << "Content-type" << "application/json");
+    }
+    else if(arg1 == "Content-type: application/xml"){
+        Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << "Content-type" << "application/xml");
     }
     else if(arg1 == "Content-type: multipart/form-data"){
         Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << "Content-type" << "multipart/form-data");
@@ -1541,7 +1755,17 @@ void MainWindow::on_twRequestHeadersKeyValue_cellChanged(int row, int column)
 
 void MainWindow::on_tbRequestBodyKeyValueAdd_clicked()
 {
-    Util::TableWidget::addRow(ui->twRequestBodyKeyValue, QStringList() << "" << "");
+    UtilFRequest::addRequestFormBodyRow(ui->twRequestBodyKeyValue, "", "", UtilFRequest::FormKeyValueType::TEXT);
+}
+
+void MainWindow::on_tbRequestBodyFile_clicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Choose a file to upload"));
+
+    // Only add a row if a file was selected
+    if(!filePath.isEmpty()){
+        UtilFRequest::addRequestFormBodyRow(ui->twRequestBodyKeyValue, "", filePath, UtilFRequest::FormKeyValueType::FILE);
+    }
 }
 
 void MainWindow::on_tbRequestBodyKeyValueRemove_clicked()
@@ -1566,28 +1790,52 @@ void MainWindow::on_twRequestBodyKeyValue_cellChanged(int row, int column)
 {
     setProjectHasChanged();
 
-    if(!ui->twRequestBodyKeyValue->item(row, column)->text().trimmed().isEmpty()){
-        ui->twRequestBodyKeyValue->resizeColumnsToContents();
+    // TODO use column enums
+    if(column != 1 && !ui->twRequestBodyKeyValue->item(row, column)->text().trimmed().isEmpty()){
+        ui->twRequestBodyKeyValue->resizeColumnToContents(column);
     }
 }
 
 void MainWindow::on_cbBodyType_currentIndexChanged(const QString &arg1)
 {
+    auto fSetBodyKeyValuesTableVisibility = [=](const bool &isVisible){
+        ui->twRequestBodyKeyValue->setVisible(isVisible);
+        ui->tbRequestBodyKeyValueAdd->setVisible(isVisible);
+        ui->tbRequestBodyFile->setVisible(isVisible);
+        ui->tbRequestBodyKeyValueRemove->setVisible(isVisible);
+    };
+
+    // Files are only allowed in form-data, so we need to remove them if the user is changing to something else
+    // Before removing them ask the user if that is ok
+    if(!this->ignoreAnyChangesToProject.ConditionIsSet() && arg1 != "form-data" && formKeyValueInBodyHasFiles()){
+
+        // revert to form data and don't do more anything if user doesn't approve files rows deletion
+        if(Util::Dialogs::showQuestionWithCancel(this, "You have files rows in the form, changing to " + arg1 + " will REMOVE these files rows. Proceed?") != QMessageBox::Yes){
+            this->ignoreAnyChangesToProject.SetCondition();
+            ui->cbBodyType->setCurrentText("form-data");
+            this->ignoreAnyChangesToProject.UnsetCondition();
+            return;
+        }
+        else{
+            removeAllFilesRowsFromFormKeyValueInBody(); // if approved remove the files rows
+        }
+    }
+
     ui->pteRequestBody->hide();
-    ui->twRequestBodyKeyValue->hide();
-    ui->tbRequestBodyKeyValueAdd->hide();
-    ui->tbRequestBodyKeyValueRemove->hide();
+    fSetBodyKeyValuesTableVisibility(false);
 
     if(arg1 == "raw"){
         ui->pteRequestBody->show();
     }
-    else{
-        ui->twRequestBodyKeyValue->show();
-        ui->tbRequestBodyKeyValueAdd->show();
-        ui->tbRequestBodyKeyValueRemove->show();
+    else if(arg1 == "form-data"){
+        fSetBodyKeyValuesTableVisibility(true);
+    }
+    else if(arg1 == "x-form-www-urlencoded"){
+        fSetBodyKeyValuesTableVisibility(true);
+        ui->tbRequestBodyFile->setVisible(false);
     }
 
-    if(!this->ignoreAnyChangesToProject){
+    if(!this->ignoreAnyChangesToProject.ConditionIsSet()){
         if(ui->twRequestHeadersKeyValue->rowCount() > 0 && (QMessageBox::Yes == Util::Dialogs::showQuestionWithCancel(this, "You have changed the request body type. Delete previous headers?"))){
             Util::TableWidget::clearContentsNoPrompt(ui->twRequestHeadersKeyValue);
         }
@@ -1601,7 +1849,7 @@ void MainWindow::on_cbBodyType_currentIndexChanged(const QString &arg1)
 void MainWindow::on_cbRequestType_currentIndexChanged(const QString &)
 {
     // Indicates if body can be set or not depending on the given option
-    bool toogle = UtilFRequest::requestTypeMayHaveBody(UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText()));
+    bool toogle = UtilFRequest::requestTypeMayHaveBody(UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText()));
 
     setProjectHasChanged();
 
@@ -1609,9 +1857,21 @@ void MainWindow::on_cbRequestType_currentIndexChanged(const QString &)
     ui->twRequestBodyKeyValue->setEnabled(toogle);
     ui->pteRequestBody->setEnabled(toogle);
     ui->tbRequestBodyKeyValueAdd->setEnabled(toogle);
+    ui->tbRequestBodyFile->setEnabled(toogle);
     ui->tbRequestBodyKeyValueRemove->setEnabled(toogle);
 
-    if(!this->ignoreAnyChangesToProject){
+    // Save previous item (to update icon)
+    if(this->currentItem != nullptr && !this->currentItem->isProjectItem)
+    {
+        updateTreeWidgetItemContent(this->currentItem);
+
+        // Update icon
+        if(ui->actionShow_Request_Types_Icons->isChecked()){
+            setIconForRequest(this->currentItem);
+        }
+    }
+
+    if(!this->ignoreAnyChangesToProject.ConditionIsSet()){
         if(ui->twRequestHeadersKeyValue->rowCount() > 0 && (QMessageBox::Yes == Util::Dialogs::showQuestionWithCancel(this, "You have changed the request type. Delete previous headers?"))){
             Util::TableWidget::clearContentsNoPrompt(ui->twRequestHeadersKeyValue);
         }
@@ -1631,6 +1891,31 @@ void MainWindow::on_cbRequestOverrideMainUrl_toggled(bool checked)
     buildFullPath();
 }
 
+void MainWindow::on_actionShow_Request_Types_Icons_triggered(bool checked)
+{
+    this->ignoreAnyChangesToProject.SetCondition();
+    setAllRequestIcons(checked);
+    this->currentSettings.showRequestTypesIcons = checked;
+    this->ignoreAnyChangesToProject.UnsetCondition();
+}
+
+void MainWindow::setAllRequestIcons(bool showIcon){
+
+    if(showIcon){
+        // Set request icons
+        for(int i=0; i<this->currentProjectItem->childCount(); i++){
+            setIconForRequest(FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(this->currentProjectItem->child(i)));
+        }
+    }
+    else{
+        // clear request icons
+        for(int i=0; i<this->currentProjectItem->childCount(); i++){
+            this->currentProjectItem->child(i)->setIcon(0, QIcon());
+        }
+    }
+
+}
+
 void MainWindow::on_pteRequestBody_textChanged()
 {
     setProjectHasChanged();
@@ -1641,9 +1926,28 @@ void MainWindow::on_cbDownloadResponseAsFile_toggled(bool)
     setProjectHasChanged();
 }
 
+void MainWindow::tbAbortRequest_clicked()
+{
+	QString typeRequest;
+	
+	if(this->authenticationIsRunning){
+		typeRequest = "Authentication";
+	}
+	else{
+		typeRequest = "Request";
+	}
+	
+    if(Util::Dialogs::showQuestion(this,"Are you sure you want to abort the current " + typeRequest + "?")){
+        if(this->currentReply.has_value()){
+            this->currentReply.value()->abort();
+            Util::StatusBar::showError(ui->statusBar, typeRequest + " was aborted.");
+        }
+    }
+}
+
 void MainWindow::setProjectHasChanged(){
 
-    if(!this->ignoreAnyChangesToProject && !this->unsavedChangesExist){
+    if(!this->ignoreAnyChangesToProject.ConditionIsSet() && !this->unsavedChangesExist){
         this->unsavedChangesExist = true;
 
         updateWindowTitle();
@@ -1665,7 +1969,7 @@ void MainWindow::on_tbCopyToClipboardRequest_clicked()
 {
     QString textToClipboard;
 
-    auto fRequestFormToString = [](const QVector<UtilFRequest::HttpFormKeyValue> &requestForm){
+    auto fRequestFormToString = [](const QVector<UtilFRequest::HttpFormKeyValueType> &requestForm){
 
         QString result;
 
@@ -1694,16 +1998,33 @@ void MainWindow::on_tbCopyToClipboardRequest_clicked()
 
         return result;
     };
-
+	
     if(ui->twRequest->tabText(ui->twRequest->currentIndex()) == "Body"){
-        if(ui->cbBodyType->currentText() == "raw"){
+        switch(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText())){
+        case UtilFRequest::BodyType::RAW:
+        {
             textToClipboard = ui->pteRequestBody->toPlainText();
+            break;
         }
-        else if(ui->cbBodyType->currentText() == "form-data"){
+            break;
+        case UtilFRequest::BodyType::FORM_DATA:
+        {
             textToClipboard = fRequestFormToString(getRequestForm());
+            break;
         }
-        else if(ui->cbBodyType->currentText() == "x-form-www-urlencoded"){
+            break;
+        case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
+        {
             textToClipboard = fRequestFormToString(getRequestForm());
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
         }
     }
     else if(ui->twRequest->tabText(ui->twRequest->currentIndex()) == "Headers"){
@@ -1743,7 +2064,7 @@ void MainWindow::saveCurrentSettings(){
 
 void MainWindow::addDefaultHeaders(){
 
-    UtilFRequest::RequestType currentRequestType = UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText());
+    UtilFRequest::RequestType currentRequestType = UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText());
 
 
     std::experimental::optional<ConfigFileFRequest::ProtocolHeader>& currentProtocolHeader = ConfigFileFRequest::getSettingsHeaderForRequestType(currentRequestType, this->currentSettings);
@@ -1751,14 +2072,31 @@ void MainWindow::addDefaultHeaders(){
     if(currentProtocolHeader.has_value()){
         std::experimental::optional<QVector<UtilFRequest::HttpHeader>> *currentHeaders = nullptr;
 
-        if(ui->cbBodyType->currentText() == "raw"){
+        switch(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText())){
+        case UtilFRequest::BodyType::RAW:
+        {
             currentHeaders = &currentProtocolHeader.value().headers_Raw;
+            break;
         }
-        else if(ui->cbBodyType->currentText() == "form-data"){
+            break;
+        case UtilFRequest::BodyType::FORM_DATA:
+        {
             currentHeaders = &currentProtocolHeader.value().headers_Form_Data;
+            break;
         }
-        else if(ui->cbBodyType->currentText() == "x-form-www-urlencoded"){
+            break;
+        case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
+        {
             currentHeaders = &currentProtocolHeader.value().headers_X_form_www_urlencoded;
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
         }
 
         if(currentHeaders == nullptr){
@@ -1777,73 +2115,254 @@ void MainWindow::addDefaultHeaders(){
 }
 
 void MainWindow::setRequestType(UtilFRequest::RequestType requestType){
-    ui->cbRequestType->setCurrentText(UtilFRequest::getRequestTypeText(requestType));
+    ui->cbRequestType->setCurrentText(UtilFRequest::getRequestTypeString(requestType));
 }
 
-void MainWindow::setFormatRequestAndResponseBodies(){
-    if(ui->actionFormat_Request_body->isChecked()){
-        this->requestBodyHighligher.setDocument(ui->pteRequestBody->document());
-    }
-    else{
-        this->requestBodyHighligher.setDocument(nullptr);
+void MainWindow::formatRequestBody(const UtilFRequest::SerializationFormatType serializationType){
+
+    this->xmlRequestBodyHighligher.setDocument(nullptr);
+    this->jsonRequestBodyHighligher.setDocument(nullptr);
+
+    if(serializationType != UtilFRequest::SerializationFormatType::UNKNOWN){
+
+        switch(serializationType){
+        case UtilFRequest::SerializationFormatType::JSON:
+        {
+            this->jsonRequestBodyHighligher.setDocument(ui->pteRequestBody->document());
+
+            // we re-highlight immediately because we may want to ignore the change in the plain text edit
+            // (is just formatting or re-color), this way frequest doesn't think the project was changed
+            this->jsonRequestBodyHighligher.rehighlight();
+            break;
+        }
+        case UtilFRequest::SerializationFormatType::XML:
+        {
+            this->xmlRequestBodyHighligher.setDocument(ui->pteRequestBody->document());
+
+            // we re-highlight immediately because we may want to ignore the change in the plain text edit
+            // (is just formatting or re-color), this way frequest doesn't think the project was changed
+            this->xmlRequestBodyHighligher.rehighlight();
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
+        }
     }
 
-    if(ui->actionFormat_Response_Body->isChecked()){
-        this->responseBodyHighligher.setDocument(ui->pteResponseBody->document());
-    }
-    else{
-        this->responseBodyHighligher.setDocument(nullptr);
-    }
 }
 
-bool MainWindow::loadAndValidateFRequestProjectFile(const QString &filePath, pugi::xml_document &doc){
-    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(filePath));
+void MainWindow::formatResponseBody(const UtilFRequest::SerializationFormatType serializationType){
 
-    if(result.status!=pugi::status_ok){
-        QString errorMessage = "An error ocurred while loading project file.\n" + QString(result.description());
-        LOG_ERROR << errorMessage;
-        Util::Dialogs::showError(errorMessage);
-        return false;
+    this->xmlResponseBodyHighligher.setDocument(nullptr);
+    this->jsonResponseBodyHighligher.setDocument(nullptr);
+
+    if(serializationType != UtilFRequest::SerializationFormatType::UNKNOWN){
+
+        switch(serializationType){
+        case UtilFRequest::SerializationFormatType::JSON:
+        {
+            this->jsonResponseBodyHighligher.setDocument(ui->pteResponseBody->document());
+            break;
+        }
+        case UtilFRequest::SerializationFormatType::XML:
+        {
+            this->xmlResponseBodyHighligher.setDocument(ui->pteResponseBody->document());
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
+        }
     }
 
-    if(QString(doc.root().first_child().name()) != "FRequestProject"){
-        QString errorMessage = QString(doc.root().name()) + "The file opened is not a valid FRequestProject file. Load aborted.";
-        LOG_ERROR << errorMessage;
-        Util::Dialogs::showError(errorMessage);
-        return false;
-    }
+}
 
-    QString projFRequestVersion;
+bool MainWindow::formKeyValueInBodyIsValid(){
+    for(int i = 0; i < ui->twRequestBodyKeyValue->rowCount(); i++){
 
-    try{
-        projFRequestVersion = QString(doc.select_node("/FRequestProject/@frequestVersion").attribute().value());
-    }
-    catch (const pugi::xpath_exception& e)
-    {
-        QString errorMessage = "Couldn't find the frequestVersion of the current project. Load aborted.\n" + QString(e.what());
-        LOG_ERROR << errorMessage;
-        Util::Dialogs::showError(errorMessage);
-        return false;
-    }
+        // const QString &currKey = ui->twRequestBodyKeyValue->item(i,0)->text(); // ignore
+        const QString &currValue = ui->twRequestBodyKeyValue->item(i,1)->text();
+        const UtilFRequest::FormKeyValueType currFormKeyValueType = UtilFRequest::getFormKeyTypeByString(ui->twRequestBodyKeyValue->item(i,2)->text());
 
-    if(!projFRequestVersion.startsWith(GlobalVars::LastCompatibleVersion)){
-        QString errorMessage = "The project that you are trying to load seems it is not compatible with your FRequest Version. Please update FRequest and try again.";
-        LOG_ERROR << errorMessage;
-        Util::Dialogs::showError(errorMessage);
-        return false;
+        if(currFormKeyValueType == UtilFRequest::FormKeyValueType::FILE){
+            if(!QFile::exists(currValue)){
+                QString errorMessage = "File '" + currValue + "' doesn't exist.\n\nPlease fix it in your request body form data and try again.";
+                Util::Dialogs::showError(errorMessage);
+                LOG_ERROR << errorMessage;
+                return false;
+            }
+        }
     }
 
     return true;
 }
 
-pugi::xml_attribute MainWindow::createOrGetPugiXmlAttribute(pugi::xml_node &mainNode, const char *name){
-    // if attributes doesnt exists create it
-    if(mainNode.attribute(name).empty())
+bool MainWindow::formKeyValueInBodyHasFiles(){
+    for(int i = 0; i < ui->twRequestBodyKeyValue->rowCount(); i++){
+
+        const UtilFRequest::FormKeyValueType currFormKeyValueType = UtilFRequest::getFormKeyTypeByString(ui->twRequestBodyKeyValue->item(i,2)->text());
+
+        if(currFormKeyValueType == UtilFRequest::FormKeyValueType::FILE){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void MainWindow::removeAllFilesRowsFromFormKeyValueInBody(){
+    for(int i = 0; i < ui->twRequestBodyKeyValue->rowCount(); i++){
+
+        const UtilFRequest::FormKeyValueType currFormKeyValueType = UtilFRequest::getFormKeyTypeByString(ui->twRequestBodyKeyValue->item(i,2)->text());
+
+        if(currFormKeyValueType == UtilFRequest::FormKeyValueType::FILE){
+            ui->twRequestBodyKeyValue->selectRow(i);
+        }
+    }
+
+    Util::TableWidget::deleteSelectedRows(ui->twRequestBodyKeyValue);
+}
+
+UtilFRequest::SerializationFormatType MainWindow::getRequestCurrentSerializationFormatType(){
+    UtilFRequest::SerializationFormatType serializationType = UtilFRequest::SerializationFormatType::UNKNOWN;
+
+    if(ui->actionFormat_Request_body->isChecked()){
+        serializationType = UtilFRequest::getSerializationFormatTypeForString(ui->pteRequestBody->toPlainText());
+    }
+
+    return serializationType;
+}
+
+UtilFRequest::SerializationFormatType MainWindow::getResponseCurrentSerializationFormatType(){
+    UtilFRequest::SerializationFormatType serializationType = UtilFRequest::SerializationFormatType::UNKNOWN;
+
+    if(ui->actionFormat_Response_Body->isChecked()){
+        serializationType = UtilFRequest::getSerializationFormatTypeForString(ui->pteResponseBody->toPlainText());
+    }
+
+    return serializationType;
+}
+
+QString MainWindow::getNewUuid(){
+    QString generatedUuid;
+
+    // make sure we get a unique identifier (while very small, there it is still possible to exist collisions,
+    // plus the xml uuid can be edited by hand by anyone)
+    do
     {
-        return mainNode.append_attribute(name);
+        generatedUuid = QUuid::createUuid().toString();
+    } while( this->uuidsInUse.contains(generatedUuid) );
+
+    this->uuidsInUse.insert(generatedUuid);
+
+    return generatedUuid;
+}
+
+void MainWindow::saveProjectProperties(){
+
+    // Project properties changed, we need to save the project file and maybe the configuration file (for the authentications)
+    this->unsavedChangesExist = true;
+
+    updateWindowTitle();
+
+    reloadRequest(this->currentItem);
+
+    on_actionSave_Project_triggered();
+
+    // Do we have auth data to save?
+    if(this->currentProjectItem->authData != nullptr){
+
+        // Assume the credentials are new, so a new authentication may need to be done
+        this->currentProjectAuthenticationWasMade = false;
+
+        // Is to save to config file?
+        if(this->currentProjectItem->authData->saveAuthToConfigFile){
+
+            ConfigFileFRequest::ConfigurationProjectAuthentication currConfigProjAuth;
+            currConfigProjAuth.lastProjectName = this->currentProjectItem->projectName;
+            currConfigProjAuth.projectUuid = this->currentProjectItem->getUuid();
+            currConfigProjAuth.authData = this->currentProjectItem->authData;
+
+            this->currentSettings.mapOfConfigAuths_UuidToConfigAuth[this->currentProjectItem->getUuid()] =
+                    currConfigProjAuth; // add or override config proj auth data
+
+            saveCurrentSettings();
+        }
+        else{ // Nop! We are saving to project file. In this case make sure we remove the auth data from config file if it exists
+            if(this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.contains(this->currentProjectItem->getUuid())){
+                this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.remove(this->currentProjectItem->getUuid());
+                saveCurrentSettings();
+            }
+        }
+
+
     }
-    else
-    { // if it already exists return it
-        return mainNode.attribute(name);
+
+    if(!this->unsavedChangesExist){
+        Util::Dialogs::showInfo("Project properties saved with success!");
     }
+    else{
+        Util::Dialogs::showWarning("Project properties weren't saved. Please save the project manually from file menu.");
+    }
+}
+
+void MainWindow::on_leRequestsFilter_textChanged(const QString &arg1)
+{
+    QString trimmedFilter = arg1.trimmed();
+	
+	QPalette palette; // to set filter background color
+	
+	if(trimmedFilter.isEmpty()){ // if filter is empty
+		ui->treeWidget->headerItem()->setText(0, "Requests");
+		palette.setColor(QPalette::Base, ui->lePath->palette().color(QPalette::Base)); // just use another text box to get the default value
+		ui->leRequestsFilter->setPalette(palette);
+	
+		if(this->currentProjectItem != nullptr){
+			for(int i=0; i<this->currentProjectItem->childCount(); i++){
+				this->currentProjectItem->child(i)->setHidden(false);
+			}
+		}
+	}
+	else{
+		ui->treeWidget->headerItem()->setText(0, "Requests (filtred)");
+		palette.setColor(QPalette::Base, 0xFFFACD /* LemonChiffon */);
+		ui->leRequestsFilter->setPalette(palette);
+		
+		// Show only the ones which the name match the filter
+		if(this->currentProjectItem != nullptr){
+			for(int i=0; i<this->currentProjectItem->childCount(); i++){
+				if(!this->currentProjectItem->child(i)->text(0).contains(trimmedFilter, Qt::CaseInsensitive)){ // TODO change with enum
+					this->currentProjectItem->child(i)->setHidden(true);
+				}
+				else{
+					this->currentProjectItem->child(i)->setHidden(false);
+				}		
+			}
+		}
+	}
+}
+
+void MainWindow::openProjectProperties(){
+	
+	// Show project properties
+	ProjectProperties *projectPropertiesDialog = new ProjectProperties(this, this->currentProjectItem);
+
+	// https://stackoverflow.com/a/9264888/1499019
+	connect(projectPropertiesDialog, SIGNAL (signalSaveProjectProperties()), this, SLOT(saveProjectProperties()));
+	projectPropertiesDialog->exec(); //it destroys itself when finished.
+	
+}
+
+void MainWindow::on_actionProject_Properties_triggered()
+{
+    openProjectProperties();
 }

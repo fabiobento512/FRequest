@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,18 +20,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TRACEHTTPREQUEST_H
 #define TRACEHTTPREQUEST_H
 
-#include "httprequest.h"
+#include "httprequestwithmultipart.h"
 
-class TraceHttpRequest : public HttpRequest
+class TraceHttpRequest : public HttpRequestWithMultiPart
 {
 public:
     TraceHttpRequest(
-            QNetworkAccessManager * const manager,
-            const QString &fullPath,
-            const QVector<UtilFRequest::HttpHeader> &requestHeaders
+             QNetworkAccessManager * const manager,
+			 QTableWidget * const twBodyFormKeyValue,
+			 const QString &fullPath,
+			 const QString &bodyType,
+			 const QString &rawRequestBody,
+			 const QVector<UtilFRequest::HttpHeader> &requestHeaders
             );
 private:
     QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
+	QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data);
 };
 
 #endif // TRACEHTTPREQUEST_H

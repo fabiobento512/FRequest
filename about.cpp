@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -37,11 +37,15 @@ About::About(QWidget *parent) :
                          "Andrzej Krzemienski and the remaining contributors for C++14 optional library<br />"
                          "Sergey Podobry and the remaining contributors for plog library<br />"
                          "Jane G. (isomoar) for the JSON syntax highlighter (from SchemaBasedJSONEditor)<br />"
+                         "Dmitry Ivanov for the XML syntax highlighter (from SchemaBasedJSONEditor)<br />"
                          "<br/>"
                          "Murakumon for project folder icon (found in findicons.com)<br />"
                          "Woothemes for application icon (found in findicons.com)<br />"
                          "ana nirwana for send request icon (found in iconfinder.com)<br />"
-                         "Omercetin for clipboard icon (found in iconfinder.com) <a href='https://creativecommons.org/licenses/by/3.0/'>(license)</a>"
+                         "Omercetin for clipboard icon (found in iconfinder.com) <a href='https://creativecommons.org/licenses/by/3.0/'>(license)</a><br />"
+                         "Icons8 for clone icon (found in <a href='https://icons8.com/'>here</a>) <a href='https://creativecommons.org/licenses/by-nd/3.0/'>(license)</a>"
+                         "Aha-Soft Team for abort icon (found in findicons.com)<br />"
+                         "FatCow Web Hosting for warning icon (found in iconfinder.com) <a href='http://creativecommons.org/licenses/by/3.0/us/'>(license)</a>"
                          + R"(<hr/>
                          This program is free software: you can redistribute it and/or modify
                          it under the terms of the GNU General Public License as published by

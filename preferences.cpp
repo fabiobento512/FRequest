@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,6 +27,18 @@ Preferences::Preferences(QWidget *parent, ConfigFileFRequest::Settings &currentS
 {
     ui->setupUi(this);
     this->setAttribute(Qt::WA_DeleteOnClose,true ); //destroy itself once finished.
+
+    ui->lbProjAuthDataNote->setText(
+                "<b>Note:</b> These authentications are only the ones that were saved as \"FRequest Configuration File\", "
+                "that is the ones saved in your FRequest configuration (the ones saved as "
+                "\"FRequest Project File\" are not shown here).<br/><br/>"
+                "You can see and delete here the authentications for projects that you no longer use."
+                );
+    ui->lbProjAuthDataNote->adjustSize(); // to show all the text (resize label automatically to fit)
+
+    fillConfigProjAuthDataTable();
+
+    ui->twConfigProjAuthData->resizeColumnsToContents();
 }
 
 Preferences::~Preferences()
@@ -83,8 +95,11 @@ void Preferences::accept (){
 
     this->currentSettings.useProxy = ui->cbProxyUseProxy->isChecked();
 
+    bool differentThanAutomaticProxy = true;
+
     if(ui->cbProxyType->currentText() == "Automatic"){
         this->currentSettings.proxySettings.type = ConfigFileFRequest::ProxyType::AUTOMATIC;
+        differentThanAutomaticProxy = false;
     }
     else if(ui->cbProxyType->currentText() == "Http Transparent Proxy"){
         this->currentSettings.proxySettings.type = ConfigFileFRequest::ProxyType::HTTP_TRANSPARENT;
@@ -102,7 +117,17 @@ void Preferences::accept (){
         return;
     }
 
+    if(differentThanAutomaticProxy){
+        this->currentSettings.proxySettings.hostName = ui->leProxyHostname->text();
+        this->currentSettings.proxySettings.portNumber = ui->leProxyPort->text().toUInt();
+    }
+
     updateCurrentDefaultHeaders();
+
+    // Remove the requested config proj authentications
+    for(const QString &currProjUuid : this->configProjAuthsToDelete){
+        this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.remove(currProjUuid);
+    }
 
     emit saveSettings();
 
@@ -113,7 +138,7 @@ void Preferences::accept (){
 
 void Preferences::on_buttonBox_rejected()
 {
-    this->destroy(true,true);
+    // nothing todo (it auto closes)
 }
 
 void Preferences::on_cbUseDefaultHeaders_toggled(bool checked)
@@ -130,7 +155,7 @@ void Preferences::on_cbRequestType_currentIndexChanged(const QString &arg1)
     ui->cbRequestBodyType->setEnabled(true);
 
     // Indicates if body can be set or not depending on the given option
-    switch(UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText())){
+    switch(UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText())){
     case UtilFRequest::RequestType::GET_OPTION:
     case UtilFRequest::RequestType::DELETE_OPTION:
     case UtilFRequest::RequestType::HEAD_OPTION:
@@ -234,7 +259,7 @@ void Preferences::loadCurrentDefaultHeaders(){
 
     Util::TableWidget::clearContentsNoPrompt(ui->twRequestBodyKeyValue);
 
-    UtilFRequest::RequestType currentRequestType = UtilFRequest::getRequestTypeByText(ui->cbRequestType->currentText());
+    UtilFRequest::RequestType currentRequestType = UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText());
 
     std::experimental::optional<ConfigFileFRequest::ProtocolHeader> &currentProtocolHeader = ConfigFileFRequest::getSettingsHeaderForRequestType(currentRequestType, this->currentSettings);
     bool mayHaveBody = UtilFRequest::requestTypeMayHaveBody(currentRequestType);
@@ -315,7 +340,7 @@ void Preferences::updateCurrentDefaultHeaders(){
     std::experimental::optional<QVector<UtilFRequest::HttpHeader>> currentRequestDefaultHeaders = getRequestHeaders();
     std::experimental::optional<QVector<UtilFRequest::HttpHeader>> *currentHeaders = nullptr;
 
-    UtilFRequest::RequestType requestType = UtilFRequest::getRequestTypeByText(this->previousRequestType);
+    UtilFRequest::RequestType requestType = UtilFRequest::getRequestTypeByString(this->previousRequestType);
 
     std::experimental::optional<ConfigFileFRequest::ProtocolHeader> &currentProtocolHeader = ConfigFileFRequest::getSettingsHeaderForRequestType(requestType, this->currentSettings);
     bool mayHaveBody = UtilFRequest::requestTypeMayHaveBody(requestType);
@@ -365,5 +390,42 @@ void Preferences::on_cbProxyType_currentIndexChanged(const QString &arg1)
     else{
         ui->leProxyHostname->setEnabled(true);
         ui->leProxyPort->setEnabled(true);
+    }
+}
+
+void Preferences::fillConfigProjAuthDataTable(){
+    for(const ConfigFileFRequest::ConfigurationProjectAuthentication &currAuthData :
+        this->currentSettings.mapOfConfigAuths_UuidToConfigAuth){
+        Util::TableWidget::addRow(ui->twConfigProjAuthData, QStringList() <<
+                                  currAuthData.lastProjectName <<
+                                  currAuthData.projectUuid <<
+                                  FRequestAuthentication::getAuthenticationString(currAuthData.authData->type)
+                                  );
+    }
+
+    // Disable editing on our table
+    for(int i=0; i<ui->twConfigProjAuthData->rowCount(); i++){
+        for(int j=0; j<ui->twConfigProjAuthData->columnCount(); j++){
+            ui->twConfigProjAuthData->item(i,j)->setFlags(ui->twConfigProjAuthData->item(i,j)->flags() & (~Qt::ItemIsEditable));
+        }
+    }
+}
+
+void Preferences::on_tbConfigProjDataRemove_clicked()
+{
+    int size = Util::TableWidget::getSelectedRows(ui->twConfigProjAuthData).size();
+
+    if(size==0){
+        Util::Dialogs::showInfo("Select a row first!");
+        return;
+    }
+
+    if(Util::Dialogs::showQuestion(this, "Are you sure you want to remove all selected rows?")){
+        for(int i=0; i < size; i++){
+            this->configProjAuthsToDelete.append(ui->twConfigProjAuthData->item(Util::TableWidget::getSelectedRows(ui->twConfigProjAuthData).at(size-i-1).row(),1)->text()); // TODO: replace 1 by an index enum
+            ui->twConfigProjAuthData->removeRow(Util::TableWidget::getSelectedRows(ui->twConfigProjAuthData).at(size-i-1).row());
+        }
+
+        Util::Dialogs::showInfo("Authentications rows deleted");
     }
 }

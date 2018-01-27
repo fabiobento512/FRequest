@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017  Fábio Bento (random-guy)
+Copyright (C) 2017-2018  Fábio Bento (random-guy)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QShowEvent>
 
 #include "util.h"
-#include "configfilefrequest.h"
+#include "XmlParsers/configfilefrequest.h"
 
 namespace Ui {
 class Preferences;
@@ -40,10 +40,9 @@ public:
     Preferences(QWidget *parent, ConfigFileFRequest::Settings &currentSettings);
     ~Preferences();
 
-public slots:
-    void accept ();
-    
 private slots:
+
+	void accept ();
 
     void on_buttonBox_rejected();
 
@@ -62,6 +61,8 @@ private slots:
 
     void on_cbProxyType_currentIndexChanged(const QString &arg1);
 
+    void on_tbConfigProjDataRemove_clicked();
+
 signals:
     void signalPreferencesAreLoaded();
     void saveSettings();
@@ -72,6 +73,7 @@ private:
     QString previousRequestType = "GET"; // by default
     QString previousRequestBodyType = "raw";
     bool preferencesAreFullyLoaded = false;
+    QVector<QString> configProjAuthsToDelete;
 
 private:
     void showEvent(QShowEvent *e);
@@ -79,6 +81,7 @@ private:
     std::experimental::optional<QVector<UtilFRequest::HttpHeader> > getRequestHeaders();
     void loadCurrentDefaultHeaders();
     void updateCurrentDefaultHeaders();
+    void fillConfigProjAuthDataTable();
 };
 
 #endif // PREFERENCES_H
