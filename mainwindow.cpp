@@ -35,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent) :
     this->ignoreAnyChangesToProject.SetCondition();
     ui->setupUi(this);
 
+    // We aren't using this yet, so close it
+    ui->mainToolBar->close();
+
     // show request types icons or not?
     ui->actionShow_Request_Types_Icons->setChecked(this->currentSettings.showRequestTypesIcons);
 
