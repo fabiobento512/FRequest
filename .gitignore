@@ -1,0 +1,12 @@
+# ignore QtCreator user files
+*.pro.user
+
+# ignore QtCreator generated Makefiles
+/*Makefile*
+
+# ignore MacOS specific files
+*.DS_Store
+
+#ignore cache and _site
+/.sass-cache
+/_site
