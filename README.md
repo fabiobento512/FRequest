@@ -1,6 +1,6 @@
 ## FRequest <img src="images/frequest_icon.png" alt="download frequest" width="32" height="32">
 
-<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows" width="50%" height="50%"></a>
+<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows"></a>
 
 FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
@@ -29,16 +29,16 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ### Screenshots
 #### Windows main interface
-<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows" width="80%" height="80%"></a>
+<a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows"></a>
 
 #### MacOS main interface
-<a href="images/frequest-macos.png"><img src="images/frequest-macos.png" alt="frequest macos" width="80%" height="80%"></a>
+<a href="images/frequest-macos.png"><img src="images/frequest-macos.png" alt="frequest macos"></a>
 
 ### FRequest preferences interface
-<a href="images/frequest-preferences-windows.png"><img src="images/frequest-preferences-windows.png" alt="frequest preferences" width="80%" height="80%"></a>
+<a href="images/frequest-preferences-windows.png"><img src="images/frequest-preferences-windows.png" alt="frequest preferences"></a>
 
 ### FRequest project properties interface
-<a href="images/frequest-projproperties-macos.png"><img src="images/frequest-projproperties-macos.png" alt="frequest project properties" width="80%" height="80%"></a>
+<a href="images/frequest-projproperties-macos.png"><img src="images/frequest-projproperties-macos.png" alt="frequest project properties"></a>
 
 ### Download <a href="https://github.com/fabiobento512/FRequest/releases"><img src="images/download.png" alt="download frequest"><a/>
 
