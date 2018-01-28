@@ -22,11 +22,12 @@ The current features of FRequest are:
 - Requests are contained in a project, this project is then saved in XML file on user's desired location
 - Ability to override a project main url, so you can make requests to different domain name addresses within the same project
 - Ability to download files from the requests
-- Automatically beautify and provide syntax highlighting for JSON and XML
+- Automatically beautify and apply syntax highlighting for JSON and XML
 - Support for authentication (HTTP Basic authentication and Request based authentication) which can be saved either in the
 program configuration file (for private use) or the project file itself (for shared use)
 - The FRequest project files are stored in a way which allow easy collaboration via a VCS like Git, Svn or Team Foundation Server
-- Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or manually)
+- Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or adding them 
+manually)
 - Network proxy support
 
 FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html).
@@ -53,7 +54,7 @@ https://github.com/fabiobento512/FRequest
 ----------------------------------
 Change Log:
 ----------------------------------
-1.1, 27-01-2018
+1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data
 - Now when the data is bigger than 200 kb only the first 200 kb are displayed in the interface, the remaining data is 
 written to the disk if the request is marked to download (avoids slowdowns and possible crashes)
@@ -75,6 +76,7 @@ the status bar
 - Added requests filter so you can quickly find your requests
 - Added authentication support (starting with Request authentication and HTTP Basic Authentication)
 - Fixed the save of proxy settings
+- Hide toolbar since it is unused
 ----------------------------------
 1.0, 18-08-2017
 - Initial Version
