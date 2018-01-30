@@ -10,5 +10,6 @@
         <file>warning_icon.png</file>
         <file>abort.png</file>
         <file>clone_icon.png</file>
+        <file>delete_icon.png</file>
     </qresource>
 </RCC>

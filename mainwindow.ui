@@ -40,7 +40,7 @@
             </widget>
            </item>
            <item>
-            <widget class="CustomTreeWidget" name="treeWidget">
+            <widget class="FRequestTreeWidget" name="treeWidget">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -862,9 +862,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>CustomTreeWidget</class>
+   <class>FRequestTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>customtreewidget.h</header>
+   <header>Widgets/frequesttreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -78,6 +78,8 @@ private slots:
     void applicationHasLoaded();
 	
 	void saveProjectProperties();
+	
+	void treeWidgetDeleteKeyPressed();
 
     void on_pbSendRequest_clicked();
 
@@ -216,6 +218,7 @@ private:
     QString getFullPathFromMainUrlAndPath(const QString & mainUrl, const QString & path);
 	void applyRequestAuthentication();
 	void openProjectProperties();
+	void removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete);
 
 public:
     static constexpr int recentProjectsMaxSize=6;

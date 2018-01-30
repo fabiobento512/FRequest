@@ -110,6 +110,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->tbAbortRequest.setToolTip("Abort current request");
     connect(&this->tbAbortRequest , SIGNAL (clicked()), this, SLOT(tbAbortRequest_clicked())); // connect button click to our slot function
     connect(&this->networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+	connect(ui->treeWidget, SIGNAL(deleteKeyPressed()), this, SLOT(treeWidgetDeleteKeyPressed()));
     ui->statusBar->addPermanentWidget(&this->tbAbortRequest);
     this->lbRequestInfo.hide();
     this->pbRequestProgress.hide();
@@ -427,7 +428,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 	bool isToRetryWithAuthentication = false;
 	
 	// -1 means we have set a custom error, we don't want to override that one
-    if(this->lastReplyStatusError != -1 && reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()){ // sucess request
+    if(this->lastReplyStatusError != -1 && reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()){ // success request
 		requestReturnCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
 		requestReturnMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
     }
@@ -529,7 +530,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 							}
 						}
 
-						Util::StatusBar::showSuccess(ui->statusBar, "File saved with sucess.");
+						Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
 					}
 					else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
 						QString errorMessage = "Could not open file for writing: " + filePath;
@@ -540,7 +541,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 				}
 			}
 			else{
-				QString successMessage = "Request performed with sucess.";
+				QString successMessage = "Request performed with success.";
 				
 				if(this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked()){
 					successMessage += " Since this was an url overriden request, the authentication was not applied.";
@@ -582,7 +583,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 			LOG_ERROR << requestReturnMessage;
 
 			Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
-			Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with sucess." + 
+			Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with success." + 
 			(overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : ""));
 		}
 		
@@ -775,18 +776,23 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
     // Common actions
     std::unique_ptr<QAction> addNewRequest = std::make_unique<QAction>("Add new request", myTree);
+	std::unique_ptr<QAction> renameItem = nullptr;
 
     if(ui->treeWidget->currentItem() == this->currentProjectItem){ // Project
+		renameItem = std::make_unique<QAction>("Rename project", myTree);
         openProjectLocation = std::make_unique<QAction>("Open project location", myTree);
         menu->addAction(openProjectLocation.get());
         menu->addSeparator();
         menu->addAction(addNewRequest.get());
+		menu->addAction(renameItem.get());
         menu->addSeparator();
         projectProperties = std::make_unique<QAction>("Project properties", myTree);
         menu->addAction(projectProperties.get());
     }
     else{ // Requests
+		renameItem = std::make_unique<QAction>("Rename request", myTree);
         menu->addAction(addNewRequest.get());
+		menu->addAction(renameItem.get());
         cloneRequest =  std::make_unique<QAction>(QIcon(":/icons/clone_icon.png"), "Clone request", myTree);
         menu->addAction(cloneRequest.get());
         menu->addSeparator();
@@ -795,7 +801,7 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         moveRequestDown =  std::make_unique<QAction>("Move down", myTree);
         menu->addAction(moveRequestDown.get());
         menu->addSeparator();
-        deleteRequest =  std::make_unique<QAction>("Delete request", myTree);
+        deleteRequest =  std::make_unique<QAction>(QIcon(":/icons/delete_icon.png"), "Delete request", myTree);
         menu->addAction(deleteRequest.get());
 
         if(this->currentProjectItem->childCount() == 1){
@@ -810,6 +816,15 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         }
     }
 
+	// Shortcuts info display for the users
+	renameItem->setShortcut(Qt::Key_F2);
+	renameItem->setShortcutVisibleInContextMenu(true);
+	
+	if(deleteRequest != nullptr){
+		deleteRequest->setShortcut(Qt::Key_Delete);
+		deleteRequest->setShortcutVisibleInContextMenu(true);
+	}
+	
     // Disable show in explorer if we don't have any project saved to disk
     if(openProjectLocation != nullptr && this->lastProjectFilePath.isEmpty()){
         openProjectLocation->setEnabled(false);
@@ -858,6 +873,9 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
         this->ignoreAnyChangesToProject.UnsetCondition();
     }
+	else if(selectedOption == renameItem.get()){
+		ui->treeWidget->editItem(ui->treeWidget->currentItem());
+    }
     else if(selectedOption == cloneRequest.get()){
         this->unsavedChangesExist = true;
 
@@ -884,30 +902,7 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         setProjectHasChanged();
     }
     else if(selectedOption == deleteRequest.get()){
-
-        FRequestTreeWidgetRequestItem * const itemToDelete = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
-
-        if(Util::Dialogs::showQuestion(this, "Remove the request '" + itemToDelete->text(0) + "'?")){
-
-            QString uuidToRemove = itemToDelete->itemContent.uuid;
-
-            this->currentProjectItem->removeChild(itemToDelete);
-
-            this->uuidsToCleanUp.append(uuidToRemove);
-            this->uuidsInUse.remove(uuidToRemove);
-
-            if(ui->treeWidget->currentItem() != this->currentProjectItem){
-                this->currentItem = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
-            }
-            else{
-                this->currentItem = nullptr;
-            }
-
-            // We need to call this event manually when a item is removed (it is not called automatically in this case)
-            on_treeWidget_currentItemChanged(ui->treeWidget->currentItem(), nullptr);
-
-            setProjectHasChanged();
-        }
+        removeRequest(FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem()));
     }
     else if(selectedOption == projectProperties.get()){
 		openProjectProperties();
@@ -1275,7 +1270,7 @@ void MainWindow::saveProjectState(const QString &filePath)
 
         updateWindowTitle();
 
-        Util::StatusBar::showSuccess(ui->statusBar, "Project saved with sucess!");
+        Util::StatusBar::showSuccess(ui->statusBar, "Project saved with success!");
     }
     catch(const std::exception& e){
         QString errorMessage = QString("Couldn't save project file. Save aborted.\n") + e.what();
@@ -1579,7 +1574,7 @@ void MainWindow::clearRequestAndResponse(){
 void MainWindow::clearEverything(){
     // order is important
     // (we should clear the pointers first, because clearing tree widgets
-    // will then call update title that will try to acess pointer to unexisting objects)
+    // will then call update title that will try to access pointer to unexisting objects)
     this->uuidsInUse.clear();
     this->uuidsToCleanUp.clear();
     this->currentItem = nullptr;
@@ -2368,4 +2363,38 @@ void MainWindow::openProjectProperties(){
 void MainWindow::on_actionProject_Properties_triggered()
 {
     openProjectProperties();
+}
+
+void MainWindow::removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete){
+	
+        if(Util::Dialogs::showQuestion(this, "Remove the request '" + itemToDelete->text(0) + "'?")){
+
+            QString uuidToRemove = itemToDelete->itemContent.uuid;
+
+            this->currentProjectItem->removeChild(itemToDelete);
+
+            this->uuidsToCleanUp.append(uuidToRemove);
+            this->uuidsInUse.remove(uuidToRemove);
+
+            if(ui->treeWidget->currentItem() != this->currentProjectItem){
+                this->currentItem = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
+            }
+            else{
+                this->currentItem = nullptr;
+            }
+
+            // We need to call this event manually when a item is removed (it is not called automatically in this case)
+            on_treeWidget_currentItemChanged(ui->treeWidget->currentItem(), nullptr);
+
+            setProjectHasChanged();
+        }
+}
+
+void MainWindow::treeWidgetDeleteKeyPressed(){
+	
+    if (this->currentItem != nullptr && ui->treeWidget->currentItem() == this->currentItem)
+    {
+        removeRequest(this->currentItem);
+    }
+	
 }

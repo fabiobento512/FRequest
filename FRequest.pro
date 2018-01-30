@@ -48,7 +48,8 @@ SOURCES += main.cpp\
     Authentications/basicauthentication.cpp \
     Authentications/requestauthentication.cpp \
     Widgets/frequesttreewidgetprojectitem.cpp \
-    Widgets/frequesttreewidgetrequestitem.cpp
+    Widgets/frequesttreewidgetrequestitem.cpp \
+    Widgets/frequesttreewidget.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -74,7 +75,8 @@ HEADERS  += mainwindow.h \
     Authentications/basicauthentication.h \
     Authentications/requestauthentication.h \
     Widgets/frequesttreewidgetprojectitem.h \
-    Widgets/frequesttreewidgetrequestitem.h
+    Widgets/frequesttreewidgetrequestitem.h \
+    Widgets/frequesttreewidget.h
 
 
 FORMS    += mainwindow.ui \

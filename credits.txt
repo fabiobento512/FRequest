@@ -31,3 +31,6 @@ http://findicons.com/icon/219146/close
 
 clone icon (see license here: https://icons8.com/license/):
 https://icons8.com/icon/set/sheep/all
+
+delete icon (see license here: https://icons8.com/license/):
+https://icons8.com/icon/set/delete/all
