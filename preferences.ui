@@ -221,11 +221,34 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="cbAskOpenLastProject">
-         <property name="text">
-          <string>Ask to open last saved project at startup</string>
-         </property>
-        </widget>
+        <layout class="QFormLayout" name="formLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>On startup:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cbOnStartup">
+           <item>
+            <property name="text">
+             <string>Ask to load last project</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Load last project</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Do nothing</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QCheckBox" name="cbSaveWindowGeometryWhenExiting">

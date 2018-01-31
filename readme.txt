@@ -58,6 +58,7 @@ Change Log:
 - Added rename request / project to requests tree context menu
 - Added shortcut to delete requests (DEL)
 - Added an icon to delete request context menu
+- Improved config/project files upgrade code
 ----------------------------------
 1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data

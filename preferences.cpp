@@ -89,7 +89,22 @@ void Preferences::accept (){
 
     // https://stackoverflow.com/a/16487964/1499019
     this->currentSettings.requestTimeout = QTime(0, 0, 0).secsTo(ui->teRequestTimeout->time());
-    this->currentSettings.askToOpenLastProject = ui->cbAskOpenLastProject->isChecked();
+
+    if(ui->cbOnStartup->currentText() == "Load last project"){
+        this->currentSettings.onStartupSelectedOption = ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT;
+    }
+    else if(ui->cbOnStartup->currentText() == "Ask to load last project"){
+        this->currentSettings.onStartupSelectedOption = ConfigFileFRequest::OnStartupOption::ASK_TO_LOAD_LAST_PROJECT;
+    }
+    else if(ui->cbOnStartup->currentText() == "Do nothing"){
+        this->currentSettings.onStartupSelectedOption = ConfigFileFRequest::OnStartupOption::DO_NOTHING;
+    }
+    else{
+        QString errorMessage = "Unrecognized cbOnStartup option selected! The On startup option will not be saved!";
+        Util::Dialogs::showError(errorMessage);
+        LOG_ERROR << errorMessage;
+    }
+
     this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting = ui->cbSaveWindowGeometryWhenExiting->isChecked();
     this->currentSettings.defaultHeaders.useDefaultHeaders = ui->cbUseDefaultHeaders->isChecked();
 
@@ -215,9 +230,36 @@ void Preferences::on_tbRequestBodyKeyValueRemove_clicked()
 void Preferences::loadExistingSettings(){
     ui->teRequestTimeout->setTime(QTime(0,0).addSecs(this->currentSettings.requestTimeout));
     ui->cbUseDefaultHeaders->setChecked(this->currentSettings.defaultHeaders.useDefaultHeaders);
-    ui->cbAskOpenLastProject->setChecked(this->currentSettings.askToOpenLastProject);
     ui->cbSaveWindowGeometryWhenExiting->setChecked(this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting);
     ui->cbProxyUseProxy->setChecked(this->currentSettings.useProxy);
+
+    // TODO Check if there's a better alternative to do this switches / ifs (maybe using enums??)
+    // (without do direct string comparisons), because as it is, it is easy to break if we change any of the strings
+    switch(this->currentSettings.onStartupSelectedOption){
+    case ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT:
+    {
+        ui->cbOnStartup->setCurrentText("Load last project");
+        break;
+    }
+    case ConfigFileFRequest::OnStartupOption::ASK_TO_LOAD_LAST_PROJECT:
+    {
+        ui->cbOnStartup->setCurrentText("Ask to load last project");
+        break;
+    }
+    case ConfigFileFRequest::OnStartupOption::DO_NOTHING:
+    {
+        ui->cbOnStartup->setCurrentText("Do nothing");
+        break;
+    }
+    default:
+    {
+        ui->cbProxyType->setCurrentText("Ask to load last project");
+        QString warningMessage = "Unknown on startup option loaded! '" +
+                QString::number(static_cast<unsigned int>(this->currentSettings.onStartupSelectedOption)) + "'. Using 'Ask to load last project' instead.";
+        Util::Dialogs::showWarning(warningMessage);
+        LOG_WARNING << warningMessage;
+    }
+    }
 
     switch(this->currentSettings.proxySettings.type){
     case ConfigFileFRequest::ProxyType::AUTOMATIC:

@@ -30,9 +30,15 @@ public:
 
     enum class ProxyType{
         AUTOMATIC = 0,
-        HTTP_TRANSPARENT,
-        HTTP,
-        SOCKS5
+        HTTP_TRANSPARENT = 1,
+        HTTP = 2,
+        SOCKS5 = 3
+    };
+
+    enum class OnStartupOption{
+        ASK_TO_LOAD_LAST_PROJECT = 0,
+        LOAD_LAST_PROJECT = 1,
+		DO_NOTHING = 100
     };
 
     struct ProtocolHeader{
@@ -74,7 +80,7 @@ public:
 	
     struct Settings{
         unsigned int requestTimeout = 20;
-        bool askToOpenLastProject = false;
+        OnStartupOption onStartupSelectedOption = OnStartupOption::ASK_TO_LOAD_LAST_PROJECT;
         QString lastProjectPath;
         QString lastResponseFilePath;
         bool showRequestTypesIcons = true;

@@ -35,12 +35,12 @@ void ConfigFileFRequest::createNewConfig(){
     pugi::xml_document doc;
 
     pugi::xml_node rootNode = doc.append_child("FRequestConfig");
-    rootNode.append_attribute("frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersion));
+    rootNode.append_attribute("frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersionConfig));
 
     pugi::xml_node generalNode = rootNode.append_child("General");
 
     generalNode.append_attribute("requestTimeout").set_value(currentSettings.requestTimeout);
-    generalNode.append_attribute("askToOpenLastProject").set_value(currentSettings.askToOpenLastProject);
+    generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(currentSettings.onStartupSelectedOption));
     generalNode.append_attribute("lastProjectPath");
     generalNode.append_attribute("lastResponseFilePath");
     generalNode.append_attribute("showRequestTypesIcons");
@@ -90,7 +90,7 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
         generalNode.attribute("requestTimeout").set_value(newSettings.requestTimeout);
-        generalNode.attribute("askToOpenLastProject").set_value(newSettings.askToOpenLastProject);
+        generalNode.attribute("onStartupOption").set_value(static_cast<int>(newSettings.onStartupSelectedOption));
         generalNode.attribute("lastProjectPath").set_value(QSTR_TO_CSTR(newSettings.lastProjectPath));
         generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_CSTR(newSettings.lastResponseFilePath));
         generalNode.attribute("showRequestTypesIcons").set_value(newSettings.showRequestTypesIcons);
@@ -241,7 +241,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
         this->currentSettings.requestTimeout = generalNode.attribute("requestTimeout").as_uint();
-        this->currentSettings.askToOpenLastProject = generalNode.attribute("askToOpenLastProject").as_bool();
+        this->currentSettings.onStartupSelectedOption = static_cast<OnStartupOption>(generalNode.attribute("onStartupOption").as_int());
         this->currentSettings.lastProjectPath = generalNode.attribute("lastProjectPath").as_string();
         this->currentSettings.lastResponseFilePath = generalNode.attribute("lastResponseFilePath").as_string();
         this->currentSettings.showRequestTypesIcons = generalNode.attribute("showRequestTypesIcons").as_bool();
@@ -506,16 +506,26 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 
     QString configVersion = QString(doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").as_string());
 
-    if(configVersion == "1.0"){
-
+    if(configVersion != GlobalVars::LastCompatibleVersionConfig){
         if(!Util::FileSystem::backupFile(this->fileFullPath, this->fileFullPath + UtilFRequest::getDateTimeFormatForFilename(QDateTime::currentDateTime()))){
             QString errorMessage = "Couldn't backup the existing config file for version upgrade, program can't proceed.";
             Util::Dialogs::showError(errorMessage);
             LOG_FATAL << errorMessage;
             exit(1);
         }
+    }
+	
+    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion){
+        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + upgradeVersion + " )"));
+        }
+	};
+	
+    if(configVersion == "1.0"){
 
-        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersion));
+		const QString versionAfterUpgrade = "1.1";
+
+        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
@@ -529,11 +539,35 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
             proxyNode.set_name("Proxy");
         }
 
-        if(!doc.save_file(QSTR_TO_CSTR(this->fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + this->fileFullPath + "'. After file version upgrade."));
-        }
+        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
+		
+		configVersion = versionAfterUpgrade;
     }
-    else if(configVersion != GlobalVars::LastCompatibleVersion){
+	if(configVersion == "1.1"){
+		const QString versionAfterUpgrade = "1.1a";
+
+        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+
+        pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
+
+		// Delete old attribute 'askToOpenLastProject'
+        pugi::xml_attribute askToOpenLastProjectAttribute = generalNode.attribute("askToOpenLastProject");
+
+        if(!askToOpenLastProjectAttribute.empty()){
+            generalNode.remove_attribute(askToOpenLastProjectAttribute);
+        }
+		
+		// Add new attribute that replaces 'askToOpenLastProject'
+		
+		// use ASK_TO_LOAD_LAST_PROJECT as default
+		generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(OnStartupOption::ASK_TO_LOAD_LAST_PROJECT)); 
+		
+        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
+		
+		configVersion = versionAfterUpgrade;
+	}
+	
+    if(configVersion != GlobalVars::LastCompatibleVersionConfig){
         throw std::runtime_error("Can't load the config file, it is from an incompatible version. Probably newer?");
     }
 }

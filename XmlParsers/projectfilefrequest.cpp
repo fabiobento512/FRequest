@@ -47,7 +47,7 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         throw std::runtime_error(QSTR_TO_CSTR(QString("Couldn't find the frequestVersion of the current project. Load aborted.\n") + e.what()));
     }
 
-    if(!projFRequestVersion.startsWith(GlobalVars::LastCompatibleVersion)){
+    if(projFRequestVersion != GlobalVars::LastCompatibleVersionProjects){
         throw std::runtime_error("The project that you are trying to load seems it is not compatible with your FRequest Version. Please update FRequest and try again.");
     }
 
@@ -182,53 +182,6 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
     return currentProjectData;
 }
 
-void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath){
-
-    pugi::xml_document doc;
-
-    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(filePath));
-
-    if(result.status!=pugi::status_ok){
-        throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
-    }
-
-    QString projectVersion = QString(doc.select_single_node("/FRequestProject").node().attribute("frequestVersion").as_string());
-
-    if(projectVersion == "1.0"){
-
-        if(!Util::FileSystem::backupFile(filePath, filePath + UtilFRequest::getDateTimeFormatForFilename(QDateTime::currentDateTime()))){
-            QString errorMessage = "Couldn't backup the existing project file for version upgrade, program can't proceed.";
-            Util::Dialogs::showError(errorMessage);
-            LOG_FATAL << errorMessage;
-            exit(1);
-        }
-
-        pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
-
-        // Update version
-        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersion));
-
-        // Generate an uuid to the project
-        projectNode.append_attribute("uuid").set_value(QSTR_TO_CSTR(QUuid::createUuid().toString()));
-
-        // Add types to form rows
-
-        // Get form request bodies nodes to update
-        pugi::xpath_node_set formKeyValuesNodes = doc.select_nodes("/FRequestProject/Request/Body/FormKeyValue");
-
-        for(size_t i=0; i < formKeyValuesNodes.size(); i++){
-            formKeyValuesNodes[i].node().append_child("Type").append_child(pugi::node_pcdata).set_value("0"); // 0 is Text in 1.1
-        }
-
-        if(!doc.save_file(QSTR_TO_CSTR(filePath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + filePath + "'. After file version upgrade."));
-        }
-    }
-    else if(projectVersion != GlobalVars::LastCompatibleVersion){
-        throw std::runtime_error("Can't load the project file, it is from an incompatible version. Probably newer?");
-    }
-}
-
 void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, const ProjectFileFRequest::ProjectData &newProjectData, const QVector<QString> &uuidsToCleanUp){
     pugi::xml_document doc;
     pugi::xml_node rootNode;
@@ -259,7 +212,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         rootNode = doc.append_child("FRequestProject"); // create
     }
 
-    createOrGetPugiXmlAttribute(rootNode, "frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersion));
+    createOrGetPugiXmlAttribute(rootNode, "frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersionProjects));
     createOrGetPugiXmlAttribute(rootNode, "name").set_value(QSTR_TO_CSTR(newProjectData.projectName));
     createOrGetPugiXmlAttribute(rootNode, "mainUrl").set_value(QSTR_TO_CSTR(newProjectData.mainUrl));
     createOrGetPugiXmlAttribute(rootNode, "uuid").set_value(QSTR_TO_CSTR(newProjectData.projectUuid));
@@ -398,5 +351,63 @@ pugi::xml_attribute ProjectFileFRequest::createOrGetPugiXmlAttribute(pugi::xml_n
     else
     { // if it already exists return it
         return mainNode.attribute(name);
+    }
+}
+
+void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath){
+
+    pugi::xml_document doc;
+
+    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(filePath));
+
+    if(result.status!=pugi::status_ok){
+        throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
+    }
+
+    QString projectVersion = QString(doc.select_single_node("/FRequestProject").node().attribute("frequestVersion").as_string());
+
+    if(projectVersion != GlobalVars::LastCompatibleVersionProjects){
+        if(!Util::FileSystem::backupFile(filePath, filePath + UtilFRequest::getDateTimeFormatForFilename(QDateTime::currentDateTime()))){
+            QString errorMessage = "Couldn't backup the existing project file for version upgrade, program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
+    }
+
+    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion){
+        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + upgradeVersion + " )"));
+        }
+    };
+
+    if(projectVersion == "1.0"){
+
+        const QString versionAfterUpgrade = "1.1";
+
+        pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
+
+        // Update version
+        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+
+        // Generate an uuid to the project
+        projectNode.append_attribute("uuid").set_value(QSTR_TO_CSTR(QUuid::createUuid().toString()));
+
+        // Add types to form rows
+
+        // Get form request bodies nodes to update
+        pugi::xpath_node_set formKeyValuesNodes = doc.select_nodes("/FRequestProject/Request/Body/FormKeyValue");
+
+        for(size_t i=0; i < formKeyValuesNodes.size(); i++){
+            formKeyValuesNodes[i].node().append_child("Type").append_child(pugi::node_pcdata).set_value("0"); // 0 is Text in 1.1
+        }
+
+        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade);
+
+        projectVersion = versionAfterUpgrade;
+    }
+
+    if(projectVersion != GlobalVars::LastCompatibleVersionProjects){
+        throw std::runtime_error("Can't load the project file, it is from an incompatible version. Probably newer?");
     }
 }

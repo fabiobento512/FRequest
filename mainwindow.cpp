@@ -169,15 +169,23 @@ void MainWindow::applicationHasLoaded(){
     this->applicationIsFullyLoaded = true;
     this->ignoreAnyChangesToProject.UnsetCondition();
 
-    if(this->currentSettings.askToOpenLastProject && this->currentSettings.recentProjectsPaths.size() > 0){
-        QString lastSavedProject = this->currentSettings.recentProjectsPaths[0];
-
-        if(!lastSavedProject.isEmpty()){
-            if(Util::Dialogs::showQuestion(this,"Do you want to load latest project?\n\nLatest project was '" + Util::FileSystem::cutNameWithoutBackSlash(lastSavedProject) + "'.")){
-                loadProjectState(lastSavedProject);
-            }
-        }
-    }
+    if(this->currentSettings.recentProjectsPaths.size() > 0){
+		
+		const QString &lastSavedProject = this->currentSettings.recentProjectsPaths[0];
+		
+		if(!lastSavedProject.isEmpty()){
+		
+			if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT){
+				loadProjectState(lastSavedProject);
+			}
+			else if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::ASK_TO_LOAD_LAST_PROJECT){
+				if(Util::Dialogs::showQuestion(this,"Do you want to load latest project?\n\nLatest project was '" + 
+				Util::FileSystem::cutNameWithoutBackSlash(lastSavedProject) + "'.")){
+					loadProjectState(lastSavedProject);
+				}
+			}
+		}
+	}
 }
 
 
