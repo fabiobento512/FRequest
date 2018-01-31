@@ -72,7 +72,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lbResponseBodyWarningMessage->hide();
     ui->lbResponseBodyWarningIcon->setMaximumSize(0,0);
     ui->lbResponseBodyWarningMessage->setMaximumSize(0,0);
-    ui->lbResponseBodyWarningMessage->setToolTip(ui->lbResponseBodyWarningMessage->text());
 
     // Hide key value table for now (the raw textedit is displayed by default)
     ui->twRequestBodyKeyValue->setMaximumSize(0,0);
@@ -458,9 +457,8 @@ void MainWindow::replyFinished(QNetworkReply *reply){
     if(reply->error() == QNetworkReply::NoError)
     {
 		if(!this->authenticationIsRunning){
-			// TODO: Add an option for this and clean up this code
-			// If greater than 200 KB only give the option to download the file
-			constexpr int maxBytesForBufferAndDisplay = 200*1024;
+			// *1024 to get bytes...
+			const int maxBytesForBufferAndDisplay = this->currentSettings.maxRequestResponseDataSizeToDisplay*1024;
 			QString headersText;
 			QByteArray totalLoadedData;
 			QByteArray currentData;
@@ -491,6 +489,9 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 				totalLoadedData.append(currentData);
 				ui->lbResponseBodyWarningIcon->show();
 				ui->lbResponseBodyWarningMessage->show();
+				ui->lbResponseBodyWarningMessage->setText("Return data size is greater than " + 
+				QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB, only displaying the first " + 
+				QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB.");
 			}
 
 			if(ui->cbDownloadResponseAsFile->isChecked())

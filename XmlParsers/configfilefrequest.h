@@ -80,6 +80,7 @@ public:
 	
     struct Settings{
         unsigned int requestTimeout = 20;
+		unsigned int maxRequestResponseDataSizeToDisplay = 200;
         OnStartupOption onStartupSelectedOption = OnStartupOption::ASK_TO_LOAD_LAST_PROJECT;
         QString lastProjectPath;
         QString lastResponseFilePath;

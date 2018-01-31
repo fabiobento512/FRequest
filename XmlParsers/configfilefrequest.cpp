@@ -40,6 +40,7 @@ void ConfigFileFRequest::createNewConfig(){
     pugi::xml_node generalNode = rootNode.append_child("General");
 
     generalNode.append_attribute("requestTimeout").set_value(currentSettings.requestTimeout);
+	generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(currentSettings.maxRequestResponseDataSizeToDisplay);
     generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(currentSettings.onStartupSelectedOption));
     generalNode.append_attribute("lastProjectPath");
     generalNode.append_attribute("lastResponseFilePath");
@@ -90,6 +91,7 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
         generalNode.attribute("requestTimeout").set_value(newSettings.requestTimeout);
+		generalNode.attribute("maxRequestResponseDataSizeToDisplay").set_value(newSettings.maxRequestResponseDataSizeToDisplay);
         generalNode.attribute("onStartupOption").set_value(static_cast<int>(newSettings.onStartupSelectedOption));
         generalNode.attribute("lastProjectPath").set_value(QSTR_TO_CSTR(newSettings.lastProjectPath));
         generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_CSTR(newSettings.lastResponseFilePath));
@@ -241,6 +243,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
         this->currentSettings.requestTimeout = generalNode.attribute("requestTimeout").as_uint();
+		this->currentSettings.maxRequestResponseDataSizeToDisplay = generalNode.attribute("maxRequestResponseDataSizeToDisplay").as_uint();
         this->currentSettings.onStartupSelectedOption = static_cast<OnStartupOption>(generalNode.attribute("onStartupOption").as_int());
         this->currentSettings.lastProjectPath = generalNode.attribute("lastProjectPath").as_string();
         this->currentSettings.lastResponseFilePath = generalNode.attribute("lastResponseFilePath").as_string();
@@ -561,6 +564,9 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 		
 		// use ASK_TO_LOAD_LAST_PROJECT as default
 		generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(OnStartupOption::ASK_TO_LOAD_LAST_PROJECT)); 
+		
+		// Add new attribute that specifies the max response size for display in ui
+		generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(200); // 200 kb default
 		
         fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
 		

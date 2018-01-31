@@ -59,6 +59,7 @@ Change Log:
 - Added shortcut to delete requests (DEL)
 - Added an icon to delete request context menu
 - Improved config/project files upgrade code
+- Now it is possible to set the maximum response data size for display
 ----------------------------------
 1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data

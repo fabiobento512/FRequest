@@ -538,6 +538,10 @@
                            <height>16</height>
                           </size>
                          </property>
+                         <property name="toolTip">
+                          <string>If you pretend to see all the data, increase the value in preferences 
+or alternatively just download the response as file.</string>
+                         </property>
                          <property name="pixmap">
                           <pixmap resource="resources.qrc">:/icons/warning_icon.png</pixmap>
                          </property>
@@ -552,6 +556,10 @@
                           <font>
                            <pointsize>7</pointsize>
                           </font>
+                         </property>
+                         <property name="toolTip">
+                          <string>If you pretend to see all the data, increase the value in preferences 
+or alternatively just download the response as file.</string>
                          </property>
                          <property name="text">
                           <string>Return data size is greater than 200 KB, only displaying the first 200 KB.</string>
