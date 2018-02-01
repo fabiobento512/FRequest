@@ -1499,9 +1499,9 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     ui->lePath->setText(info.path);
     ui->cbRequestOverrideMainUrl->setChecked(info.bOverridesMainUrl);
     ui->leRequestOverrideMainUrl->setText(info.overrideMainUrl);
-
+	
     setRequestType(info.requestType);
-
+	
     // Aux lambda to avoid duplicated code for FORM_DATA / X_FORM_WWW_URLENCODED
     auto fFillRequestBodyKeyValueTable = [](const QVector<UtilFRequest::HttpFormKeyValueType> &bodyForm, QTableWidget * const table){
         for(const UtilFRequest::HttpFormKeyValueType &currFormKeyValue : bodyForm){
@@ -1538,8 +1538,6 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     }
     }
 
-    ui->pteRequestBody->setPlainText(info.body);
-
     formatRequestBody(getRequestCurrentSerializationFormatType());
 
     for(const UtilFRequest::HttpHeader &currentHeader : info.headers){
@@ -1547,8 +1545,6 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     }
 
     ui->cbDownloadResponseAsFile->setChecked(info.bDownloadResponseAsFile);
-
-    clearOlderResponse();
 
     this->ignoreAnyChangesToProject.UnsetCondition();
 }
@@ -2073,7 +2069,6 @@ void MainWindow::addDefaultHeaders(){
 
     UtilFRequest::RequestType currentRequestType = UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText());
 
-
     std::experimental::optional<ConfigFileFRequest::ProtocolHeader>& currentProtocolHeader = ConfigFileFRequest::getSettingsHeaderForRequestType(currentRequestType, this->currentSettings);
 
     if(currentProtocolHeader.has_value()){
@@ -2275,13 +2270,13 @@ QString MainWindow::getNewUuid(){
 }
 
 void MainWindow::saveProjectProperties(){
-
+	
     // Project properties changed, we need to save the project file and maybe the configuration file (for the authentications)
     this->unsavedChangesExist = true;
 
     updateWindowTitle();
-
-    reloadRequest(this->currentItem);
+	
+    buildFullPath(); // project url may have been updated
 
     on_actionSave_Project_triggered();
 
@@ -2359,7 +2354,7 @@ void MainWindow::on_leRequestsFilter_textChanged(const QString &arg1)
 }
 
 void MainWindow::openProjectProperties(){
-	
+
 	// Show project properties
 	ProjectProperties *projectPropertiesDialog = new ProjectProperties(this, this->currentProjectItem);
 

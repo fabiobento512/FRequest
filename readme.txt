@@ -60,6 +60,8 @@ Change Log:
 - Added an icon to delete request context menu
 - Improved config/project files upgrade code
 - Now it is possible to set the maximum response data size for display
+- Fixed bug: on a new project, after saving the project properties 
+the body data of the selected request may be cleared
 ----------------------------------
 1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data
