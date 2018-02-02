@@ -209,53 +209,7 @@ void MainWindow::on_pbSendRequest_clicked()
         ui->gbRequest->setEnabled(false);
 		
 		// Apply proxy type
-		if(this->currentSettings.useProxy){
-            QNetworkProxy proxy;
-
-            switch (this->currentSettings.proxySettings.type) {
-            case ConfigFileFRequest::ProxyType::AUTOMATIC:
-            {
-                QNetworkProxyFactory::setUseSystemConfiguration(true);
-                break;
-            }
-            case ConfigFileFRequest::ProxyType::HTTP_TRANSPARENT:
-            {
-                proxy.setType(QNetworkProxy::HttpProxy);
-                break;
-            }
-            case ConfigFileFRequest::ProxyType::HTTP:
-            {
-                proxy.setType(QNetworkProxy::HttpCachingProxy);
-                break;
-            }
-            case ConfigFileFRequest::ProxyType::SOCKS5:
-            {
-                proxy.setType(QNetworkProxy::Socks5Proxy);
-                break;
-            }
-            default:
-            {
-                QString errorMessage = "Unknown proxy type set! '" + QString::number(static_cast<unsigned int>(this->currentSettings.proxySettings.type)) + "'. Check the proxy settings.";
-                Util::Dialogs::showError(errorMessage);
-                LOG_ERROR << errorMessage;
-                Util::StatusBar::showError(ui->statusBar, errorMessage);
-                return;
-            }
-            }
-
-            if(this->currentSettings.proxySettings.type != ConfigFileFRequest::ProxyType::AUTOMATIC){
-                QNetworkProxyFactory::setUseSystemConfiguration(false);
-                proxy.setHostName(this->currentSettings.proxySettings.hostName);
-                proxy.setPort(this->currentSettings.proxySettings.portNumber);
-                QNetworkProxy::setApplicationProxy(proxy);
-                this->networkAccessManager.setProxy(proxy);
-            }
-        }
-        else{
-            QNetworkProxy proxy;
-            proxy.setType(QNetworkProxy::NoProxy);
-            this->networkAccessManager.setProxy(proxy);
-        }
+		ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
 		
 		QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
 		
@@ -1900,6 +1854,12 @@ void MainWindow::on_actionShow_Request_Types_Icons_triggered(bool checked)
     setAllRequestIcons(checked);
     this->currentSettings.showRequestTypesIcons = checked;
     this->ignoreAnyChangesToProject.UnsetCondition();
+}
+
+void MainWindow::on_actionCheck_for_updates_triggered()
+{
+	// This deletes itself once finished
+	UpdateChecker::startNewInstance(this->currentSettings);
 }
 
 void MainWindow::setAllRequestIcons(bool showIcon){

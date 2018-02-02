@@ -14,7 +14,7 @@
    <string>FRequest</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources.qrc">
+   <iconset resource="Resources/resources.qrc">
     <normaloff>:/icons/frequest_icon.png</normaloff>:/icons/frequest_icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -292,7 +292,7 @@
                           <string>...</string>
                          </property>
                          <property name="icon">
-                          <iconset resource="resources.qrc">
+                          <iconset resource="Resources/resources.qrc">
                            <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
                          </property>
                         </widget>
@@ -309,7 +309,7 @@
                           <string>...</string>
                          </property>
                          <property name="icon">
-                          <iconset resource="resources.qrc">
+                          <iconset resource="Resources/resources.qrc">
                            <normaloff>:/icons/plus_file.png</normaloff>:/icons/plus_file.png</iconset>
                          </property>
                         </widget>
@@ -326,7 +326,7 @@
                           <string>...</string>
                          </property>
                          <property name="icon">
-                          <iconset resource="resources.qrc">
+                          <iconset resource="Resources/resources.qrc">
                            <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
                          </property>
                         </widget>
@@ -401,7 +401,7 @@
                           <string>...</string>
                          </property>
                          <property name="icon">
-                          <iconset resource="resources.qrc">
+                          <iconset resource="Resources/resources.qrc">
                            <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
                          </property>
                         </widget>
@@ -415,7 +415,7 @@
                           <string>...</string>
                          </property>
                          <property name="icon">
-                          <iconset resource="resources.qrc">
+                          <iconset resource="Resources/resources.qrc">
                            <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
                          </property>
                         </widget>
@@ -437,7 +437,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resources.qrc">
+                  <iconset resource="Resources/resources.qrc">
                    <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
                  </property>
                  <property name="autoRaise">
@@ -543,7 +543,7 @@
 or alternatively just download the response as file.</string>
                          </property>
                          <property name="pixmap">
-                          <pixmap resource="resources.qrc">:/icons/warning_icon.png</pixmap>
+                          <pixmap resource="Resources/resources.qrc">:/icons/warning_icon.png</pixmap>
                          </property>
                          <property name="scaledContents">
                           <bool>true</bool>
@@ -602,7 +602,7 @@ or alternatively just download the response as file.</string>
                     <string>...</string>
                    </property>
                    <property name="icon">
-                    <iconset resource="resources.qrc">
+                    <iconset resource="Resources/resources.qrc">
                      <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
                    </property>
                    <property name="autoRaise">
@@ -651,7 +651,7 @@ or alternatively just download the response as file.</string>
               <string>Send Request</string>
              </property>
              <property name="icon">
-              <iconset resource="resources.qrc">
+              <iconset resource="Resources/resources.qrc">
                <normaloff>:/icons/send_request_icon.png</normaloff>:/icons/send_request_icon.png</iconset>
              </property>
              <property name="iconSize">
@@ -710,6 +710,8 @@ or alternatively just download the response as file.</string>
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionCheck_for_updates"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
@@ -866,6 +868,11 @@ or alternatively just download the response as file.</string>
     <string>Project Properties</string>
    </property>
   </action>
+  <action name="actionCheck_for_updates">
+   <property name="text">
+    <string>Check for updates</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -876,7 +883,7 @@ or alternatively just download the response as file.</string>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="Resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

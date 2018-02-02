@@ -49,7 +49,9 @@ SOURCES += main.cpp\
     Authentications/requestauthentication.cpp \
     Widgets/frequesttreewidgetprojectitem.cpp \
     Widgets/frequesttreewidgetrequestitem.cpp \
-    Widgets/frequesttreewidget.cpp
+    Widgets/frequesttreewidget.cpp \
+    updatechecker.cpp \
+    proxysetup.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -76,7 +78,9 @@ HEADERS  += mainwindow.h \
     Authentications/requestauthentication.h \
     Widgets/frequesttreewidgetprojectitem.h \
     Widgets/frequesttreewidgetrequestitem.h \
-    Widgets/frequesttreewidget.h
+    Widgets/frequesttreewidget.h \
+    updatechecker.h \
+    proxysetup.h
 
 
 FORMS    += mainwindow.ui \

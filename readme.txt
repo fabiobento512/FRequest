@@ -54,7 +54,7 @@ https://github.com/fabiobento512/FRequest
 ----------------------------------
 Change Log:
 ----------------------------------
-1.1a, 30-01-2018
+1.1a, 03-02-2018
 - Added rename request / project to requests tree context menu
 - Added shortcut to delete requests (DEL)
 - Added an icon to delete request context menu
@@ -64,6 +64,7 @@ Change Log:
 the body data of the selected request may be cleared
 - Now macOS users are warned about "App Translocation" when the application
 can't create its .config file
+- Added check for updates option in help menu
 ----------------------------------
 1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data

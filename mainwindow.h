@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QNetworkProxyFactory>
 #include <QTimer>
 #include <QTreeWidgetItem>
 #include <QStringBuilder>
@@ -47,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "preferences.h"
 #include "projectproperties.h"
 #include "utilfrequest.h"
+#include "updatechecker.h"
 #include "Widgets/frequesttreewidgetprojectitem.h"
 
 #include "XmlParsers/projectfilefrequest.h"
@@ -164,6 +164,8 @@ private slots:
     void on_leRequestsFilter_textChanged(const QString &arg1);
 	
 	void on_actionProject_Properties_triggered();
+
+    void on_actionCheck_for_updates_triggered();
 
 signals:
     void signalAppIsLoaded();
