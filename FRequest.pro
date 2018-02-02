@@ -18,11 +18,11 @@ TARGET = FRequest
 TEMPLATE = app
 
 macx {
-ICON = frequest_icon.icns # mac os icon
+ICON = Resources/frequest_icon.icns # mac os icon
 }
 
 win32 {
-    RC_FILE = icon_resource.rc #for windows explorer icon
+    RC_FILE = Resources/icon_resource.rc #for windows explorer icon
 }
 
 SOURCES += main.cpp\
@@ -85,4 +85,9 @@ FORMS    += mainwindow.ui \
     projectproperties.ui
 
 RESOURCES += \
-    resources.qrc
+    Resources/resources.qrc
+
+macx {
+RESOURCES += \
+    Resources/macos_resources.qrc
+}

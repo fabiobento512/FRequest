@@ -62,6 +62,8 @@ Change Log:
 - Now it is possible to set the maximum response data size for display
 - Fixed bug: on a new project, after saving the project properties 
 the body data of the selected request may be cleared
+- Now macOS users are warned about "App Translocation" when the application
+can't create its .config file
 ----------------------------------
 1.1, 28-01-2018
 - Morphed the QTextEdits to QPlainTextEdits in order to increase render performance for requests and responses data

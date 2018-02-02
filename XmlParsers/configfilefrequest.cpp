@@ -71,9 +71,24 @@ void ConfigFileFRequest::createNewConfig(){
     defaultHeadersNode.append_attribute("useDefaultHeaders").set_value(currentSettings.defaultHeaders.useDefaultHeaders);
 
     if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-        QString errorMessage = "An error ocurred while creating the FRequest config file. Application needs to abort.";
+		#ifdef Q_OS_MAC
+			QString errorMessage = "An error ocurred while creating the FRequest config file.<br/>"
+			"Make sure the application is placed on a writable location."
+			"<hr/>"
+			"This problem can be caused by \"App Translocation\" more information <a href='https://github.com/fabiobento512/FRequest/issues/5'>here</a>.<br/>"
+			"As workaround please try to move FRequest.app using finder to another folder with write permission, for instance your \"Documents\" folder, and then try to open it again.<br/><br/>"
+			"<img src=':/help/macos_apptrans_workaround.png'/>"
+			"<hr/>"
+			"Application needs to abort.";
+			const bool richError = true;
+		#else
+			QString errorMessage = "An error ocurred while creating the FRequest config file.\n"
+			"Make sure the application is placed on a writable location.\n"
+			"Application needs to abort.";
+			const bool richError = false;
+		#endif
         LOG_FATAL << errorMessage;
-        Util::Dialogs::showError(errorMessage);
+        Util::Dialogs::showError(errorMessage, richError);
         exit(1);
     }
 

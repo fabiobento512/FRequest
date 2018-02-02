@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/help">
+        <file>macos_apptrans_workaround.png</file>
+    </qresource>
+</RCC>
