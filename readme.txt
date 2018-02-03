@@ -55,7 +55,7 @@ https://github.com/fabiobento512/FRequest
 Change Log:
 ----------------------------------
 1.1a, 03-02-2018
-- Added rename request / project to requests tree context menu
+- Added rename request / project to requests tree context menu (thanks pingzing!)
 - Added shortcut to delete requests (DEL)
 - Added an icon to delete request context menu
 - Improved config/project files upgrade code
