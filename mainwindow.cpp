@@ -109,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->tbAbortRequest.setToolTip("Abort current request");
     connect(&this->tbAbortRequest , SIGNAL (clicked()), this, SLOT(tbAbortRequest_clicked())); // connect button click to our slot function
     connect(&this->networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
-	connect(ui->treeWidget, SIGNAL(deleteKeyPressed()), this, SLOT(treeWidgetDeleteKeyPressed()));
+    connect(ui->treeWidget, SIGNAL(deleteKeyPressed()), this, SLOT(treeWidgetDeleteKeyPressed()));
     ui->statusBar->addPermanentWidget(&this->tbAbortRequest);
     this->lbRequestInfo.hide();
     this->pbRequestProgress.hide();
@@ -169,22 +169,22 @@ void MainWindow::applicationHasLoaded(){
     this->ignoreAnyChangesToProject.UnsetCondition();
 
     if(this->currentSettings.recentProjectsPaths.size() > 0){
-		
-		const QString &lastSavedProject = this->currentSettings.recentProjectsPaths[0];
-		
-		if(!lastSavedProject.isEmpty()){
-		
-			if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT){
-				loadProjectState(lastSavedProject);
-			}
-			else if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::ASK_TO_LOAD_LAST_PROJECT){
-				if(Util::Dialogs::showQuestion(this,"Do you want to load latest project?\n\nLatest project was '" + 
-				Util::FileSystem::cutNameWithoutBackSlash(lastSavedProject) + "'.")){
-					loadProjectState(lastSavedProject);
-				}
-			}
-		}
-	}
+
+        const QString &lastSavedProject = this->currentSettings.recentProjectsPaths[0];
+
+        if(!lastSavedProject.isEmpty()){
+
+            if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT){
+                loadProjectState(lastSavedProject);
+            }
+            else if(this->currentSettings.onStartupSelectedOption == ConfigFileFRequest::OnStartupOption::ASK_TO_LOAD_LAST_PROJECT){
+                if(Util::Dialogs::showQuestion(this,"Do you want to load latest project?\n\nLatest project was '" +
+                                               Util::FileSystem::cutNameWithoutBackSlash(lastSavedProject) + "'.")){
+                    loadProjectState(lastSavedProject);
+                }
+            }
+        }
+    }
 }
 
 
@@ -196,68 +196,68 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pbSendRequest_clicked()
 {
-	
+
     if(formKeyValueInBodyIsValid()){
-		
-		 // Disable until this request is finished
+
+        // Disable until this request is finished
         ui->pbSendRequest->setEnabled(false);
         this->lbRequestInfo.show();
         this->pbRequestProgress.show();
         this->tbAbortRequest.show();
         this->pbRequestProgress.setValue(0);
-		ui->gbProject->setEnabled(false);
+        ui->gbProject->setEnabled(false);
         ui->gbRequest->setEnabled(false);
-		
-		// Apply proxy type
-		ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
-		
-		QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
-		
-		// Attempt to authenticate if we have authentication and its the first request in this project
+
+        // Apply proxy type
+        ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
+
+        QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
+
+        // Attempt to authenticate if we have authentication and its the first request in this project
         if(this->currentProjectItem->authData != nullptr){
-				
-			// We only apply the authentication to urls of the project, overriden urls don't have the auth applied
-			if(!ui->cbRequestOverrideMainUrl->isChecked()){
-				switch(this->currentProjectItem->authData->type){
-					case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
-					{
-						if(!this->currentProjectAuthenticationWasMade)
-						{
-							this->lbRequestInfo.setText("Authenticating using the request provided...");
 
-							applyRequestAuthentication();
-							
-							// If there was an error with the authorization don't proceed
-							if(!this->currentProjectAuthenticationWasMade){
-								return;
-							}
-						}
-						break;
-					}
-					case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
-					{
-						const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
-						
-						UtilFRequest::HttpHeader currentHeader;
+            // We only apply the authentication to urls of the project, overriden urls don't have the auth applied
+            if(!ui->cbRequestOverrideMainUrl->isChecked()){
+                switch(this->currentProjectItem->authData->type){
+                case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
+                {
+                    if(!this->currentProjectAuthenticationWasMade)
+                    {
+                        this->lbRequestInfo.setText("Authenticating using the request provided...");
 
-						currentHeader.name = "Authorization";
-						currentHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
-						
-						requestFinalHeaders.append(currentHeader);
-						
-						break;
-					}
-					default:
-					{
-						QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(this->currentProjectItem->authData->type)) + "'. Program can't proceed.";
-						Util::Dialogs::showError(errorMessage);
-						LOG_FATAL << errorMessage;
-						exit(1);
-					}
-				}	
-			}
-		}
-		
+                        applyRequestAuthentication();
+
+                        // If there was an error with the authorization don't proceed
+                        if(!this->currentProjectAuthenticationWasMade){
+                            return;
+                        }
+                    }
+                    break;
+                }
+                case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
+                {
+                    const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
+
+                    UtilFRequest::HttpHeader currentHeader;
+
+                    currentHeader.name = "Authorization";
+                    currentHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
+
+                    requestFinalHeaders.append(currentHeader);
+
+                    break;
+                }
+                default:
+                {
+                    QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(this->currentProjectItem->authData->type)) + "'. Program can't proceed.";
+                    Util::Dialogs::showError(errorMessage);
+                    LOG_FATAL << errorMessage;
+                    exit(1);
+                }
+                }
+            }
+        }
+
         this->ignoreAnyChangesToProject.SetCondition();
         formatRequestBody(getRequestCurrentSerializationFormatType());
         this->ignoreAnyChangesToProject.UnsetCondition();
@@ -267,7 +267,7 @@ void MainWindow::on_pbSendRequest_clicked()
 
         // Clear previous request data:
         clearOlderResponse();
-		
+
         this->currentReply = processHttpRequest
                 (
                     UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText()),
@@ -284,58 +284,58 @@ void MainWindow::on_pbSendRequest_clicked()
 }
 
 void MainWindow::applyRequestAuthentication(){
-	
-	std::shared_ptr<FRequestAuthentication> authData = this->currentProjectItem->authData;
+
+    std::shared_ptr<FRequestAuthentication> authData = this->currentProjectItem->authData;
 
 
-	if(authData->type != FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION)
-	{
-		QString errorMessage = "Authentication is not a REQUEST_AUTHENTICATION. Please report this error.";
-		Util::Dialogs::showError(errorMessage);
-		LOG_ERROR << errorMessage;
-		return;
-	}
-	
-	this->authenticationIsRunning = true;
-	
-	const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(authData.get());
+    if(authData->type != FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION)
+    {
+        QString errorMessage = "Authentication is not a REQUEST_AUTHENTICATION. Please report this error.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_ERROR << errorMessage;
+        return;
+    }
 
-	const FRequestTreeWidgetRequestItem * const authRequestItem =
-			this->currentProjectItem->getChildRequestByUuid(concreteAuthData->requestForAuthenticationUuid);
+    this->authenticationIsRunning = true;
 
-	QString mainUrl;
+    const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(authData.get());
 
-	if(authRequestItem->itemContent.bOverridesMainUrl){
-		mainUrl = authRequestItem->itemContent.overrideMainUrl;
-	}
-	else{
-		mainUrl = this->currentProjectItem->projectMainUrl;
-	}
+    const FRequestTreeWidgetRequestItem * const authRequestItem =
+            this->currentProjectItem->getChildRequestByUuid(concreteAuthData->requestForAuthenticationUuid);
 
-	// Wait for authentication request synchronously
-	// https://stackoverflow.com/a/5496468/1499019
-	QEventLoop loop;
-	connect(this, SIGNAL(signalRequestFinishedAndProcessed()), &loop, SLOT(quit()));
-	
-	QVector<UtilFRequest::HttpHeader> finalAuthRequestHeaders = authRequestItem->itemContent.headers;
-	
-	// Apply auth data to headers if it the placeholder fields are found
-	for(UtilFRequest::HttpHeader &currentHeader : finalAuthRequestHeaders){
-		currentHeader.name = UtilFRequest::replaceFRequestAuthenticationPlaceholders(currentHeader.name, concreteAuthData->username, concreteAuthData->password);
+    QString mainUrl;
+
+    if(authRequestItem->itemContent.bOverridesMainUrl){
+        mainUrl = authRequestItem->itemContent.overrideMainUrl;
+    }
+    else{
+        mainUrl = this->currentProjectItem->projectMainUrl;
+    }
+
+    // Wait for authentication request synchronously
+    // https://stackoverflow.com/a/5496468/1499019
+    QEventLoop loop;
+    connect(this, SIGNAL(signalRequestFinishedAndProcessed()), &loop, SLOT(quit()));
+
+    QVector<UtilFRequest::HttpHeader> finalAuthRequestHeaders = authRequestItem->itemContent.headers;
+
+    // Apply auth data to headers if it the placeholder fields are found
+    for(UtilFRequest::HttpHeader &currentHeader : finalAuthRequestHeaders){
+        currentHeader.name = UtilFRequest::replaceFRequestAuthenticationPlaceholders(currentHeader.name, concreteAuthData->username, concreteAuthData->password);
         currentHeader.value = UtilFRequest::replaceFRequestAuthenticationPlaceholders(currentHeader.value, concreteAuthData->username, concreteAuthData->password);
-	}
-	
-	this->currentReply = processHttpRequest(
-				authRequestItem->itemContent.requestType,
-				getFullPathFromMainUrlAndPath(mainUrl, UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.path, concreteAuthData->username, concreteAuthData->password)),
-				UtilFRequest::getBodyTypeString(authRequestItem->itemContent.bodyType),
-				UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.body, concreteAuthData->username, concreteAuthData->password),
-				finalAuthRequestHeaders
+    }
+
+    this->currentReply = processHttpRequest(
+                authRequestItem->itemContent.requestType,
+                getFullPathFromMainUrlAndPath(mainUrl, UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.path, concreteAuthData->username, concreteAuthData->password)),
+                UtilFRequest::getBodyTypeString(authRequestItem->itemContent.bodyType),
+                UtilFRequest::replaceFRequestAuthenticationPlaceholders(authRequestItem->itemContent.body, concreteAuthData->username, concreteAuthData->password),
+                finalAuthRequestHeaders
                 );
-				
-	// checkForQNetworkAccessManagerTimeout(this->currentReply.value()); // TODO: check why this is causing problems
-				
-	loop.exec();
+
+    // checkForQNetworkAccessManagerTimeout(this->currentReply.value()); // TODO: check why this is causing problems
+
+    loop.exec();
 }
 
 // Since QNetworkReply doesn't have a way to set a timeout we need implement it by ourselves
@@ -359,19 +359,19 @@ void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
     else
     {
         // timeout
-		
-		QString errorMessage = "Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds";
-		
-		if(this->authenticationIsRunning){
-			Util::Dialogs::showError(errorMessage);
-		}
-		else{
-			ui->lbStatus->setText("-1");
-			ui->lbDescription->setText(errorMessage);
-			ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
-		}
-		
-		LOG_ERROR << errorMessage;
+
+        QString errorMessage = "Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds";
+
+        if(this->authenticationIsRunning){
+            Util::Dialogs::showError(errorMessage);
+        }
+        else{
+            ui->lbStatus->setText("-1");
+            ui->lbDescription->setText(errorMessage);
+            ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+        }
+
+        LOG_ERROR << errorMessage;
 
         this->lastReplyStatusError = -1;
 
@@ -383,202 +383,202 @@ void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
 
 void MainWindow::replyFinished(QNetworkReply *reply){
 
-	QString requestReturnCode;
-	QString requestReturnMessage;
-	bool isError = false;
-	bool isToRetryWithAuthentication = false;
-	
-	// -1 means we have set a custom error, we don't want to override that one
+    QString requestReturnCode;
+    QString requestReturnMessage;
+    bool isError = false;
+    bool isToRetryWithAuthentication = false;
+
+    // -1 means we have set a custom error, we don't want to override that one
     if(this->lastReplyStatusError != -1 && reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()){ // success request
-		requestReturnCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
-		requestReturnMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+        requestReturnCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
+        requestReturnMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
     }
     else if(this->lastReplyStatusError == 0 && reply->error() != QNetworkReply::NoError){
-		requestReturnCode = "N/A";
-		requestReturnMessage = reply->errorString() + " - Error " + QString::number(reply->error());
-		isError = true;
+        requestReturnCode = "N/A";
+        requestReturnMessage = reply->errorString() + " - Error " + QString::number(reply->error());
+        isError = true;
     }
-	
-	if(!this->authenticationIsRunning){
-		ui->lbStatus->setText(requestReturnCode);
-		ui->lbDescription->setText(requestReturnMessage);
-	}
 
-	if(!this->authenticationIsRunning){
-		ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
-	}
-	
+    if(!this->authenticationIsRunning){
+        ui->lbStatus->setText(requestReturnCode);
+        ui->lbDescription->setText(requestReturnMessage);
+    }
+
+    if(!this->authenticationIsRunning){
+        ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
+    }
+
     if(reply->error() == QNetworkReply::NoError)
     {
-		if(!this->authenticationIsRunning){
-			// *1024 to get bytes...
-			const int maxBytesForBufferAndDisplay = this->currentSettings.maxRequestResponseDataSizeToDisplay*1024;
-			QString headersText;
-			QByteArray totalLoadedData;
-			QByteArray currentData;
+        if(!this->authenticationIsRunning){
+            // *1024 to get bytes...
+            const int maxBytesForBufferAndDisplay = this->currentSettings.maxRequestResponseDataSizeToDisplay*1024;
+            QString headersText;
+            QByteArray totalLoadedData;
+            QByteArray currentData;
 
-			// Read the bytes to display
-			totalLoadedData = reply->read(maxBytesForBufferAndDisplay);
+            // Read the bytes to display
+            totalLoadedData = reply->read(maxBytesForBufferAndDisplay);
 
-			for(const QNetworkReply::RawHeaderPair &currentPair : reply->rawHeaderPairs()){
-				headersText += currentPair.first + ": " + currentPair.second + "\n";
-			}
+            for(const QNetworkReply::RawHeaderPair &currentPair : reply->rawHeaderPairs()){
+                headersText += currentPair.first + ": " + currentPair.second + "\n";
+            }
 
-			ui->pteResponseHeaders->document()->setPlainText(headersText);
+            ui->pteResponseHeaders->document()->setPlainText(headersText);
 
-			UtilFRequest::SerializationFormatType serializationType = UtilFRequest::getSerializationFormatTypeForString(totalLoadedData);
+            UtilFRequest::SerializationFormatType serializationType = UtilFRequest::getSerializationFormatTypeForString(totalLoadedData);
 
-			if(ui->actionFormat_Response_Body->isChecked()){
-				ui->pteResponseBody->document()->setPlainText(UtilFRequest::getStringFormattedForSerializationType(totalLoadedData, serializationType));
-				formatResponseBody(serializationType);
-			}
-			else{
-				ui->pteResponseBody->document()->setPlainText(totalLoadedData);
-			}
+            if(ui->actionFormat_Response_Body->isChecked()){
+                ui->pteResponseBody->document()->setPlainText(UtilFRequest::getStringFormattedForSerializationType(totalLoadedData, serializationType));
+                formatResponseBody(serializationType);
+            }
+            else{
+                ui->pteResponseBody->document()->setPlainText(totalLoadedData);
+            }
 
-			// Check if there are more bytes to read
-			// (they will not be displayed on the interface, but they can be saved to a file and a warning in the interface will be displayed)
-			currentData = reply->read(maxBytesForBufferAndDisplay);
-			if(currentData.size() > 0){
-				totalLoadedData.append(currentData);
-				ui->lbResponseBodyWarningIcon->show();
-				ui->lbResponseBodyWarningMessage->show();
-				ui->lbResponseBodyWarningMessage->setText("Return data size is greater than " + 
-				QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB, only displaying the first " + 
-				QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB.");
-			}
+            // Check if there are more bytes to read
+            // (they will not be displayed on the interface, but they can be saved to a file and a warning in the interface will be displayed)
+            currentData = reply->read(maxBytesForBufferAndDisplay);
+            if(currentData.size() > 0){
+                totalLoadedData.append(currentData);
+                ui->lbResponseBodyWarningIcon->show();
+                ui->lbResponseBodyWarningMessage->show();
+                ui->lbResponseBodyWarningMessage->setText("Return data size is greater than " +
+                                                          QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB, only displaying the first " +
+                                                          QString::number(this->currentSettings.maxRequestResponseDataSizeToDisplay) + " KB.");
+            }
 
-			if(ui->cbDownloadResponseAsFile->isChecked())
-			{
+            if(ui->cbDownloadResponseAsFile->isChecked())
+            {
 
-				QString filePath;
-				QString fileName;
+                QString filePath;
+                QString fileName;
 
-				if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
-				{
-					fileName = this->lastResponseFileName;
-					filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
-				}
-				else
-				{
-					fileName = getDownloadFileName(reply);
-					filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
-															this->currentSettings.lastResponseFilePath + "/" + fileName);
-				}
+                if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
+                {
+                    fileName = this->lastResponseFileName;
+                    filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
+                }
+                else
+                {
+                    fileName = getDownloadFileName(reply);
+                    filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                            this->currentSettings.lastResponseFilePath + "/" + fileName);
+                }
 
-				if(!filePath.isEmpty())
-				{
-					this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
-					this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
+                if(!filePath.isEmpty())
+                {
+                    this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
+                    this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
 
-					QFile file(filePath);
+                    QFile file(filePath);
 
-					if (file.open(QIODevice::WriteOnly)) {
-						file.write(totalLoadedData);
+                    if (file.open(QIODevice::WriteOnly)) {
+                        file.write(totalLoadedData);
 
-						// Load remaining data using a buffer
-						do{
-							currentData = reply->read(maxBytesForBufferAndDisplay);
-							file.write(currentData);
-						}while(currentData.size() > 0);
+                        // Load remaining data using a buffer
+                        do{
+                            currentData = reply->read(maxBytesForBufferAndDisplay);
+                            file.write(currentData);
+                        }while(currentData.size() > 0);
 
-						file.close();
+                        file.close();
 
-						if(ui->actionOpen_file_after_download->isChecked()){
-							if(!QDesktopServices::openUrl("file:///"+filePath)){
-								QString errorMessage = "Could not open downloaded file: " + filePath;
-								Util::Dialogs::showError(errorMessage);
-								LOG_ERROR << errorMessage;
-								Util::StatusBar::showError(ui->statusBar, errorMessage);
-							}
-						}
+                        if(ui->actionOpen_file_after_download->isChecked()){
+                            if(!QDesktopServices::openUrl("file:///"+filePath)){
+                                QString errorMessage = "Could not open downloaded file: " + filePath;
+                                Util::Dialogs::showError(errorMessage);
+                                LOG_ERROR << errorMessage;
+                                Util::StatusBar::showError(ui->statusBar, errorMessage);
+                            }
+                        }
 
-						Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
-					}
-					else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
-						QString errorMessage = "Could not open file for writing: " + filePath;
-						Util::Dialogs::showError(errorMessage);
-						Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
-						LOG_ERROR << errorMessage;
-					}
-				}
-			}
-			else{
-				QString successMessage = "Request performed with success.";
-				
-				if(this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked()){
-					successMessage += " Since this was an url overriden request, the authentication was not applied.";
-				}
-				
-				Util::StatusBar::showSuccess(ui->statusBar, successMessage);
-			}
-		}
-		else{
-			Util::StatusBar::showSuccess(ui->statusBar, "Authenticated with success.");
-		}
-	}
+                        Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
+                    }
+                    else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
+                        QString errorMessage = "Could not open file for writing: " + filePath;
+                        Util::Dialogs::showError(errorMessage);
+                        Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
+                        LOG_ERROR << errorMessage;
+                    }
+                }
+            }
+            else{
+                QString successMessage = "Request performed with success.";
+
+                if(this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked()){
+                    successMessage += " Since this was an url overriden request, the authentication was not applied.";
+                }
+
+                Util::StatusBar::showSuccess(ui->statusBar, successMessage);
+            }
+        }
+        else{
+            Util::StatusBar::showSuccess(ui->statusBar, "Authenticated with success.");
+        }
+    }
     else if(reply->error() == QNetworkReply::OperationCanceledError){ /* ignore user aborted */ }
     else{
-		
-		// If we receive 401 and if we have an authentication and if we are allowed to retry to authenticate again, repeat the request
-		if
-		(
-			requestReturnCode == "401" && this->currentProjectItem->authData != nullptr && 
-			this->currentProjectItem->authData->retryLoginIfError401 &&
-			this->currentProjectItem->authData->type == FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION && 
-			this->currentProjectAuthenticationWasMade
-		){
-			isToRetryWithAuthentication = true;
-		}
-		
-		if(!isToRetryWithAuthentication){
-			
-			QString requestType;
-			bool overridenRequest = !this->authenticationIsRunning && this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked();
-			
-			if(this->authenticationIsRunning){
-				requestType = "Authentication";
-			}
-			else{
-				requestType = "Request";
-			}
-			
-			LOG_ERROR << requestReturnMessage;
 
-			Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
-			Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with success." + 
-			(overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : ""));
-		}
-		
-		isError = true;
+        // If we receive 401 and if we have an authentication and if we are allowed to retry to authenticate again, repeat the request
+        if
+                (
+                 requestReturnCode == "401" && this->currentProjectItem->authData != nullptr &&
+                 this->currentProjectItem->authData->retryLoginIfError401 &&
+                 this->currentProjectItem->authData->type == FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION &&
+                 this->currentProjectAuthenticationWasMade
+                 ){
+            isToRetryWithAuthentication = true;
+        }
+
+        if(!isToRetryWithAuthentication){
+
+            QString requestType;
+            bool overridenRequest = !this->authenticationIsRunning && this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked();
+
+            if(this->authenticationIsRunning){
+                requestType = "Authentication";
+            }
+            else{
+                requestType = "Request";
+            }
+
+            LOG_ERROR << requestReturnMessage;
+
+            Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
+            Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with success." +
+                                       (overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : ""));
+        }
+
+        isError = true;
 
     }
 
     this->lbRequestInfo.hide();
-	this->pbRequestProgress.hide();
-	this->tbAbortRequest.hide();
-	ui->pbSendRequest->setEnabled(true);
-	ui->gbRequest->setEnabled(true);
-	ui->gbProject->setEnabled(true);
-	this->currentReply.reset();
-	reply->deleteLater();
-	
-	if(this->authenticationIsRunning){
-		this->authenticationIsRunning = false;
-		
-		if(!isError){
-			this->currentProjectAuthenticationWasMade = true;
-		}
-		
-	}
-	
-	emit signalRequestFinishedAndProcessed();
-	
-	if(isToRetryWithAuthentication){
-		this->currentProjectAuthenticationWasMade = false;
-		on_pbSendRequest_clicked();
-	}
-	
+    this->pbRequestProgress.hide();
+    this->tbAbortRequest.hide();
+    ui->pbSendRequest->setEnabled(true);
+    ui->gbRequest->setEnabled(true);
+    ui->gbProject->setEnabled(true);
+    this->currentReply.reset();
+    reply->deleteLater();
+
+    if(this->authenticationIsRunning){
+        this->authenticationIsRunning = false;
+
+        if(!isError){
+            this->currentProjectAuthenticationWasMade = true;
+        }
+
+    }
+
+    emit signalRequestFinishedAndProcessed();
+
+    if(isToRetryWithAuthentication){
+        this->currentProjectAuthenticationWasMade = false;
+        on_pbSendRequest_clicked();
+    }
+
 }
 
 void MainWindow::on_leRequestOverrideMainUrl_textChanged(const QString &)
@@ -739,23 +739,23 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
     // Common actions
     std::unique_ptr<QAction> addNewRequest = std::make_unique<QAction>("Add new request", myTree);
-	std::unique_ptr<QAction> renameItem = nullptr;
+    std::unique_ptr<QAction> renameItem = nullptr;
 
     if(ui->treeWidget->currentItem() == this->currentProjectItem){ // Project
-		renameItem = std::make_unique<QAction>("Rename project", myTree);
+        renameItem = std::make_unique<QAction>("Rename project", myTree);
         openProjectLocation = std::make_unique<QAction>("Open project location", myTree);
         menu->addAction(openProjectLocation.get());
         menu->addSeparator();
         menu->addAction(addNewRequest.get());
-		menu->addAction(renameItem.get());
+        menu->addAction(renameItem.get());
         menu->addSeparator();
         projectProperties = std::make_unique<QAction>("Project properties", myTree);
         menu->addAction(projectProperties.get());
     }
     else{ // Requests
-		renameItem = std::make_unique<QAction>("Rename request", myTree);
+        renameItem = std::make_unique<QAction>("Rename request", myTree);
         menu->addAction(addNewRequest.get());
-		menu->addAction(renameItem.get());
+        menu->addAction(renameItem.get());
         cloneRequest =  std::make_unique<QAction>(QIcon(":/icons/clone_icon.png"), "Clone request", myTree);
         menu->addAction(cloneRequest.get());
         menu->addSeparator();
@@ -779,15 +779,19 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         }
     }
 
-	// Shortcuts info display for the users
-	renameItem->setShortcut(Qt::Key_F2);
-	renameItem->setShortcutVisibleInContextMenu(true);
-	
-	if(deleteRequest != nullptr){
-		deleteRequest->setShortcut(Qt::Key_Delete);
-		deleteRequest->setShortcutVisibleInContextMenu(true);
-	}
-	
+    // Shortcuts info display for the users
+#ifdef Q_OS_MAC
+    renameItem->setShortcut(Qt::Key_Return);
+#else
+    renameItem->setShortcut(Qt::Key_F2);
+#endif
+    renameItem->setShortcutVisibleInContextMenu(true);
+
+    if(deleteRequest != nullptr){
+        deleteRequest->setShortcut(Qt::Key_Delete);
+        deleteRequest->setShortcutVisibleInContextMenu(true);
+    }
+
     // Disable show in explorer if we don't have any project saved to disk
     if(openProjectLocation != nullptr && this->lastProjectFilePath.isEmpty()){
         openProjectLocation->setEnabled(false);
@@ -836,8 +840,8 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
 
         this->ignoreAnyChangesToProject.UnsetCondition();
     }
-	else if(selectedOption == renameItem.get()){
-		ui->treeWidget->editItem(ui->treeWidget->currentItem());
+    else if(selectedOption == renameItem.get()){
+        ui->treeWidget->editItem(ui->treeWidget->currentItem());
     }
     else if(selectedOption == cloneRequest.get()){
         this->unsavedChangesExist = true;
@@ -868,7 +872,7 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         removeRequest(FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem()));
     }
     else if(selectedOption == projectProperties.get()){
-		openProjectProperties();
+        openProjectProperties();
     }
 }
 
@@ -1127,8 +1131,8 @@ void MainWindow::setNewProject(){
     updateWindowTitle(); // it doesn't get called automatically here
 
     this->ignoreAnyChangesToProject.UnsetCondition();
-	
-	
+
+
 }
 
 QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
@@ -1453,9 +1457,9 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     ui->lePath->setText(info.path);
     ui->cbRequestOverrideMainUrl->setChecked(info.bOverridesMainUrl);
     ui->leRequestOverrideMainUrl->setText(info.overrideMainUrl);
-	
+
     setRequestType(info.requestType);
-	
+
     // Aux lambda to avoid duplicated code for FORM_DATA / X_FORM_WWW_URLENCODED
     auto fFillRequestBodyKeyValueTable = [](const QVector<UtilFRequest::HttpFormKeyValueType> &bodyForm, QTableWidget * const table){
         for(const UtilFRequest::HttpFormKeyValueType &currFormKeyValue : bodyForm){
@@ -1539,7 +1543,7 @@ void MainWindow::clearEverything(){
     this->currentItem = nullptr;
     this->currentProjectItem = nullptr;
     ui->treeWidget->clear();
-	ui->leRequestsFilter->clear();
+    ui->leRequestsFilter->clear();
     clearRequestAndResponse();
 }
 
@@ -1858,8 +1862,8 @@ void MainWindow::on_actionShow_Request_Types_Icons_triggered(bool checked)
 
 void MainWindow::on_actionCheck_for_updates_triggered()
 {
-	// This deletes itself once finished
-	UpdateChecker::startNewInstance(this->currentSettings);
+    // This deletes itself once finished
+    UpdateChecker::startNewInstance(this->currentSettings);
 }
 
 void MainWindow::setAllRequestIcons(bool showIcon){
@@ -1891,15 +1895,15 @@ void MainWindow::on_cbDownloadResponseAsFile_toggled(bool)
 
 void MainWindow::tbAbortRequest_clicked()
 {
-	QString typeRequest;
-	
-	if(this->authenticationIsRunning){
-		typeRequest = "Authentication";
-	}
-	else{
-		typeRequest = "Request";
-	}
-	
+    QString typeRequest;
+
+    if(this->authenticationIsRunning){
+        typeRequest = "Authentication";
+    }
+    else{
+        typeRequest = "Request";
+    }
+
     if(Util::Dialogs::showQuestion(this,"Are you sure you want to abort the current " + typeRequest + "?")){
         if(this->currentReply.has_value()){
             this->currentReply.value()->abort();
@@ -1961,7 +1965,7 @@ void MainWindow::on_tbCopyToClipboardRequest_clicked()
 
         return result;
     };
-	
+
     if(ui->twRequest->tabText(ui->twRequest->currentIndex()) == "Body"){
         switch(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText())){
         case UtilFRequest::BodyType::RAW:
@@ -2230,12 +2234,12 @@ QString MainWindow::getNewUuid(){
 }
 
 void MainWindow::saveProjectProperties(){
-	
+
     // Project properties changed, we need to save the project file and maybe the configuration file (for the authentications)
     this->unsavedChangesExist = true;
 
     updateWindowTitle();
-	
+
     buildFullPath(); // project url may have been updated
 
     on_actionSave_Project_triggered();
@@ -2280,48 +2284,48 @@ void MainWindow::saveProjectProperties(){
 void MainWindow::on_leRequestsFilter_textChanged(const QString &arg1)
 {
     QString trimmedFilter = arg1.trimmed();
-	
-	QPalette palette; // to set filter background color
-	
-	if(trimmedFilter.isEmpty()){ // if filter is empty
-		ui->treeWidget->headerItem()->setText(0, "Requests");
-		palette.setColor(QPalette::Base, ui->lePath->palette().color(QPalette::Base)); // just use another text box to get the default value
-		ui->leRequestsFilter->setPalette(palette);
-	
-		if(this->currentProjectItem != nullptr){
-			for(int i=0; i<this->currentProjectItem->childCount(); i++){
-				this->currentProjectItem->child(i)->setHidden(false);
-			}
-		}
-	}
-	else{
-		ui->treeWidget->headerItem()->setText(0, "Requests (filtred)");
-		palette.setColor(QPalette::Base, 0xFFFACD /* LemonChiffon */);
-		ui->leRequestsFilter->setPalette(palette);
-		
-		// Show only the ones which the name match the filter
-		if(this->currentProjectItem != nullptr){
-			for(int i=0; i<this->currentProjectItem->childCount(); i++){
-				if(!this->currentProjectItem->child(i)->text(0).contains(trimmedFilter, Qt::CaseInsensitive)){ // TODO change with enum
-					this->currentProjectItem->child(i)->setHidden(true);
-				}
-				else{
-					this->currentProjectItem->child(i)->setHidden(false);
-				}		
-			}
-		}
-	}
+
+    QPalette palette; // to set filter background color
+
+    if(trimmedFilter.isEmpty()){ // if filter is empty
+        ui->treeWidget->headerItem()->setText(0, "Requests");
+        palette.setColor(QPalette::Base, ui->lePath->palette().color(QPalette::Base)); // just use another text box to get the default value
+        ui->leRequestsFilter->setPalette(palette);
+
+        if(this->currentProjectItem != nullptr){
+            for(int i=0; i<this->currentProjectItem->childCount(); i++){
+                this->currentProjectItem->child(i)->setHidden(false);
+            }
+        }
+    }
+    else{
+        ui->treeWidget->headerItem()->setText(0, "Requests (filtred)");
+        palette.setColor(QPalette::Base, 0xFFFACD /* LemonChiffon */);
+        ui->leRequestsFilter->setPalette(palette);
+
+        // Show only the ones which the name match the filter
+        if(this->currentProjectItem != nullptr){
+            for(int i=0; i<this->currentProjectItem->childCount(); i++){
+                if(!this->currentProjectItem->child(i)->text(0).contains(trimmedFilter, Qt::CaseInsensitive)){ // TODO change with enum
+                    this->currentProjectItem->child(i)->setHidden(true);
+                }
+                else{
+                    this->currentProjectItem->child(i)->setHidden(false);
+                }
+            }
+        }
+    }
 }
 
 void MainWindow::openProjectProperties(){
 
-	// Show project properties
-	ProjectProperties *projectPropertiesDialog = new ProjectProperties(this, this->currentProjectItem);
+    // Show project properties
+    ProjectProperties *projectPropertiesDialog = new ProjectProperties(this, this->currentProjectItem);
 
-	// https://stackoverflow.com/a/9264888/1499019
-	connect(projectPropertiesDialog, SIGNAL (signalSaveProjectProperties()), this, SLOT(saveProjectProperties()));
-	projectPropertiesDialog->exec(); //it destroys itself when finished.
-	
+    // https://stackoverflow.com/a/9264888/1499019
+    connect(projectPropertiesDialog, SIGNAL (signalSaveProjectProperties()), this, SLOT(saveProjectProperties()));
+    projectPropertiesDialog->exec(); //it destroys itself when finished.
+
 }
 
 void MainWindow::on_actionProject_Properties_triggered()
@@ -2330,35 +2334,35 @@ void MainWindow::on_actionProject_Properties_triggered()
 }
 
 void MainWindow::removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete){
-	
-        if(Util::Dialogs::showQuestion(this, "Remove the request '" + itemToDelete->text(0) + "'?")){
 
-            QString uuidToRemove = itemToDelete->itemContent.uuid;
+    if(Util::Dialogs::showQuestion(this, "Remove the request '" + itemToDelete->text(0) + "'?")){
 
-            this->currentProjectItem->removeChild(itemToDelete);
+        QString uuidToRemove = itemToDelete->itemContent.uuid;
 
-            this->uuidsToCleanUp.append(uuidToRemove);
-            this->uuidsInUse.remove(uuidToRemove);
+        this->currentProjectItem->removeChild(itemToDelete);
 
-            if(ui->treeWidget->currentItem() != this->currentProjectItem){
-                this->currentItem = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
-            }
-            else{
-                this->currentItem = nullptr;
-            }
+        this->uuidsToCleanUp.append(uuidToRemove);
+        this->uuidsInUse.remove(uuidToRemove);
 
-            // We need to call this event manually when a item is removed (it is not called automatically in this case)
-            on_treeWidget_currentItemChanged(ui->treeWidget->currentItem(), nullptr);
-
-            setProjectHasChanged();
+        if(ui->treeWidget->currentItem() != this->currentProjectItem){
+            this->currentItem = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(ui->treeWidget->currentItem());
         }
+        else{
+            this->currentItem = nullptr;
+        }
+
+        // We need to call this event manually when a item is removed (it is not called automatically in this case)
+        on_treeWidget_currentItemChanged(ui->treeWidget->currentItem(), nullptr);
+
+        setProjectHasChanged();
+    }
 }
 
 void MainWindow::treeWidgetDeleteKeyPressed(){
-	
+
     if (this->currentItem != nullptr && ui->treeWidget->currentItem() == this->currentItem)
     {
         removeRequest(this->currentItem);
     }
-	
+
 }

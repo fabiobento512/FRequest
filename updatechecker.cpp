@@ -34,7 +34,7 @@ void UpdateChecker::checkForUpdates(){
     // Apply proxy type
     ProxySetup::setupProxyForNetworkManager(this->settings, &this->networkAccessManager);
 
-    QObject::connect(&this->networkAccessManager, &QNetworkAccessManager::finished, this, &replyFinished);
+    connect(&this->networkAccessManager, &QNetworkAccessManager::finished, this, &UpdateChecker::replyFinished);
 
     // do the request and also check for timeout
     checkForQNetworkAccessManagerTimeout(this->networkAccessManager.get(this->networkRequest));
