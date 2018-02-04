@@ -8,7 +8,7 @@ FRequest is a fast, lightweight and opensource Windows / MacOS desktop program t
 
 FRequest aims to provide a similar interface to an integrated development environment program (IDE) but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
-easily shared and work seamless with Version Control System (VCS) for collaborative work.
+easily shared and work seamless with Version Control Systems (VCS) for collaborative work.
 
 The current features of FRequest are:
 
