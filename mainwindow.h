@@ -38,8 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMap>
 #include <QStyleFactory>
 
-#include <jsonhighlighter/highlighter.h>
-#include <BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.h>
 #include <pugixml/pugixml.hpp>
 #include <ConditionalSemaphore/conditionalsemaphore.h>
 
@@ -49,6 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utilfrequest.h"
 #include "updatechecker.h"
 #include "Widgets/frequesttreewidgetprojectitem.h"
+#include "SyntaxHighlighters/frequestjsonhighlighter.h"
+#include "SyntaxHighlighters/frequestxmlhighlighter.h"
 
 #include "XmlParsers/projectfilefrequest.h"
 #include "XmlParsers/configfilefrequest.h"
@@ -258,10 +258,10 @@ private:
 	const QString operatingSystemDefaultStyle;
 	
 	// Requests Highlighters
-	Highlighter jsonRequestBodyHighligher;
-    Highlighter jsonResponseBodyHighligher;
-	BasicXMLSyntaxHighlighter xmlRequestBodyHighligher;
-	BasicXMLSyntaxHighlighter xmlResponseBodyHighligher;
+	FRequestJSONHighlighter jsonRequestBodyHighligher;
+    FRequestJSONHighlighter jsonResponseBodyHighligher;
+	FRequestXMLHighlighter xmlRequestBodyHighligher;
+	FRequestXMLHighlighter xmlResponseBodyHighligher;
     bool currentProjectAuthenticationWasMade = false;
 	bool authenticationIsRunning = false;
 

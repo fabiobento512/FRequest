@@ -51,7 +51,9 @@ SOURCES += main.cpp\
     Widgets/frequesttreewidgetrequestitem.cpp \
     Widgets/frequesttreewidget.cpp \
     updatechecker.cpp \
-    proxysetup.cpp
+    proxysetup.cpp \
+    SyntaxHighlighters/frequestjsonhighlighter.cpp \
+    SyntaxHighlighters/frequestxmlhighlighter.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -80,7 +82,9 @@ HEADERS  += mainwindow.h \
     Widgets/frequesttreewidgetrequestitem.h \
     Widgets/frequesttreewidget.h \
     updatechecker.h \
-    proxysetup.h
+    proxysetup.h \
+    SyntaxHighlighters/frequestjsonhighlighter.h \
+    SyntaxHighlighters/frequestxmlhighlighter.h
 
 
 FORMS    += mainwindow.ui \
