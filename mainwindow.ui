@@ -33,11 +33,14 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
            <item>
-            <widget class="QLineEdit" name="leRequestsFilter">
-             <property name="placeholderText">
-              <string>Requests Filter</string>
-             </property>
-            </widget>
+              <widget class="QLineEdit" name="leRequestsFilter">
+               <property name="placeholderText">
+                <string>Requests Filter</string>
+               </property>
+               <property name="clearButtonEnabled">
+                <bool>true</bool>
+               </property>
+              </widget>
            </item>
            <item>
             <widget class="FRequestTreeWidget" name="treeWidget">

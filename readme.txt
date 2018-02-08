@@ -57,6 +57,7 @@ Change Log:
 1.1b, 03-02-2018
 - Added dark theme 
 - Some changes on design and code to accommodate the new dark theme (thanks Jorgen-VikingGod!)
+- Added a clear button for the filter text box
 ----------------------------------
 1.1a, 03-02-2018
 - Added rename request / project to requests tree context menu (thanks pingzing!)
