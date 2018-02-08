@@ -34,3 +34,10 @@ https://icons8.com/icon/set/sheep/all
 
 delete icon (see license here: https://icons8.com/license/):
 https://icons8.com/icon/set/delete/all
+
+dark theme:
+Jürgen Skrotzky (Jorgen-VikingGod)
+https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle
+
+dark orange theme (currently unused, maybe in the future):
+http://discourse.techart.online/t/release-qt-dark-orange-stylesheet/2287

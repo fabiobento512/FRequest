@@ -38,6 +38,7 @@ About::About(QWidget *parent) :
                          "Sergey Podobry and the remaining contributors for plog library<br />"
                          "Jane G. (isomoar) for the JSON syntax highlighter (from SchemaBasedJSONEditor)<br />"
                          "Dmitry Ivanov for the XML syntax highlighter (from SchemaBasedJSONEditor)<br />"
+						 "Jürgen Skrotzky (Jorgen-VikingGod) for the Dark Theme<br />"
                          "<br/>"
                          "Murakumon for project folder icon (found in findicons.com)<br />"
                          "Woothemes for application icon (found in findicons.com)<br />"
@@ -45,8 +46,8 @@ About::About(QWidget *parent) :
                          "Omercetin for clipboard icon (found in iconfinder.com) <a href='https://creativecommons.org/licenses/by/3.0/'>(license)</a><br />"
                          "Icons8 for clone icon (found in <a href='https://icons8.com/'>here</a>) <a href='https://creativecommons.org/licenses/by-nd/3.0/'>(license)</a><br />"
                          "Aha-Soft Team for abort icon (found in findicons.com)<br />"
-                         "FatCow Web Hosting for warning icon (found in iconfinder.com) <a href='http://creativecommons.org/licenses/by/3.0/us/'>(license)</a>"
-						 "Icons8 for delete icon (found in <a href='https://icons8.com/'>here</a>) <a href='https://creativecommons.org/licenses/by-nd/3.0/'>(license)</a><br />"
+                         "FatCow Web Hosting for warning icon (found in iconfinder.com) <a href='http://creativecommons.org/licenses/by/3.0/us/'>(license)</a><br />"
+						 "Icons8 for delete icon (found in <a href='https://icons8.com/'>here</a>) <a href='https://creativecommons.org/licenses/by-nd/3.0/'>(license)</a>"
                          + R"(<hr/>
                          This program is free software: you can redistribute it and/or modify
                          it under the terms of the GNU General Public License as published by

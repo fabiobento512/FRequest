@@ -42,6 +42,7 @@ void ConfigFileFRequest::createNewConfig(){
     generalNode.append_attribute("requestTimeout").set_value(currentSettings.requestTimeout);
 	generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(currentSettings.maxRequestResponseDataSizeToDisplay);
     generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(currentSettings.onStartupSelectedOption));
+	generalNode.append_attribute("theme").set_value(static_cast<int>(currentSettings.theme));
     generalNode.append_attribute("lastProjectPath");
     generalNode.append_attribute("lastResponseFilePath");
     generalNode.append_attribute("showRequestTypesIcons");
@@ -108,6 +109,7 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
         generalNode.attribute("requestTimeout").set_value(newSettings.requestTimeout);
 		generalNode.attribute("maxRequestResponseDataSizeToDisplay").set_value(newSettings.maxRequestResponseDataSizeToDisplay);
         generalNode.attribute("onStartupOption").set_value(static_cast<int>(newSettings.onStartupSelectedOption));
+		generalNode.attribute("theme").set_value(static_cast<int>(newSettings.theme));
         generalNode.attribute("lastProjectPath").set_value(QSTR_TO_CSTR(newSettings.lastProjectPath));
         generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_CSTR(newSettings.lastResponseFilePath));
         generalNode.attribute("showRequestTypesIcons").set_value(newSettings.showRequestTypesIcons);
@@ -260,6 +262,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
         this->currentSettings.requestTimeout = generalNode.attribute("requestTimeout").as_uint();
 		this->currentSettings.maxRequestResponseDataSizeToDisplay = generalNode.attribute("maxRequestResponseDataSizeToDisplay").as_uint();
         this->currentSettings.onStartupSelectedOption = static_cast<OnStartupOption>(generalNode.attribute("onStartupOption").as_int());
+		this->currentSettings.theme = static_cast<FRequestTheme>(generalNode.attribute("theme").as_int());
         this->currentSettings.lastProjectPath = generalNode.attribute("lastProjectPath").as_string();
         this->currentSettings.lastResponseFilePath = generalNode.attribute("lastResponseFilePath").as_string();
         this->currentSettings.showRequestTypesIcons = generalNode.attribute("showRequestTypesIcons").as_bool();
@@ -587,8 +590,55 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 		
 		configVersion = versionAfterUpgrade;
 	}
+	if(configVersion == "1.1a"){
+		const QString versionAfterUpgrade = "1.1b";
+
+        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+
+        pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
+
+		// Add new attribute for themes
+		generalNode.append_attribute("theme").set_value(static_cast<int>(FRequestTheme::OS_DEFAULT)); 
+		
+        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
+		
+		configVersion = versionAfterUpgrade;
+	}
 	
     if(configVersion != GlobalVars::LastCompatibleVersionConfig){
         throw std::runtime_error("Can't load the config file, it is from an incompatible version. Probably newer?");
+    }
+}
+
+ConfigFileFRequest::FRequestTheme ConfigFileFRequest::geFRequestThemeByString(const QString &currentFRequestThemeText){
+
+    if(currentFRequestThemeText == "OS Default"){
+        return FRequestTheme::OS_DEFAULT;
+    }
+    else if(currentFRequestThemeText == "Jorgen's Dark Theme"){
+        return FRequestTheme::JORGEN_DARK_THEME;
+    }
+    else{
+        QString errorMessage = "FRequestTheme unknown: '" + currentFRequestThemeText + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
+}
+
+QString ConfigFileFRequest::getFRequestThemeString(const FRequestTheme currentFRequestTheme){
+
+    switch(currentFRequestTheme){
+    case FRequestTheme::OS_DEFAULT:
+        return "OS Default";
+    case FRequestTheme::JORGEN_DARK_THEME:
+        return "Jorgen's Dark Theme";
+    default:
+    {
+        QString errorMessage = "Invalid FRequestTheme " + QString::number(static_cast<int>(currentFRequestTheme)) + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
     }
 }

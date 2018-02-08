@@ -146,6 +146,8 @@ void Preferences::accept (){
         this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.remove(currProjUuid);
     }
 
+	this->currentSettings.theme = ConfigFileFRequest::geFRequestThemeByString(ui->cbTheme->currentText());
+	
     emit saveSettings();
 
     QDialog::accept();
@@ -298,6 +300,8 @@ void Preferences::loadExistingSettings(){
     ui->leProxyPort->setText(QString::number(this->currentSettings.proxySettings.portNumber));
 
     loadCurrentDefaultHeaders();
+	
+	ui->cbTheme->setCurrentText(ConfigFileFRequest::getFRequestThemeString(this->currentSettings.theme));
 }
 
 void Preferences::loadCurrentDefaultHeaders(){

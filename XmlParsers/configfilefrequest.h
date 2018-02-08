@@ -40,6 +40,11 @@ public:
         LOAD_LAST_PROJECT = 1,
 		DO_NOTHING = 100
     };
+	
+	enum class FRequestTheme{
+		OS_DEFAULT = 0,
+		JORGEN_DARK_THEME = 1
+	};
 
     struct ProtocolHeader{
         std::experimental::optional<QVector<UtilFRequest::HttpHeader>> headers_Raw;
@@ -82,6 +87,7 @@ public:
         unsigned int requestTimeout = 20;
 		unsigned int maxRequestResponseDataSizeToDisplay = 200;
         OnStartupOption onStartupSelectedOption = OnStartupOption::ASK_TO_LOAD_LAST_PROJECT;
+		FRequestTheme theme = FRequestTheme::OS_DEFAULT;
         QString lastProjectPath;
         QString lastResponseFilePath;
         bool showRequestTypesIcons = true;
@@ -99,6 +105,8 @@ public:
     ConfigFileFRequest::Settings getCurrentSettings();
     void saveSettings(Settings &newSettings);
     static std::experimental::optional<ProtocolHeader>& getSettingsHeaderForRequestType(UtilFRequest::RequestType currentRequestType, Settings &currentSettings);
+	static FRequestTheme geFRequestThemeByString(const QString &currentFRequestThemeText);
+	static QString getFRequestThemeString(const FRequestTheme currentFRequestTheme);
 private:
     void createNewConfig();
     void readSettingsFromFile();

@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QPainter>
 #include <QMap>
+#include <QStyleFactory>
 
 #include <jsonhighlighter/highlighter.h>
 #include <BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.h>
@@ -221,6 +222,9 @@ private:
 	void applyRequestAuthentication();
 	void openProjectProperties();
 	void removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete);
+	void setThemePalette();
+	void setFilterThemePalette();
+	void setTheme();
 
 public:
     static constexpr int recentProjectsMaxSize=6;
@@ -251,6 +255,7 @@ private:
     std::experimental::optional<QNetworkReply*> currentReply;
     QMap<UtilFRequest::RequestType, QIcon> generatedIconCache;
     QNetworkAccessManager networkAccessManager;
+	const QString operatingSystemDefaultStyle;
 	
 	// Requests Highlighters
 	Highlighter jsonRequestBodyHighligher;

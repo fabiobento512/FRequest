@@ -262,6 +262,27 @@ As alternative try to download the response as file (since this way it writes al
            </item>
           </widget>
          </item>
+		 <item row="2" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Theme:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="cbTheme">
+           <item>
+            <property name="text">
+             <string>OS Default</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Jorgen's Dark Theme</string>
+            </property>
+           </item>
+          </widget>
+         </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="sbMaxRequestResponseDataSizeToDisplay">
            <property name="toolTip">
