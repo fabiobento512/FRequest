@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class FRequestJSONHighlighter: public Highlighter
 {
+	Q_OBJECT
 public:
      FRequestJSONHighlighter(QTextDocument *parent = 0);
 };

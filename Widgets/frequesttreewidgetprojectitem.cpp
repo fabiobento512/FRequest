@@ -59,11 +59,10 @@ FRequestTreeWidgetRequestItem * FRequestTreeWidgetProjectItem::getChildRequestBy
     return this->mapOfChilds_UuidToRequest[requestUuid];
 }
 
-void FRequestTreeWidgetProjectItem::addChild(QTreeWidgetItem *child){
-    FRequestTreeWidgetRequestItem* const currentRequest = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(child);
+void FRequestTreeWidgetProjectItem::addRequestItemChild(FRequestTreeWidgetRequestItem * const child){
 	
 	// Add uuid to our child cache
-    this->mapOfChilds_UuidToRequest.insert(currentRequest->itemContent.uuid, currentRequest);
+    this->mapOfChilds_UuidToRequest.insert(child->itemContent.uuid, child);
 	
-	FRequestTreeWidgetItem::addChild(child);
+	addChild(child); // calls QTreeWidgetItem addChild()
 }

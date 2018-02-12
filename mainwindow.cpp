@@ -1016,7 +1016,7 @@ FRequestTreeWidgetRequestItem* MainWindow::addRequestItem(const QString &request
     FRequestTreeWidgetRequestItem *newRequest = new FRequestTreeWidgetRequestItem(QStringList() << requestName, projectUuid);
     newRequest->setToolTip(0, newRequest->text(0));
     newRequest->setFlags((newRequest->flags() | Qt::ItemIsEditable) ^ Qt::ItemIsDropEnabled); // don't allow drop inside another items
-    currentProject->addChild(newRequest);
+    currentProject->addRequestItemChild(newRequest);
 
     return newRequest;
 }

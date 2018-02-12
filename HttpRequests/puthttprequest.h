@@ -33,9 +33,9 @@ public:
             const QString &rawRequestBody,
             const QVector<UtilFRequest::HttpHeader> &requestHeaders
             );
-private:
-    QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
-	QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data);
+protected:
+    virtual QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data) override;
+	virtual QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data) override;
 };
 
 #endif // PUTHTTPREQUEST_H

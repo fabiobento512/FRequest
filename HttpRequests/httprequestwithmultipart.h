@@ -44,14 +44,8 @@ public:
 			
 	virtual ~HttpRequestWithMultiPart() = default; // needed to avoid undefined behaviour https://stackoverflow.com/a/22491471/1499019
 protected:
-#ifdef Q_OS_MAC // hinding is intended, this is a fix for clang (https://stackoverflow.com/a/20146621)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
-#endif
 	virtual QNetworkReply* sendRequest(const QNetworkRequest &request, QHttpMultiPart &data) = 0; // abstract funtion to be filled by subclasses
-#ifdef Q_OS_MAC
-#pragma clang diagnostic pop
-#endif
+	virtual QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data) = 0; // abstract funtion to be filled by subclasses
 private:
 	QNetworkReply* sendFormRequest(QNetworkRequest &request);
 };

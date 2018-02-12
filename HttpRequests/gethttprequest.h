@@ -30,8 +30,8 @@ public:
             const QString &fullPath,
             const QVector<UtilFRequest::HttpHeader> &requestHeaders
             );
-private:
-    QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data);
+protected:
+    virtual QNetworkReply* sendRequest(const QNetworkRequest &request, const QByteArray &data) override;
 };
 
 #endif // GETHTTPREQUEST_H

@@ -31,7 +31,7 @@ public:
     static FRequestTreeWidgetProjectItem* fromQTreeWidgetItem(QTreeWidgetItem* widget);
 	QString getUuid();
 	FRequestTreeWidgetRequestItem * getChildRequestByUuid(const QString &requestUuid);
-    void addChild(QTreeWidgetItem *child);
+    virtual void addRequestItemChild(FRequestTreeWidgetRequestItem * const child);
 public:
 	QString projectName;
 	QString projectMainUrl = "http://localhost/";
