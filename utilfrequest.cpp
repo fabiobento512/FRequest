@@ -191,12 +191,10 @@ QString getBodyTypeString(const BodyType currentBodyType){
     {
         return "raw";
     }
-        break;
     case UtilFRequest::BodyType::FORM_DATA:
     {
         return "form-data";
     }
-        break;
     case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
     {
         return "x-form-www-urlencoded";

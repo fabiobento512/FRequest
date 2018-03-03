@@ -1190,13 +1190,11 @@ void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * con
         requestItem->itemContent.body = ui->pteRequestBody->toPlainText();
         break;
     }
-        break;
     case UtilFRequest::BodyType::FORM_DATA:
     {
         requestItem->itemContent.bodyForm = getRequestForm();
         break;
     }
-        break;
     case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
     {
         requestItem->itemContent.bodyForm = getRequestForm();
@@ -1474,13 +1472,11 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
         ui->pteRequestBody->setPlainText(info.body);
         break;
     }
-        break;
     case UtilFRequest::BodyType::FORM_DATA:
     {
         fFillRequestBodyKeyValueTable(info.bodyForm, ui->twRequestBodyKeyValue);
         break;
     }
-        break;
     case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
     {
         fFillRequestBodyKeyValueTable(info.bodyForm, ui->twRequestBodyKeyValue);
@@ -2044,13 +2040,11 @@ void MainWindow::addDefaultHeaders(){
             currentHeaders = &currentProtocolHeader.value().headers_Raw;
             break;
         }
-            break;
         case UtilFRequest::BodyType::FORM_DATA:
         {
             currentHeaders = &currentProtocolHeader.value().headers_Form_Data;
             break;
         }
-            break;
         case UtilFRequest::BodyType::X_FORM_WWW_URLENCODED:
         {
             currentHeaders = &currentProtocolHeader.value().headers_X_form_www_urlencoded;
@@ -2373,11 +2367,13 @@ void MainWindow::setThemePaletteForCustomWidgets(){
         case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
         {
             palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
+            ui->treeWidget->setStyleSheet(""); // clear any existing stylesheet
             break;
         }
         case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
         {
             palette.setColor(QPalette::Active, QPalette::Text, palette.color(QPalette::Disabled, QPalette::Text));
+            ui->treeWidget->setStyleSheet("selection-background-color: rgba(42, 130, 218, 25%)");
             break;
         }
         default:
