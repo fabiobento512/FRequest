@@ -146,11 +146,22 @@ void Preferences::accept (){
         this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.remove(currProjUuid);
     }
 
-	this->currentSettings.theme = ConfigFileFRequest::geFRequestThemeByString(ui->cbTheme->currentText());
+    ConfigFileFRequest::FRequestTheme newTheme = ConfigFileFRequest::geFRequestThemeByString(ui->cbTheme->currentText());
+    bool giveThemeWarningToRestart = false;
+
+    if(this->currentSettings.theme != newTheme){
+        giveThemeWarningToRestart = true;
+    }
+
+    this->currentSettings.theme = newTheme;
 	
     emit saveSettings();
 
     QDialog::accept();
+
+    if(giveThemeWarningToRestart){
+        Util::Dialogs::showWarning("The theme will only be applied once you restart " + GlobalVars::AppName + ".");
+    }
 
     Util::Dialogs::showInfo("Settings saved with success!");
 }

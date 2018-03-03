@@ -2022,7 +2022,6 @@ void MainWindow::on_actionPreferences_triggered()
 
 void MainWindow::saveCurrentSettings(){
     this->configFileManager.saveSettings(this->currentSettings);
-    setTheme();
 }
 
 void MainWindow::addDefaultHeaders(){
@@ -2367,7 +2366,6 @@ void MainWindow::setThemePaletteForCustomWidgets(){
         case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
         {
             palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
-            ui->treeWidget->setStyleSheet(""); // clear any existing stylesheet
             break;
         }
         case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
@@ -2426,10 +2424,7 @@ void MainWindow::setTheme(){
     switch(this->currentSettings.theme){
     case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
     {
-        qApp->setStyleSheet("");
-        qApp->setStyle(this->operatingSystemDefaultStyle);
-        qApp->setPalette(QApplication::style()->standardPalette());
-
+        // Nothing to do
         break;
     }
     case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
