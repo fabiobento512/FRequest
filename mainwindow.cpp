@@ -23,14 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-	operatingSystemDefaultStyle(QApplication::style()->objectName())
+    operatingSystemDefaultStyle(QApplication::style()->objectName())
 {
     // We use this appender because it is the native way to have \r\n in windows in plog library
     // example: https://github.com/SergiusTheBest/plog/blob/master/samples/NativeEOL/Main.cpp
     static plog::RollingFileAppender<plog::TxtFormatter, plog::NativeEOLConverter<>> fileAppender
             (QSTR_TO_CSTR(Util::FileSystem::getAppPath() + "/" + GlobalVars::AppLogFileName), 1024*5 /* 5 Mb max log size */, 3);
     plog::init(plog::info, &fileAppender);
-	
+
     this->currentSettings = this->configFileManager.getCurrentSettings();
 
     this->ignoreAnyChangesToProject.SetCondition();
@@ -2025,8 +2025,8 @@ void MainWindow::on_actionPreferences_triggered()
 }
 
 void MainWindow::saveCurrentSettings(){
-	this->configFileManager.saveSettings(this->currentSettings);
-	setTheme();
+    this->configFileManager.saveSettings(this->currentSettings);
+    setTheme();
 }
 
 void MainWindow::addDefaultHeaders(){
@@ -2285,8 +2285,8 @@ void MainWindow::on_leRequestsFilter_textChanged(const QString &arg1)
 {
     QString trimmedFilter = arg1.trimmed();
 
-	setFilterThemePalette();
-	
+    setFilterThemePalette();
+
     if(trimmedFilter.isEmpty()){ // if filter is empty
         ui->treeWidget->headerItem()->setText(0, "Requests");
 
@@ -2363,122 +2363,132 @@ void MainWindow::treeWidgetDeleteKeyPressed(){
 
 }
 
-void MainWindow::setThemePalette(){
-	
-	setFilterThemePalette();
-	
-	QPalette palette;
+void MainWindow::setThemePaletteForCustomWidgets(){
 
-	switch(this->currentSettings.theme){
-		case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
-		{
-			palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
-			break;
-		}
-		case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
-		{
-			palette.setColor(QPalette::Active, QPalette::Text, palette.color(QPalette::Disabled, QPalette::Text));
-			break;
-		}
-		default:
-		{
-			QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
-			this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
-			Util::Dialogs::showError(errorMessage);
-			LOG_ERROR << errorMessage;
-		}
-	}
-	
-	ui->leFullPath->setPalette(palette); // Set the background color the same as disable
+    setFilterThemePalette();
+
+    QPalette palette;
+
+    switch(this->currentSettings.theme){
+        case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
+        {
+            palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
+            break;
+        }
+        case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
+        {
+            palette.setColor(QPalette::Active, QPalette::Text, palette.color(QPalette::Disabled, QPalette::Text));
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+            this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
+            Util::Dialogs::showError(errorMessage);
+            LOG_ERROR << errorMessage;
+        }
+    }
+
+    ui->leFullPath->setPalette(palette); // Set the background color the same as disable
 }
 
 void MainWindow::setFilterThemePalette(){
-	QPalette palette; // to set filter background color
-	
-	QString trimmedFilter = ui->leRequestsFilter->text().trimmed();
-	
-	if(trimmedFilter.isEmpty()){ // if filter is empty
+    QPalette palette; // to set filter background color
+
+    QString trimmedFilter = ui->leRequestsFilter->text().trimmed();
+
+    if(trimmedFilter.isEmpty()){ // if filter is empty
         palette.setColor(QPalette::Base, ui->lePath->palette().color(QPalette::Base)); // just use another text box to get the default value
     }
     else{
-		switch(this->currentSettings.theme){
-			case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
-			{
-				palette.setColor(QPalette::Base, 0xFFFACD /* "LemonChiffon" */);
-				break;
-			}
-			case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
-			{
-				palette.setColor(QPalette::Base, 0x2A82DA /* Light Blue */);
-				break;
-			}
-			default:
-			{
-				QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
-				this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
-				Util::Dialogs::showError(errorMessage);
-				LOG_ERROR << errorMessage;
-			}
-		}
-	}
-	
-	ui->leRequestsFilter->setPalette(palette);
+        switch(this->currentSettings.theme){
+            case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
+            {
+                palette.setColor(QPalette::Base, 0xFFFACD /* "LemonChiffon" */);
+                break;
+            }
+            case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
+            {
+                palette.setColor(QPalette::Base, 0x2A82DA /* Light Blue */);
+                break;
+            }
+            default:
+            {
+                QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+                this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
+                Util::Dialogs::showError(errorMessage);
+                LOG_ERROR << errorMessage;
+            }
+        }
+    }
+
+    ui->leRequestsFilter->setPalette(palette);
 }
 
 void MainWindow::setTheme(){
-	
-	switch(this->currentSettings.theme){
+
+    switch(this->currentSettings.theme){
     case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
     {
-		qApp->setPalette(QApplication::style()->standardPalette());
-		qApp->setStyle(this->operatingSystemDefaultStyle);
-		qApp->setStyleSheet("");
+        qApp->setStyleSheet("");
+        qApp->setStyle(this->operatingSystemDefaultStyle);
+        qApp->setPalette(QApplication::style()->standardPalette());
+
         break;
     }
     case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
     {
-		// From here:
-		// https://stackoverflow.com/a/45634644/1499019
-		// https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle/blob/master/DarkStyle.cpp
-		// Just removed font resizing
+        // From here:
+        // https://stackoverflow.com/a/45634644/1499019
+        // https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle/blob/master/DarkStyle.cpp
+        // Just removed font resizing
         
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-		
-		// modify palette to dark
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window,QColor(53,53,53));
-		darkPalette.setColor(QPalette::WindowText,Qt::white);
-		darkPalette.setColor(QPalette::Disabled,QPalette::WindowText,QColor(127,127,127));
-		darkPalette.setColor(QPalette::Base,QColor(42,42,42));
-		darkPalette.setColor(QPalette::AlternateBase,QColor(66,66,66));
-		darkPalette.setColor(QPalette::ToolTipBase,Qt::white);
-		darkPalette.setColor(QPalette::ToolTipText,Qt::white);
-		darkPalette.setColor(QPalette::Text,Qt::white);
-		darkPalette.setColor(QPalette::Disabled,QPalette::Text,QColor(127,127,127));
-		darkPalette.setColor(QPalette::Dark,QColor(35,35,35));
-		darkPalette.setColor(QPalette::Shadow,QColor(20,20,20));
-		darkPalette.setColor(QPalette::Button,QColor(53,53,53));
-		darkPalette.setColor(QPalette::ButtonText,Qt::white);
-		darkPalette.setColor(QPalette::Disabled,QPalette::ButtonText,QColor(127,127,127));
-		darkPalette.setColor(QPalette::BrightText,Qt::red);
-		darkPalette.setColor(QPalette::Link,QColor(42,130,218));
-		darkPalette.setColor(QPalette::Highlight,QColor(42,130,218));
-		darkPalette.setColor(QPalette::Disabled,QPalette::Highlight,QColor(80,80,80));
-		darkPalette.setColor(QPalette::HighlightedText,Qt::white);
-		darkPalette.setColor(QPalette::Disabled,QPalette::HighlightedText,QColor(127,127,127));
+        qApp->setStyle(QStyleFactory::create("Fusion"));
 
-		qApp->setPalette(darkPalette);
-		
+        // modify palette to dark
+        QPalette darkPalette;
+        darkPalette.setColor(QPalette::Window,QColor(53,53,53));
+        darkPalette.setColor(QPalette::WindowText,Qt::white);
+        darkPalette.setColor(QPalette::Disabled,QPalette::WindowText,QColor(127,127,127));
+        darkPalette.setColor(QPalette::Base,QColor(42,42,42));
+        darkPalette.setColor(QPalette::AlternateBase,QColor(66,66,66));
+        darkPalette.setColor(QPalette::ToolTipBase,Qt::white);
+        darkPalette.setColor(QPalette::ToolTipText,Qt::white);
+        darkPalette.setColor(QPalette::Text,Qt::white);
+        darkPalette.setColor(QPalette::Disabled,QPalette::Text,QColor(127,127,127));
+        darkPalette.setColor(QPalette::Dark,QColor(35,35,35));
+        darkPalette.setColor(QPalette::Shadow,QColor(20,20,20));
+        darkPalette.setColor(QPalette::Button,QColor(53,53,53));
+        darkPalette.setColor(QPalette::ButtonText,Qt::white);
+        darkPalette.setColor(QPalette::Disabled,QPalette::ButtonText,QColor(127,127,127));
+        darkPalette.setColor(QPalette::BrightText,Qt::red);
+        darkPalette.setColor(QPalette::Link,QColor(42,130,218));
+        darkPalette.setColor(QPalette::Highlight,QColor(42,130,218));
+        darkPalette.setColor(QPalette::Disabled,QPalette::Highlight,QColor(80,80,80));
+        darkPalette.setColor(QPalette::HighlightedText,Qt::white);
+        darkPalette.setColor(QPalette::Disabled,QPalette::HighlightedText,QColor(127,127,127));
+
+        qApp->setPalette(darkPalette);
+
+        // Fix for macos, if we don't do this, tabs of main window doesn't get properly rethemed
+        // Fix from here: https://gist.github.com/QuantumCD/9863860, https://forum.qt.io/topic/37154/qpalette-not-inherited-properly/12
+        // To apply only to custom themes, the default one doesn't need (it even gets broken by this)
+
+        for (QWidget* const w : this->findChildren<QWidget*>())
+        {
+            w->setPalette(darkPalette);
+        }
+
         break;
     }
     default:
     {
         QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
-		this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
-		Util::Dialogs::showError(errorMessage);
-		LOG_ERROR << errorMessage;
+        this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
+        Util::Dialogs::showError(errorMessage);
+        LOG_ERROR << errorMessage;
     }
     }
-	
-	setThemePalette();
+
+    setThemePaletteForCustomWidgets();
 }

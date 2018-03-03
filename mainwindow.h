@@ -222,7 +222,7 @@ private:
 	void applyRequestAuthentication();
 	void openProjectProperties();
 	void removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete);
-	void setThemePalette();
+	void setThemePaletteForCustomWidgets();
 	void setFilterThemePalette();
 	void setTheme();
 
