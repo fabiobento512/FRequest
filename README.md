@@ -34,6 +34,9 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 #### MacOS main interface
 <a href="images/frequest-macos.png"><img src="images/frequest-macos.png" alt="frequest macos"></a>
 
+#### Dark Theme
+<a href="images/frequest-dark-theme.png"><img src="images/frequest-dark-theme.png" alt="frequest dark theme"></a>
+
 ### FRequest preferences interface
 <a href="images/frequest-preferences-windows.png"><img src="images/frequest-preferences-windows.png" alt="frequest preferences"></a>
 
