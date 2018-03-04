@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <plog/Converters/NativeEOLConverter.h>
 #include <pugixml/pugixml.hpp>
 #include <cpp17optional/optional.hpp>
+#include <cstdint>
 
 #include <QComboBox>
 #include <QDateTime>

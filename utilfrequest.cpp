@@ -299,8 +299,14 @@ QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, c
 	QByteArray saltByteArray = ofuscationSalt.toUtf8();
     QByteArray inputByteArray = input.toUtf8();
 
-    for(int i=0; i<inputByteArray.size(); i++){
-        inputByteArray[i] = inputByteArray[i] ^ (i < (saltByteArray.size()) ? saltByteArray[i] : i);
+    // Using unsigned types as they have a defined truncation in iso c++:
+    // https://stackoverflow.com/a/34886065
+    // (so the static_cast<unsigned char> below works the same in all different systems)
+    uint32_t saltByteArraySize = static_cast<uint32_t>(saltByteArray.size());
+    uint32_t inputByteArraySize = static_cast<uint32_t>(inputByteArray.size());
+
+    for(uint32_t i=0; i< inputByteArraySize; i++){
+        inputByteArray[i] = inputByteArray[i] ^ (i < saltByteArraySize ? saltByteArray[i] : static_cast<unsigned char>(i));
     }
 
     return inputByteArray;

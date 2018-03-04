@@ -54,10 +54,11 @@ https://github.com/fabiobento512/FRequest
 ----------------------------------
 Change Log:
 ----------------------------------
-1.1b, 03-02-2018
-- Added dark theme 
-- Some changes on design and code to accommodate the new dark theme (thanks Jorgen-VikingGod!)
+1.1b, 04-03-2018
+- Added dark theme (thanks Jorgen-VikingGod!)
 - Added a clear button for the filter text box
+- Fixed possible system implementation of passwords obfuscation (you may need to re-enter your project passwords)
+- Some code refactoring (using now override C++ keyword for instance)
 ----------------------------------
 1.1a, 03-02-2018
 - Added rename request / project to requests tree context menu (thanks pingzing!)
