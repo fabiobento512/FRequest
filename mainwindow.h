@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017-2018  Fábio Bento (fabiobento512)
+Copyright (C) 2017-2019  Fábio Bento (fabiobento512)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -225,6 +225,7 @@ private:
 	void setThemePaletteForCustomWidgets();
 	void setFilterThemePalette();
 	void setTheme();
+    void downloadResponseAsFile(QNetworkReply *reply, QByteArray &totalLoadedData, QByteArray &currentData, const int maxBytesForBufferAndDisplay);
 
 public:
     static constexpr int recentProjectsMaxSize=6;

@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017-2018  Fábio Bento (fabiobento512)
+Copyright (C) 2017-2019  Fábio Bento (fabiobento512)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -407,8 +407,9 @@ void MainWindow::replyFinished(QNetworkReply *reply){
         ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
     }
 
-    if(reply->error() == QNetworkReply::NoError)
-    {
+    if(reply->error() == QNetworkReply::OperationCanceledError){ /* ignore user aborted */ }
+    else{
+
         if(!this->authenticationIsRunning){
             // *1024 to get bytes...
             const int maxBytesForBufferAndDisplay = this->currentSettings.maxRequestResponseDataSizeToDisplay*1024;
@@ -449,58 +450,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 
             if(ui->cbDownloadResponseAsFile->isChecked())
             {
-
-                QString filePath;
-                QString fileName;
-
-                if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
-                {
-                    fileName = this->lastResponseFileName;
-                    filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
-                }
-                else
-                {
-                    fileName = getDownloadFileName(reply);
-                    filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
-                                                            this->currentSettings.lastResponseFilePath + "/" + fileName);
-                }
-
-                if(!filePath.isEmpty())
-                {
-                    this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
-                    this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
-
-                    QFile file(filePath);
-
-                    if (file.open(QIODevice::WriteOnly)) {
-                        file.write(totalLoadedData);
-
-                        // Load remaining data using a buffer
-                        do{
-                            currentData = reply->read(maxBytesForBufferAndDisplay);
-                            file.write(currentData);
-                        }while(currentData.size() > 0);
-
-                        file.close();
-
-                        if(ui->actionOpen_file_after_download->isChecked()){
-                            if(!QDesktopServices::openUrl("file:///"+filePath)){
-                                QString errorMessage = "Could not open downloaded file: " + filePath;
-                                Util::Dialogs::showError(errorMessage);
-                                LOG_ERROR << errorMessage;
-                                Util::StatusBar::showError(ui->statusBar, errorMessage);
-                            }
-                        }
-
-                        Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
-                    }
-                    else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
-                        QString errorMessage = "Could not open file for writing: " + filePath;
-                        Util::Dialogs::showError(errorMessage);
-                        Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
-                        LOG_ERROR << errorMessage;
-                    }
-                }
+                downloadResponseAsFile(reply, totalLoadedData, currentData, maxBytesForBufferAndDisplay); // this call handles errors and status bar messages
             }
             else{
                 QString successMessage = "Request performed with success.";
@@ -515,41 +465,45 @@ void MainWindow::replyFinished(QNetworkReply *reply){
         else{
             Util::StatusBar::showSuccess(ui->statusBar, "Authenticated with success.");
         }
-    }
-    else if(reply->error() == QNetworkReply::OperationCanceledError){ /* ignore user aborted */ }
-    else{
 
-        // If we receive 401 and if we have an authentication and if we are allowed to retry to authenticate again, repeat the request
-        if
-                (
-                 requestReturnCode == "401" && this->currentProjectItem->authData != nullptr &&
-                 this->currentProjectItem->authData->retryLoginIfError401 &&
-                 this->currentProjectItem->authData->type == FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION &&
-                 this->currentProjectAuthenticationWasMade
-                 ){
-            isToRetryWithAuthentication = true;
-        }
+        if(reply->error() != QNetworkReply::NoError){
 
-        if(!isToRetryWithAuthentication){
-
-            QString requestType;
-            bool overridenRequest = !this->authenticationIsRunning && this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked();
-
-            if(this->authenticationIsRunning){
-                requestType = "Authentication";
-            }
-            else{
-                requestType = "Request";
+            // If we receive 401 and if we have an authentication and if we are allowed to retry to authenticate again, repeat the request
+            if
+                    (
+                     requestReturnCode == "401" && this->currentProjectItem->authData != nullptr &&
+                     this->currentProjectItem->authData->retryLoginIfError401 &&
+                     this->currentProjectItem->authData->type == FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION &&
+                     this->currentProjectAuthenticationWasMade
+                     ){
+                isToRetryWithAuthentication = true;
             }
 
-            LOG_ERROR << requestReturnMessage;
+            if(!isToRetryWithAuthentication){
 
-            Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
-            Util::StatusBar::showError(ui->statusBar, requestType + " was not performed with success." +
-                                       (overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : ""));
+                QString requestType;
+                bool overridenRequest = !this->authenticationIsRunning && this->currentProjectItem->authData != nullptr && ui->cbRequestOverrideMainUrl->isChecked();
+
+                if(this->authenticationIsRunning){
+                    requestType = "Authentication";
+                }
+                else{
+                    requestType = "Request";
+                }
+
+                LOG_ERROR << requestReturnMessage;
+
+                QString statusErrorMessage = requestType + " was not performed with success." +
+                        (overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : "");
+
+                // We show status bar error twice because if the user takes too long to click ok in error popup the message may not be seen by him
+                Util::StatusBar::showError(ui->statusBar, statusErrorMessage); // this one is necessary to override any previous message
+                Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
+                Util::StatusBar::showError(ui->statusBar, statusErrorMessage);
+            }
+
+            isError = true;
         }
-
-        isError = true;
 
     }
 
@@ -578,6 +532,60 @@ void MainWindow::replyFinished(QNetworkReply *reply){
         on_pbSendRequest_clicked();
     }
 
+}
+
+void MainWindow::downloadResponseAsFile(QNetworkReply *reply, QByteArray &totalLoadedData, QByteArray &currentData, const int maxBytesForBufferAndDisplay){
+    QString filePath;
+    QString fileName;
+
+    if(ui->actionUse_Last_Download_Location->isChecked() && !this->lastResponseFileName.isEmpty())
+    {
+        fileName = this->lastResponseFileName;
+        filePath = this->currentSettings.lastResponseFilePath + "/" + this->lastResponseFileName;
+    }
+    else
+    {
+        fileName = getDownloadFileName(reply);
+        filePath = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                this->currentSettings.lastResponseFilePath + "/" + fileName);
+    }
+
+    if(!filePath.isEmpty())
+    {
+        this->currentSettings.lastResponseFilePath = Util::FileSystem::normalizePath(QFileInfo(filePath).absoluteDir().path());
+        this->lastResponseFileName = Util::FileSystem::cutNameWithoutBackSlash(Util::FileSystem::normalizePath(filePath));
+
+        QFile file(filePath);
+
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(totalLoadedData);
+
+            // Load remaining data using a buffer
+            do{
+                currentData = reply->read(maxBytesForBufferAndDisplay);
+                file.write(currentData);
+            }while(currentData.size() > 0);
+
+            file.close();
+
+            if(ui->actionOpen_file_after_download->isChecked()){
+                if(!QDesktopServices::openUrl("file:///"+filePath)){
+                    QString errorMessage = "Could not open downloaded file: " + filePath;
+                    Util::Dialogs::showError(errorMessage);
+                    LOG_ERROR << errorMessage;
+                    Util::StatusBar::showError(ui->statusBar, errorMessage);
+                }
+            }
+
+            Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
+        }
+        else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
+            QString errorMessage = "Could not open file for writing: " + filePath;
+            Util::Dialogs::showError(errorMessage);
+            Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
+            LOG_ERROR << errorMessage;
+        }
+    }
 }
 
 void MainWindow::on_leRequestOverrideMainUrl_textChanged(const QString &)
@@ -2363,24 +2371,24 @@ void MainWindow::setThemePaletteForCustomWidgets(){
     QPalette palette;
 
     switch(this->currentSettings.theme){
-        case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
-        {
-            palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
-            break;
-        }
-        case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
-        {
-            palette.setColor(QPalette::Active, QPalette::Text, palette.color(QPalette::Disabled, QPalette::Text));
-            ui->treeWidget->setStyleSheet("selection-background-color: rgba(42, 130, 218, 25%)");
-            break;
-        }
-        default:
-        {
-            QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
-            this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
-            Util::Dialogs::showError(errorMessage);
-            LOG_ERROR << errorMessage;
-        }
+    case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
+    {
+        palette.setColor(QPalette::Active, QPalette::Base, palette.color(QPalette::Disabled, QPalette::Base));
+        break;
+    }
+    case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
+    {
+        palette.setColor(QPalette::Active, QPalette::Text, palette.color(QPalette::Disabled, QPalette::Text));
+        ui->treeWidget->setStyleSheet("selection-background-color: rgba(42, 130, 218, 25%)");
+        break;
+    }
+    default:
+    {
+        QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+        this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
+        Util::Dialogs::showError(errorMessage);
+        LOG_ERROR << errorMessage;
+    }
     }
 
     ui->leFullPath->setPalette(palette); // Set the background color the same as disable
@@ -2396,23 +2404,23 @@ void MainWindow::setFilterThemePalette(){
     }
     else{
         switch(this->currentSettings.theme){
-            case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
-            {
-                palette.setColor(QPalette::Base, 0xFFFACD /* "LemonChiffon" */);
-                break;
-            }
-            case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
-            {
-                palette.setColor(QPalette::Base, 0x2A82DA /* Light Blue */);
-                break;
-            }
-            default:
-            {
-                QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
-                this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
-                Util::Dialogs::showError(errorMessage);
-                LOG_ERROR << errorMessage;
-            }
+        case ConfigFileFRequest::FRequestTheme::OS_DEFAULT:
+        {
+            palette.setColor(QPalette::Base, 0xFFFACD /* "LemonChiffon" */);
+            break;
+        }
+        case ConfigFileFRequest::FRequestTheme::JORGEN_DARK_THEME:
+        {
+            palette.setColor(QPalette::Base, 0x2A82DA /* Light Blue */);
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+            this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
+            Util::Dialogs::showError(errorMessage);
+            LOG_ERROR << errorMessage;
+        }
         }
     }
 

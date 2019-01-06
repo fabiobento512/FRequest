@@ -1,6 +1,6 @@
 /*
  *
-Copyright (C) 2017-2018  Fábio Bento (fabiobento512)
+Copyright (C) 2017-2019  Fábio Bento (fabiobento512)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace GlobalVars{
 
 static const QString AppName = "FRequest";
-static const QString AppVersion = "1.1b";
+static const QString AppVersion = "1.1c (Development)";
 static const QString LastCompatibleVersionConfig = "1.1b";
 static const QString LastCompatibleVersionProjects= "1.1";
 static const QString AppConfigFileName = AppName + ".cfg";
