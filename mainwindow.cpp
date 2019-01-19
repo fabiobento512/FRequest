@@ -398,12 +398,10 @@ void MainWindow::replyFinished(QNetworkReply *reply){
         isError = true;
     }
 
-    if(!this->authenticationIsRunning){
+    // Don't override if we are authenticating or we have a custom error
+    if(!this->authenticationIsRunning && this->lastReplyStatusError != -1){
         ui->lbStatus->setText(requestReturnCode);
         ui->lbDescription->setText(requestReturnMessage);
-    }
-
-    if(!this->authenticationIsRunning){
         ui->lbTimeElapsed->setText(QString::number(lastStartTime.msecsTo(QDateTime::currentDateTime())) + " ms");
     }
 
