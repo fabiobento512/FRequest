@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 );
 
     // Set max icon size in tree widget
-    ui->treeWidget->setIconSize(QSize(32,16));
+    ui->treeWidget->setIconSize(QSize(48,16));
 
     setNewProject();
     // Set our desired proportion for the projects tree widget and remaining interface
@@ -1035,7 +1035,7 @@ void MainWindow::setIconForRequest(FRequestTreeWidgetRequestItem * const item){
         item->setIcon(0, this->generatedIconCache.value(item->itemContent.requestType));
     }
     else{ // generate the necessary icon and add it to our cache
-        QPixmap myIcon(32,16);
+        QPixmap myIcon(48,16);
         myIcon.fill(Qt::transparent);
 
         QPainter painter( &myIcon );
