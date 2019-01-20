@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace GlobalVars{
 
 static const QString AppName = "FRequest";
-static const QString AppVersion = "1.1c (Development)";
+static const QString AppVersion = "1.1c";
 static const QString LastCompatibleVersionConfig = "1.1b";
 static const QString LastCompatibleVersionProjects= "1.1c";
 static const QString AppConfigFileName = AppName + ".cfg";

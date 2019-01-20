@@ -1,13 +1,13 @@
 readme.txt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FRequest v1.1b
+FRequest v1.1c
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ----------------------------------
 Description:
 ----------------------------------
 
-FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
+FRequest is a fast, lightweight and opensource Windows / MacOS / Linux desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
 The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
@@ -38,6 +38,13 @@ Installation:
 
 Extract FRequest folder to any place in your computer. Run the executable inside.
 
+Linux only:
+You may need to install "libssl1.0-dev" package to get the ssl requests to work properly 
+(and also to check for updates within the program).
+
+In ubuntu you can do it like this:
+sudo apt-get install libssl1.0-dev
+
 ----------------------------------
 Contacts:
 ----------------------------------
@@ -53,6 +60,13 @@ https://github.com/fabiobento512/FRequest
 
 ----------------------------------
 Change Log:
+----------------------------------
+1.1c, 20-01-2019
+- Added official support for Linux (tests are made in Ubuntu LTS and the program is distributed using an appimage)
+- Fixed not showing body/headers response when an HTTP status code error is received like (500) (issue #7)
+- Fixed timeout status code/message, when the internal FRequest timeout for a request is reached (issue #8)
+- Added option in project settings to specify the type of character identation to use (space or tab) in the 
+project xml file (issue #9)
 ----------------------------------
 1.1b, 04-03-2018
 - Added dark theme (thanks Jorgen-VikingGod!)
