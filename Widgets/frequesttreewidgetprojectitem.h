@@ -37,6 +37,7 @@ public:
 	QString projectMainUrl = "http://localhost/";
 	// can't use optional because it is an abstract base class, using unique_ptr as nullptr as alternative
     std::shared_ptr<FRequestAuthentication> authData = nullptr;
+    UtilFRequest::IdentCharacter saveIdentCharacter = UtilFRequest::IdentCharacter::SPACE; // space by default
 private:
     QString uuid;
     QHash<QString, FRequestTreeWidgetRequestItem *> mapOfChilds_UuidToRequest;

@@ -85,6 +85,11 @@ enum class SerializationFormatType{
 	XML = 2
 };
 
+enum class IdentCharacter{
+    SPACE = 0,
+    TAB = 1
+};
+
 struct HttpFormKeyValueType{
 	
 	QString key;
@@ -128,6 +133,9 @@ QString getFormKeyTypeString(const FormKeyValueType currentFormKeyValueType);
 
 BodyType getBodyTypeByString(const QString &currentBodyTypeText);
 QString getBodyTypeString(const BodyType currentBodyType);
+
+IdentCharacter getIdentCharacterByString(const QString &currentIdentCharacterText);
+QString getIdentCharacterString(const IdentCharacter currentIdentCharacter);
 
 QString getDateTimeFormatForFilename(const QDateTime &currentDateTime);
 

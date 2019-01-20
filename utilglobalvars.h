@@ -25,7 +25,7 @@ namespace GlobalVars{
 static const QString AppName = "FRequest";
 static const QString AppVersion = "1.1c (Development)";
 static const QString LastCompatibleVersionConfig = "1.1b";
-static const QString LastCompatibleVersionProjects= "1.1";
+static const QString LastCompatibleVersionProjects= "1.1c";
 static const QString AppConfigFileName = AppName + ".cfg";
 static const QString AppLogFileName = AppName.toLower() + ".log";
 static const QString FRequestAuthenticationPlaceholderUsername = "{{FREQUEST_AUTH_USERNAME}}";

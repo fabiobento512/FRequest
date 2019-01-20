@@ -209,6 +209,39 @@ QString getBodyTypeString(const BodyType currentBodyType){
     }
 }
 
+IdentCharacter getIdentCharacterByString(const QString &currentIdentCharacterText){
+
+    if(currentIdentCharacterText == "Space"){
+        return IdentCharacter::SPACE;
+    }
+    else if(currentIdentCharacterText == "Tab"){
+        return IdentCharacter::TAB;
+    }
+    else{
+        QString errorMessage = "Ident character unknown: '" + currentIdentCharacterText + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
+}
+
+QString getIdentCharacterString(const IdentCharacter currentIdentCharacter){
+    switch(currentIdentCharacter){
+    case IdentCharacter::SPACE:
+        return "Space";
+    case IdentCharacter::TAB:
+        return "Tab";
+    default:
+    {
+        QString errorMessage = "Invalid ident character " + QString::number(static_cast<int>(currentIdentCharacter)) + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
+    }
+}
+
+
 void addRequestFormBodyRow(QTableWidget * const myTable, const QString &key, const QString &value, const UtilFRequest::FormKeyValueType type){
     Util::TableWidget::addRow(myTable, QStringList() << key << value << UtilFRequest::getFormKeyTypeString(type));
 

@@ -1273,6 +1273,7 @@ void MainWindow::loadProjectState(const QString &filePath)
         this->currentProjectItem->projectName = projectData->projectName;
         this->currentProjectItem->projectMainUrl = projectData->mainUrl;
         this->currentProjectItem->authData = projectData->authData;
+        this->currentProjectItem->saveIdentCharacter = projectData->saveIdentCharacter;
 
         // Order them by the correct order
         std::sort(
@@ -1345,6 +1346,7 @@ ProjectFileFRequest::ProjectData MainWindow::fetchCurrentProjectData(){
     currentProjectData.mainUrl = this->currentProjectItem->projectMainUrl;
     currentProjectData.projectUuid = this->currentProjectItem->getUuid();
     currentProjectData.authData = this->currentProjectItem->authData;
+    currentProjectData.saveIdentCharacter = this->currentProjectItem->saveIdentCharacter;
 
     // Save by the current tree order
     for(int i=0; i<this->currentProjectItem->childCount(); i++){

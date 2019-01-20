@@ -32,20 +32,26 @@ public:
 
     struct ProjectData{
         QString projectName;
-		QString mainUrl;
+        QString mainUrl;
         QVector<UtilFRequest::RequestInfo> projectRequests;
-		QString projectUuid;
+        QString projectUuid;
         std::shared_ptr<FRequestAuthentication> authData = nullptr;
         bool retryLoginIfError401 = false;
+        UtilFRequest::IdentCharacter saveIdentCharacter;
     };
 
 public:
     ProjectFileFRequest() = delete;
-	static ProjectFileFRequest::ProjectData readProjectDataFromFile(const QString &fileFullPath);
+    static ProjectFileFRequest::ProjectData readProjectDataFromFile(const QString &fileFullPath);
     static void saveProjectDataToFile(const QString &fileFullPath, const ProjectData &newProjectData, const QVector<QString> &uuidsToCleanUp);
 private:
-	static pugi::xml_attribute createOrGetPugiXmlAttribute(pugi::xml_node &mainNode, const char *name);
-	static void upgradeProjectFileIfNecessary(const QString &filePath);
+    static pugi::xml_attribute createOrGetPugiXmlAttribute(pugi::xml_node &mainNode, const char *name);
+    static void upgradeProjectFileIfNecessary(const QString &filePath);
 };
+
+namespace pugiIdentChars {
+    static constexpr pugi::char_t spaceChar[] = PUGIXML_TEXT("    "); // we use 4 spaces as default
+    static constexpr pugi::char_t tabChar[] = PUGIXML_TEXT("\t");
+}
 
 #endif // PROJECTFILEFREQUEST_H

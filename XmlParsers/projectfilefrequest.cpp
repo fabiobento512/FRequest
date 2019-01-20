@@ -56,6 +56,7 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
     currentProjectData.mainUrl = doc.select_node("/FRequestProject/@mainUrl").attribute().value();
     currentProjectData.projectName = doc.select_node("/FRequestProject/@name").attribute().value();
     currentProjectData.projectUuid = doc.select_node("/FRequestProject/@uuid").attribute().value();
+    currentProjectData.saveIdentCharacter = static_cast<UtilFRequest::IdentCharacter>(doc.select_node("/FRequestProject/@saveIdentCharacter").attribute().as_int());
 
     // Check if there is authentication data and load it
     pugi::xml_node authNode = doc.select_node("/FRequestProject/Authentication").node();
@@ -216,6 +217,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
     createOrGetPugiXmlAttribute(rootNode, "name").set_value(QSTR_TO_CSTR(newProjectData.projectName));
     createOrGetPugiXmlAttribute(rootNode, "mainUrl").set_value(QSTR_TO_CSTR(newProjectData.mainUrl));
     createOrGetPugiXmlAttribute(rootNode, "uuid").set_value(QSTR_TO_CSTR(newProjectData.projectUuid));
+    createOrGetPugiXmlAttribute(rootNode, "saveIdentCharacter").set_value(static_cast<int>(newProjectData.saveIdentCharacter));
 
     // Delete old auth data if exists (we always need to rebuild it
     rootNode.remove_child("Authentication");
@@ -337,7 +339,9 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
 
     }
 
-    if(!doc.save_file(fileFullPath.toUtf8().constData(), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+    const pugi::char_t* const identCharacterChar = newProjectData.saveIdentCharacter == UtilFRequest::IdentCharacter::SPACE ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar;
+
+    if(!doc.save_file(fileFullPath.toUtf8().constData(), identCharacterChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
         throw std::runtime_error("An error ocurred while trying to save the project file. Please try another path.");
     }
 }
@@ -375,8 +379,8 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
         }
     }
 
-    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion){
-        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion, const pugi::char_t* const identChar){
+        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), identChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
             throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + upgradeVersion + " )"));
         }
     };
@@ -402,7 +406,24 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
             formKeyValuesNodes[i].node().append_child("Type").append_child(pugi::node_pcdata).set_value("0"); // 0 is Text in 1.1
         }
 
-        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade);
+        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, pugiIdentChars::tabChar);
+
+        projectVersion = versionAfterUpgrade;
+    }
+    if(projectVersion == "1.1"){
+        const QString versionAfterUpgrade = "1.1c";
+
+        pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
+
+        // Update version
+        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+
+        // Set the default ident character
+        // Previous to 1.1c all versions use tab as separator, so we want to keep that
+        // until user changes, even though now space is the default
+        projectNode.append_attribute("saveIdentCharacter").set_value("1"); // 0 is tab in 1.1c
+
+        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, pugiIdentChars::tabChar);
 
         projectVersion = versionAfterUpgrade;
     }

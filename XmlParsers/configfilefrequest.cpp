@@ -581,7 +581,7 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 		// Add new attribute that replaces 'askToOpenLastProject'
 		
 		// use ASK_TO_LOAD_LAST_PROJECT as default
-		generalNode.append_attribute("onStartupOption").set_value(static_cast<int>(OnStartupOption::ASK_TO_LOAD_LAST_PROJECT)); 
+        generalNode.append_attribute("onStartupOption").set_value("0"); // 0 = ASK_TO_LOAD_LAST_PROJECT in 1.1a
 		
 		// Add new attribute that specifies the max response size for display in ui
 		generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(200); // 200 kb default
@@ -598,7 +598,7 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
 		// Add new attribute for themes
-		generalNode.append_attribute("theme").set_value(static_cast<int>(FRequestTheme::OS_DEFAULT)); 
+        generalNode.append_attribute("theme").set_value("0"); // 0 = OS_DEFAULT in 1.1b
 		
         fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
 		

@@ -23,20 +23,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ProjectProperties::ProjectProperties(QWidget *parent, FRequestTreeWidgetProjectItem * const projectItem) :
     QDialog(parent),
     ui(new Ui::ProjectProperties),
-	projectItem(projectItem)
+    projectItem(projectItem)
 {
     ui->setupUi(this);
     this->setAttribute(Qt::WA_DeleteOnClose,true); //destroy itself once finished.
     fillInterface();
-	
+
     if(this->projectItem->authData != nullptr){
         fillAuthenticationData(*this->projectItem->authData);
-	}
-	
-	if(this->currentPasswordSalt.isEmpty()){
-		// Unix time as sha256
-		this->currentPasswordSalt = QCryptographicHash::hash(QByteArray().setNum(QDateTime::currentDateTime().toSecsSinceEpoch()), QCryptographicHash::Sha256).toHex();
-	}
+    }
+
+    if(this->currentPasswordSalt.isEmpty()){
+        // Unix time as sha256
+        this->currentPasswordSalt = QCryptographicHash::hash(QByteArray().setNum(QDateTime::currentDateTime().toSecsSinceEpoch()), QCryptographicHash::Sha256).toHex();
+    }
 
     if(ui->cbRequestType->currentText() == "Request Authentication"){
         ui->saProjectPropertiesNote->setVisible(true);
@@ -62,13 +62,15 @@ void ProjectProperties::fillInterface(){
 
     ui->leProjectName->setText(this->projectItem->projectName);
     ui->leProjectMainUrl->setText(this->projectItem->projectMainUrl);
-	
-	// Get all requests name to fill request combobox
+
+    // Get all requests name to fill request combobox
     for(int i=0; i < this->projectItem->childCount(); i++){
         FRequestTreeWidgetRequestItem* currentRequest = FRequestTreeWidgetRequestItem::fromQTreeWidgetItem(this->projectItem->child(i));
 
         ui->cbRequestForAuthentication->addItem(getComboBoxNameForRequest(currentRequest), QVariant::fromValue(currentRequest));
     }
+
+    ui->cbIdentCharacter->setCurrentText(UtilFRequest::getIdentCharacterString(this->projectItem->saveIdentCharacter));
 }
 
 ProjectProperties::~ProjectProperties()
@@ -91,70 +93,86 @@ void ProjectProperties::on_cbRequestType_currentIndexChanged(const QString &arg1
 // http://stackoverflow.com/questions/3261676/how-to-make-qdialogbuttonbox-not-close-its-parent-qdialog
 void ProjectProperties::accept (){
 
-	// Validations
-	if(Util::Validation::checkEmptySpaces(
-	QStringList() << 
-	ui->leProjectName->text() << 
-	ui->leProjectMainUrl->text()
-	)){
-		Util::Dialogs::showError("Please fill the project name and main url.");
+    // Validations
+    if(Util::Validation::checkEmptySpaces(
+                QStringList() <<
+                ui->leProjectName->text() <<
+                ui->leProjectMainUrl->text()
+                )){
+        Util::Dialogs::showError("Please fill the project name and main url.");
         return;
-	}
-	
-	if(ui->cbUseAuthentication->isChecked() && Util::Validation::checkEmptySpaces(
-	QStringList() << 
-	ui->leUsername->text()
-	)){
-		Util::Dialogs::showError("Please fill the authorization username and authorization password.");
+    }
+
+    if(ui->cbUseAuthentication->isChecked() && Util::Validation::checkEmptySpaces(
+                QStringList() <<
+                ui->leUsername->text()
+                )){
+        Util::Dialogs::showError("Please fill the authorization username and authorization password.");
         return;
-	}
+    }
 
     this->projectItem->projectName = ui->leProjectName->text();
     this->projectItem->setText(0, this->projectItem->projectName); // todo replace column with enum
     this->projectItem->projectMainUrl = ui->leProjectMainUrl->text();
-	
-	if(ui->cbUseAuthentication->isChecked()){
-		switch(FRequestAuthentication::getAuthenticationTypeByString(ui->cbRequestType->currentText())){
-		case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
-		{
+
+    if(ui->cbUseAuthentication->isChecked()){
+        switch(FRequestAuthentication::getAuthenticationTypeByString(ui->cbRequestType->currentText())){
+        case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
+        {
             this->projectItem->authData = std::make_shared<RequestAuthentication>(
                         ui->rbSaveProjectAuthToConfigurationFile->isChecked(),
-						ui->cbRetryLoginIfError401->isChecked(),
+                        ui->cbRetryLoginIfError401->isChecked(),
                         ui->leUsername->text(),
-						this->currentPasswordSalt,
+                        this->currentPasswordSalt,
                         ui->lePassword->text(),
-						qvariant_cast<FRequestTreeWidgetRequestItem*>(ui->cbRequestForAuthentication->itemData(ui->cbRequestForAuthentication->currentIndex()))->itemContent.uuid
+                        qvariant_cast<FRequestTreeWidgetRequestItem*>(ui->cbRequestForAuthentication->itemData(ui->cbRequestForAuthentication->currentIndex()))->itemContent.uuid
                         );
-			break;
-		}
-		case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
-		{
+            break;
+        }
+        case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
+        {
+            this->projectItem->authData = std::make_shared<BasicAuthentication>(BasicAuthentication(ui->rbSaveProjectAuthToConfigurationFile->isChecked(),
+                                                                                                    ui->cbRetryLoginIfError401->isChecked(),
+                                                                                                    ui->leUsername->text(),
+                                                                                                    this->currentPasswordSalt,
+                                                                                                    ui->lePassword->text()
+                                                                                                    ));
+            break;
+        }
+        default:
+        {
+            QString errorMessage = "Authentication type unknown: '" + ui->cbRequestType->currentText() + "'. Program can't proceed.";
+            Util::Dialogs::showError(errorMessage);
+            LOG_FATAL << errorMessage;
+            exit(1);
+        }
+        }
+    }
+    else{
+        this->projectItem->authData = nullptr; // clear the old authentication data
+    }
 
-			
-            this->projectItem->authData = std::make_shared<BasicAuthentication>(BasicAuthentication(ui->rbSaveProjectAuthToConfigurationFile->isChecked(), 
-			ui->cbRetryLoginIfError401->isChecked(), 
-			ui->leUsername->text(), 
-			this->currentPasswordSalt,
-			ui->lePassword->text()
-			));
-			break;
-		}
-		default:
-		{
-			QString errorMessage = "Authentication type unknown: '" + ui->cbRequestType->currentText() + "'. Program can't proceed.";
-			Util::Dialogs::showError(errorMessage);
-			LOG_FATAL << errorMessage;
-			exit(1);
-		}
-		}
-	}
-	else{
-		this->projectItem->authData = nullptr; // clear the old authentication data
-	}
-	
+    UtilFRequest::IdentCharacter identCharacter = UtilFRequest::getIdentCharacterByString(ui->cbIdentCharacter->currentText());
+
+    switch(identCharacter){
+    case UtilFRequest::IdentCharacter::SPACE:
+    case UtilFRequest::IdentCharacter::TAB:
+    {
+        this->projectItem->saveIdentCharacter = identCharacter;
+        break;
+    }
+    default:
+    {
+        QString errorMessage = "Ident character unknown: '" + ui->cbIdentCharacter->currentText() + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
+    }
+
     QDialog::accept();
-	
-	emit signalSaveProjectProperties();
+
+    emit signalSaveProjectProperties();
 }
 
 void ProjectProperties::on_cbUseAuthentication_toggled(bool checked)
@@ -163,41 +181,41 @@ void ProjectProperties::on_cbUseAuthentication_toggled(bool checked)
 }
 
 void ProjectProperties::fillAuthenticationData(FRequestAuthentication &auth){
-	
-	ui->cbUseAuthentication->setChecked(true);
-	
-	if(auth.saveAuthToConfigFile){
-		ui->rbSaveProjectAuthToConfigurationFile->setChecked(true);
-	}
-	else{
-		ui->rbSaveProjectAuthToProjectFile->setChecked(true);
-	}
-	
-	ui->cbRequestType->setCurrentText(FRequestAuthentication::getAuthenticationString(auth.type));
-	
-	switch(auth.type){
+
+    ui->cbUseAuthentication->setChecked(true);
+
+    if(auth.saveAuthToConfigFile){
+        ui->rbSaveProjectAuthToConfigurationFile->setChecked(true);
+    }
+    else{
+        ui->rbSaveProjectAuthToProjectFile->setChecked(true);
+    }
+
+    ui->cbRequestType->setCurrentText(FRequestAuthentication::getAuthenticationString(auth.type));
+
+    switch(auth.type){
     case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
     {
-		// https://stackoverflow.com/a/43572369/1499019
-		RequestAuthentication &concreteAuth = static_cast<RequestAuthentication&>(auth);
-		
-		ui->leUsername->setText(concreteAuth.username);
-		ui->lePassword->setText(concreteAuth.password);
-		ui->cbRequestForAuthentication->setCurrentIndex(
-			ui->cbRequestForAuthentication->findData(QVariant::fromValue(this->projectItem->getChildRequestByUuid(concreteAuth.requestForAuthenticationUuid)))
-		);
-		this->currentPasswordSalt = concreteAuth.passwordSalt;
-		break;
-	}
+        // https://stackoverflow.com/a/43572369/1499019
+        RequestAuthentication &concreteAuth = static_cast<RequestAuthentication&>(auth);
+
+        ui->leUsername->setText(concreteAuth.username);
+        ui->lePassword->setText(concreteAuth.password);
+        ui->cbRequestForAuthentication->setCurrentIndex(
+                    ui->cbRequestForAuthentication->findData(QVariant::fromValue(this->projectItem->getChildRequestByUuid(concreteAuth.requestForAuthenticationUuid)))
+                    );
+        this->currentPasswordSalt = concreteAuth.passwordSalt;
+        break;
+    }
     case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
     {
-		BasicAuthentication &concreteAuth = static_cast<BasicAuthentication&>(auth);
-		
-		ui->leUsername->setText(concreteAuth.username);
-		ui->lePassword->setText(concreteAuth.password);
-		this->currentPasswordSalt = concreteAuth.passwordSalt;
-		break;
-	}
+        BasicAuthentication &concreteAuth = static_cast<BasicAuthentication&>(auth);
+
+        ui->leUsername->setText(concreteAuth.username);
+        ui->lePassword->setText(concreteAuth.password);
+        this->currentPasswordSalt = concreteAuth.passwordSalt;
+        break;
+    }
     default:
     {
         QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(auth.type)) + "'. Program can't proceed.";
@@ -206,10 +224,10 @@ void ProjectProperties::fillAuthenticationData(FRequestAuthentication &auth){
         exit(1);
     }
     }
-	
-	ui->cbRetryLoginIfError401->setChecked(auth.retryLoginIfError401);
+
+    ui->cbRetryLoginIfError401->setChecked(auth.retryLoginIfError401);
 }
 
 QString ProjectProperties::getComboBoxNameForRequest(const FRequestTreeWidgetRequestItem* const currentRequest){
-	return currentRequest->itemContent.name + " (" + UtilFRequest::getRequestTypeString(currentRequest->itemContent.requestType) + ")";
+    return currentRequest->itemContent.name + " (" + UtilFRequest::getRequestTypeString(currentRequest->itemContent.requestType) + ")";
 }
