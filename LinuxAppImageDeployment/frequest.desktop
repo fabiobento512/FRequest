@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FRequest
+Exec=FRequest
+Icon=frequest_icon
+Comment=A fast, lightweight and opensource desktop application to make HTTP(s) requests
+Categories=Development;
+Terminal=false
+Name[en_US]=frequest.desktop
