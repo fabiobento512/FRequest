@@ -7,7 +7,7 @@ FRequest v1.1c
 Description:
 ----------------------------------
 
-FRequest is a fast, lightweight and opensource Windows / MacOS / Linux desktop program to make HTTP(s) requests (e.g. call REST apis). 
+FRequest is a fast, lightweight and opensource Windows / macOS / Linux desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
 The main motivation for the program is to create a similar working software to an IDE but for HTTP(s) apis. It should be fast, 
 cross platform, lightweight, practical with a native look. Also it is important that project files can be 
@@ -36,14 +36,30 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 Installation:
 ----------------------------------
 
-Extract FRequest folder to any place in your computer. Run the executable inside.
+Windows / macOS:
+Just extract the inner FRequest folder to any place in your computer. Run the executable.
 
-Linux only:
-You may need to install "libssl1.0-dev" package to get the ssl requests to work properly 
+Linux:
+Download the AppImage, make it executable and run the executable.
+
+You may need to install "libssl1.0-dev" package to get the ssl requests to work properly
 (and also to check for updates within the program).
 
 In ubuntu you can do it like this:
 sudo apt-get install libssl1.0-dev
+
+----------------------------------
+Upgrading:
+----------------------------------
+
+Windows / macOS:
+You should make a backup of your previous installation folder, just in case. After this
+backup, extract the files from this zip version to your previous FRequest installation
+folder (replace all files).
+
+Linux:
+You should make a backup of your previous installation folder, just in case. After this
+backup, just replace the previous AppImage with the new one.
 
 ----------------------------------
 Contacts:
