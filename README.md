@@ -2,7 +2,7 @@
 
 <a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows"></a>
 
-FRequest is a fast, lightweight and opensource Windows / MacOS desktop program to make HTTP(s) requests (e.g. call REST apis). 
+FRequest is a fast, lightweight and opensource Windows / macOS / Linux desktop program to make HTTP(s) requests (e.g. call REST apis). 
 
 <a href="https://github.com/fabiobento512/FRequest/releases"><b>Download page</b><img src="images/download.png" alt="download frequest"><a/>
 
@@ -31,8 +31,11 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 #### Windows main interface
 <a href="images/frequest-windows.png"><img src="images/frequest-windows.png" alt="frequest windows"></a>
 
-#### MacOS main interface
+#### macOS main interface
 <a href="images/frequest-macos.png"><img src="images/frequest-macos.png" alt="frequest macos"></a>
+
+#### Linux main interface
+<a href="images/frequest-linux.png"><img src="images/frequest-linux.png" alt="frequest linux"></a>
 
 #### Dark Theme
 <a href="images/frequest-dark-theme.png"><img src="images/frequest-dark-theme.png" alt="frequest dark theme"></a>
@@ -45,7 +48,7 @@ FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ### Download <a href="https://github.com/fabiobento512/FRequest/releases"><img src="images/download.png" alt="download frequest"><a/>
 
-You can download FRequest for Windows or MacOS <a href="https://github.com/fabiobento512/FRequest/releases">here<a/>.
+You can download FRequest for Windows / macOS / Linux <a href="https://github.com/fabiobento512/FRequest/releases">here<a/>.
 
 ### Open Source
 
