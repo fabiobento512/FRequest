@@ -48,6 +48,8 @@ private slots:
     void accept ();
 
     void on_cbUseAuthentication_toggled(bool checked);
+    void on_headerKeyValueAdd_clicked();
+    void on_headerKeyValueRemove_clicked();
 
 private:
     void fillInterface();

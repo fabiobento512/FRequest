@@ -157,6 +157,7 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         }
         }
 
+
         QVector<UtilFRequest::HttpHeader> requestHeaders;
 
         for(const pugi::xml_node &currentHeaderNode : currNode.child("Headers").children()){
@@ -179,6 +180,20 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
 
         currentProjectData.projectRequests.append(currentRequestInfo);
     }
+
+    pugi::xml_node headers = doc.select_node("/FRequestProject/Headers").node();
+
+    QVector<UtilFRequest::HttpHeader> globalHeaders;
+
+    for(const pugi::xml_node &currentHeaderNode : headers.children()){
+        UtilFRequest::HttpHeader currentHeader;
+
+        currentHeader.name = QString(currentHeaderNode.child("Key").child_value());
+        currentHeader.value = currentHeaderNode.child("Value").child_value();
+
+        globalHeaders.append(currentHeader);
+    }
+    currentProjectData.globalHeaders = globalHeaders;
 
     return currentProjectData;
 }
@@ -337,6 +352,16 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
             currentHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.value));
         }
 
+    }
+
+    rootNode.remove_child("Headers");
+
+    pugi::xml_node headersNode = rootNode.append_child("Headers");
+    for (const UtilFRequest::HttpHeader &currentHeader: newProjectData.globalHeaders) {
+        pugi::xml_node currentHeaderNode = headersNode.append_child("Header");
+
+        currentHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.name));
+        currentHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.value));
     }
 
     const pugi::char_t* const identCharacterChar = newProjectData.saveIdentCharacter == UtilFRequest::IdentCharacter::SPACE ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar;

@@ -38,6 +38,7 @@ public:
         std::shared_ptr<FRequestAuthentication> authData = nullptr;
         bool retryLoginIfError401 = false;
         UtilFRequest::IdentCharacter saveIdentCharacter;
+        QVector<UtilFRequest::HttpHeader> globalHeaders;
     };
 
 public:

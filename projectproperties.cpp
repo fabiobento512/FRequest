@@ -37,25 +37,6 @@ ProjectProperties::ProjectProperties(QWidget *parent, FRequestTreeWidgetProjectI
         // Unix time as sha256
         this->currentPasswordSalt = QCryptographicHash::hash(QByteArray().setNum(QDateTime::currentDateTime().toSecsSinceEpoch()), QCryptographicHash::Sha256).toHex();
     }
-
-    if(ui->cbRequestType->currentText() == "Request Authentication"){
-        ui->saProjectPropertiesNote->setVisible(true);
-    }
-    else{
-        ui->saProjectPropertiesNote->setVisible(false);
-    }
-
-    ui->lbProjectPropertiesNote->setText(
-                "<b>Note:</b> Request authentication works by selecting one of your requests as the one for the authentication.<br/><br/>"
-                "If you have a website you can find the request that you need by checking in your browser the one that authenticates you "
-                "(normally you could find it in a \"network\" tab), "
-                "then just replicate that request in FRequest and select it for the authentication here.<br/><br/>"
-                "Currently FRequest can only use a single request for the authentication.<br/><br/>"
-                "You should add in your authentication request the FRequest placeholders for the username and password, they are respectively "
-                "{{FREQUEST_AUTH_USERNAME}} and {{FREQUEST_AUTH_PASSWORD}}.<br/><br/>"
-                "You can add these placeholders either in the body of the request or in the headers. "
-                "FRequest will replace them automatically when authenticating by the username and password that you input above."
-                );
 }
 
 void ProjectProperties::fillInterface(){
@@ -71,6 +52,10 @@ void ProjectProperties::fillInterface(){
     }
 
     ui->cbIdentCharacter->setCurrentText(UtilFRequest::getIdentCharacterString(this->projectItem->saveIdentCharacter));
+
+    for (int i = 0; i < this->projectItem->headers.size(); i++) {
+        Util::TableWidget::addRow(ui->headerKeyValue, QStringList() << this->projectItem->headers.at(i).name << this->projectItem->headers.at(i).value);
+    }
 }
 
 ProjectProperties::~ProjectProperties()
@@ -81,11 +66,9 @@ ProjectProperties::~ProjectProperties()
 void ProjectProperties::on_cbRequestType_currentIndexChanged(const QString &arg1)
 {
     ui->cbRequestForAuthentication->setEnabled(false);
-    ui->saProjectPropertiesNote->setVisible(false);
 
     if(arg1 == "Request Authentication"){
         ui->cbRequestForAuthentication->setEnabled(true);
-        ui->saProjectPropertiesNote->setVisible(true);
     }
 }
 
@@ -170,6 +153,12 @@ void ProjectProperties::accept (){
     }
     }
 
+    this->projectItem->headers.clear();
+    for (int i = 0; i < ui->headerKeyValue->rowCount(); i++) {
+        UtilFRequest::HttpHeader h = {ui->headerKeyValue->item(i, 0)->text(), ui->headerKeyValue->item(i, 1)->text()};
+        this->projectItem->headers.append(h);
+    }
+
     QDialog::accept();
 
     emit signalSaveProjectProperties();
@@ -178,6 +167,29 @@ void ProjectProperties::accept (){
 void ProjectProperties::on_cbUseAuthentication_toggled(bool checked)
 {
     ui->gbAuthentication->setEnabled(checked);
+}
+
+void ProjectProperties::on_headerKeyValueAdd_clicked()
+{
+    Util::TableWidget::addRow(ui->headerKeyValue, QStringList() << "" << "");
+}
+
+void ProjectProperties::on_headerKeyValueRemove_clicked()
+{
+
+    int size = Util::TableWidget::getSelectedRows(ui->headerKeyValue).size();
+
+    if(size==0){
+        Util::Dialogs::showInfo("Select a row first!");
+        return;
+    }
+
+    if(Util::Dialogs::showQuestion(this, "Are you sure you want to remove all selected rows?")){
+        for(int i=0; i < size; i++){
+            ui->headerKeyValue->removeRow(Util::TableWidget::getSelectedRows(ui->headerKeyValue).at(size-i-1).row());
+        }
+        Util::Dialogs::showInfo("Key-Value rows deleted");
+    }
 }
 
 void ProjectProperties::fillAuthenticationData(FRequestAuthentication &auth){

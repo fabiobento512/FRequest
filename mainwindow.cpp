@@ -257,6 +257,10 @@ void MainWindow::on_pbSendRequest_clicked()
             }
         }
 
+        for (UtilFRequest::HttpHeader const& header : this->currentProjectItem->headers) {
+            requestFinalHeaders.append(header);
+        }
+
         this->ignoreAnyChangesToProject.SetCondition();
         formatRequestBody(getRequestCurrentSerializationFormatType());
         this->ignoreAnyChangesToProject.UnsetCondition();
@@ -1274,6 +1278,7 @@ void MainWindow::loadProjectState(const QString &filePath)
         this->currentProjectItem->projectMainUrl = projectData->mainUrl;
         this->currentProjectItem->authData = projectData->authData;
         this->currentProjectItem->saveIdentCharacter = projectData->saveIdentCharacter;
+        this->currentProjectItem->headers = projectData->globalHeaders;
 
         // Order them by the correct order
         std::sort(
@@ -1347,6 +1352,7 @@ ProjectFileFRequest::ProjectData MainWindow::fetchCurrentProjectData(){
     currentProjectData.projectUuid = this->currentProjectItem->getUuid();
     currentProjectData.authData = this->currentProjectItem->authData;
     currentProjectData.saveIdentCharacter = this->currentProjectItem->saveIdentCharacter;
+    currentProjectData.globalHeaders = this->currentProjectItem->headers;
 
     // Save by the current tree order
     for(int i=0; i<this->currentProjectItem->childCount(); i++){
