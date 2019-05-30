@@ -495,12 +495,12 @@ void MainWindow::replyFinished(QNetworkReply *reply){
 
                 LOG_ERROR << requestReturnMessage;
 
-                QString statusErrorMessage = requestType + " was not performed with success." +
+                QString statusErrorMessage = requestType + " wasn't successful." +
                         (overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : "");
 
                 // We show status bar error twice because if the user takes too long to click ok in error popup the message may not be seen by him
                 Util::StatusBar::showError(ui->statusBar, statusErrorMessage); // this one is necessary to override any previous message
-                Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
+//                Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
                 Util::StatusBar::showError(ui->statusBar, statusErrorMessage);
             }
 
@@ -2280,10 +2280,7 @@ void MainWindow::saveProjectProperties(){
 
     }
 
-    if(!this->unsavedChangesExist){
-        Util::Dialogs::showInfo("Project properties saved with success!");
-    }
-    else{
+    if (this->unsavedChangesExist) {
         Util::Dialogs::showWarning("Project properties weren't saved. Please save the project manually from file menu.");
     }
 }
