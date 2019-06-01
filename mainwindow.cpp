@@ -210,7 +210,10 @@ void MainWindow::on_pbSendRequest_clicked()
         // Apply proxy type
         ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
 
-        QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
+        QMap<QString, QString> headerMap;
+        for (UtilFRequest::HttpHeader const& header : getRequestHeaders()) {
+            headerMap.insert(header.name, header.value);
+        }
 
         // Attempt to authenticate if we have authentication and its the first request in this project
         if(this->currentProjectItem->authData != nullptr){
@@ -236,14 +239,7 @@ void MainWindow::on_pbSendRequest_clicked()
                 case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
                 {
                     const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
-
-                    UtilFRequest::HttpHeader currentHeader;
-
-                    currentHeader.name = "Authorization";
-                    currentHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
-
-                    requestFinalHeaders.append(currentHeader);
-
+                    headerMap.insert("Authorization", "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64());
                     break;
                 }
                 default:
@@ -257,8 +253,19 @@ void MainWindow::on_pbSendRequest_clicked()
             }
         }
 
+        // we add the global headers only if they doesn't exist in the request
+        // this is specially useful if we want to overwrite some existing header
         for (UtilFRequest::HttpHeader const& header : this->currentProjectItem->headers) {
-            requestFinalHeaders.append(header);
+            if (!headerMap.contains(header.name)) {
+                headerMap.insert(header.name, header.value);
+            }
+        }
+
+        QVector<UtilFRequest::HttpHeader> requestFinalHeaders(headerMap.size());
+        QMap<QString, QString>::const_iterator headerIterator = headerMap.constBegin();
+        while (headerIterator != headerMap.constEnd()) {
+            requestFinalHeaders.append({headerIterator.key(), headerIterator.value()});
+            headerIterator++;
         }
 
         this->ignoreAnyChangesToProject.SetCondition();

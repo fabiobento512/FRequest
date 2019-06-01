@@ -239,13 +239,19 @@
            <string>Global Headers</string>
           </property>
           <layout class="QFormLayout" name="formLayout_4">
-           <item row="0" column="0">
+           <item row="0" column="0" colspan="2">
             <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <property name="sizeConstraint">
+              <enum>QLayout::SetDefaultConstraint</enum>
+             </property>
              <item>
               <widget class="QTableWidget" name="headerKeyValue">
                <property name="alternatingRowColors">
                 <bool>true</bool>
                </property>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>true</bool>
+               </attribute>
                <column>
                 <property name="text">
                  <string>Key</string>

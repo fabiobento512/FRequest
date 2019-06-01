@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>803</width>
-    <height>861</height>
+    <height>883</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,14 +33,14 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
            <item>
-              <widget class="QLineEdit" name="leRequestsFilter">
-               <property name="placeholderText">
-                <string>Requests Filter</string>
-               </property>
-               <property name="clearButtonEnabled">
-                <bool>true</bool>
-               </property>
-              </widget>
+            <widget class="QLineEdit" name="leRequestsFilter">
+             <property name="placeholderText">
+              <string>Requests Filter</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="FRequestTreeWidget" name="treeWidget">
@@ -207,7 +207,7 @@
                <item>
                 <widget class="QTabWidget" name="twRequest">
                  <property name="currentIndex">
-                  <number>0</number>
+                  <number>1</number>
                  </property>
                  <widget class="QWidget" name="tab_4">
                   <attribute name="title">
@@ -381,6 +381,9 @@
                        <property name="alternatingRowColors">
                         <bool>true</bool>
                        </property>
+                       <attribute name="horizontalHeaderStretchLastSection">
+                        <bool>true</bool>
+                       </attribute>
                        <column>
                         <property name="text">
                          <string>Key</string>
@@ -683,7 +686,7 @@ or alternatively just download the response as file.</string>
      <x>0</x>
      <y>0</y>
      <width>803</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
