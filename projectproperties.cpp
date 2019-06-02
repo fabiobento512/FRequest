@@ -37,6 +37,25 @@ ProjectProperties::ProjectProperties(QWidget *parent, FRequestTreeWidgetProjectI
         // Unix time as sha256
         this->currentPasswordSalt = QCryptographicHash::hash(QByteArray().setNum(QDateTime::currentDateTime().toSecsSinceEpoch()), QCryptographicHash::Sha256).toHex();
     }
+
+    if(ui->cbRequestType->currentText() == "Request Authentication"){
+        ui->saProjectPropertiesNote->setVisible(true);
+    }
+    else{
+        ui->saProjectPropertiesNote->setVisible(false);
+    }
+
+    ui->lbProjectPropertiesNote->setText(
+                "<b>Note:</b> Request authentication works by selecting one of your requests as the one for the authentication.<br/><br/>"
+                "If you have a website you can find the request that you need by checking in your browser the one that authenticates you "
+                "(normally you could find it in a \"network\" tab), "
+                "then just replicate that request in FRequest and select it for the authentication here.<br/><br/>"
+                "Currently FRequest can only use a single request for the authentication.<br/><br/>"
+                "You should add in your authentication request the FRequest placeholders for the username and password, they are respectively "
+                "{{FREQUEST_AUTH_USERNAME}} and {{FREQUEST_AUTH_PASSWORD}}.<br/><br/>"
+                "You can add these placeholders either in the body of the request or in the headers. "
+                "FRequest will replace them automatically when authenticating by the username and password that you input above."
+                );
 }
 
 void ProjectProperties::fillInterface(){
