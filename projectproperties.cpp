@@ -72,8 +72,10 @@ void ProjectProperties::fillInterface(){
 
     ui->cbIdentCharacter->setCurrentText(UtilFRequest::getIdentCharacterString(this->projectItem->saveIdentCharacter));
 
-    for (int i = 0; i < this->projectItem->headers.size(); i++) {
-        Util::TableWidget::addRow(ui->headerKeyValue, QStringList() << this->projectItem->headers.at(i).name << this->projectItem->headers.at(i).value);
+    for (int i = 0; i < this->projectItem->globalHeaders.size(); i++) {
+        Util::TableWidget::addRow(
+            ui->headerKeyValue,
+            QStringList() << this->projectItem->globalHeaders.at(i).name << this->projectItem->globalHeaders.at(i).value);
     }
 }
 
@@ -172,10 +174,10 @@ void ProjectProperties::accept (){
     }
     }
 
-    this->projectItem->headers.clear();
+    this->projectItem->globalHeaders.clear();
     for (int i = 0; i < ui->headerKeyValue->rowCount(); i++) {
         UtilFRequest::HttpHeader h = {ui->headerKeyValue->item(i, 0)->text(), ui->headerKeyValue->item(i, 1)->text()};
-        this->projectItem->headers.append(h);
+        this->projectItem->globalHeaders.append(h);
     }
 
     QDialog::accept();

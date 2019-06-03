@@ -157,7 +157,6 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         }
         }
 
-
         QVector<UtilFRequest::HttpHeader> requestHeaders;
 
         for(const pugi::xml_node &currentHeaderNode : currNode.child("Headers").children()){
