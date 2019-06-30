@@ -46,6 +46,7 @@ void ConfigFileFRequest::createNewConfig(){
     generalNode.append_attribute("lastProjectPath");
     generalNode.append_attribute("lastResponseFilePath");
     generalNode.append_attribute("showRequestTypesIcons");
+    generalNode.append_attribute("hideProjectSavedDialog");
 
     pugi::xml_node recentProjectsNode = rootNode.append_child("RecentProjects");
 
@@ -113,6 +114,7 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
         generalNode.attribute("lastProjectPath").set_value(QSTR_TO_CSTR(newSettings.lastProjectPath));
         generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_CSTR(newSettings.lastResponseFilePath));
         generalNode.attribute("showRequestTypesIcons").set_value(newSettings.showRequestTypesIcons);
+        generalNode.attribute("hideProjectSavedDialog").set_value(newSettings.hideProjectSavedDialog);
 
         pugi::xml_node recentProjectsNode = doc.select_single_node("/FRequestConfig/RecentProjects").node();
 
@@ -266,6 +268,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
         this->currentSettings.lastProjectPath = generalNode.attribute("lastProjectPath").as_string();
         this->currentSettings.lastResponseFilePath = generalNode.attribute("lastResponseFilePath").as_string();
         this->currentSettings.showRequestTypesIcons = generalNode.attribute("showRequestTypesIcons").as_bool();
+        this->currentSettings.hideProjectSavedDialog = generalNode.attribute("hideProjectSavedDialog").as_bool();
 
         pugi::xml_node recentProjectsNode = doc.select_single_node("/FRequestConfig/RecentProjects").node();
 
@@ -604,6 +607,20 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 		
 		configVersion = versionAfterUpgrade;
 	}
+
+    if (configVersion =="1.1b") {
+        const QString versionAfterUpgrade = "1.2";
+
+        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+
+        pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
+
+        generalNode.append_attribute("hideProjectSavedDialog").set_value(false);
+
+        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
+
+        configVersion = versionAfterUpgrade;
+    }
 	
     if(configVersion != GlobalVars::LastCompatibleVersionConfig){
         throw std::runtime_error("Can't load the config file, it is from an incompatible version. Probably newer?");

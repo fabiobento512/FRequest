@@ -176,11 +176,12 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         currentRequestInfo.name = requestNodes[i].node().attribute("name").value();
         currentRequestInfo.uuid = requestNodes[i].node().attribute("uuid").value();
         currentRequestInfo.order = requestNodes[i].node().attribute("order").as_ullong();
+        currentRequestInfo.bDisableGlobalHeaders = currNode.attribute("bDisableGlobalHeaders").as_bool();
 
         currentProjectData.projectRequests.append(currentRequestInfo);
     }
 
-    pugi::xml_node headers = doc.select_node("/FRequestProject/Headers").node();
+    pugi::xml_node headers = doc.select_node("/FRequestProject/GlobalHeaders").node();
 
     QVector<UtilFRequest::HttpHeader> globalHeaders;
 
@@ -298,6 +299,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         createOrGetPugiXmlAttribute(requestNode, "path").set_value(QSTR_TO_CSTR(currentRequest.path));
         createOrGetPugiXmlAttribute(requestNode, "type").set_value(static_cast<int>(currentRequest.requestType));
         createOrGetPugiXmlAttribute(requestNode, "bDownloadResponseAsFile").set_value(currentRequest.bDownloadResponseAsFile);
+        createOrGetPugiXmlAttribute(requestNode, "bDisableGlobalHeaders").set_value(currentRequest.bDisableGlobalHeaders);
 
         // remove body if exists, we will rebuild it
         requestNode.remove_child("Body");
@@ -353,9 +355,9 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
 
     }
 
-    rootNode.remove_child("Headers");
+    rootNode.remove_child("GlobalHeaders");
 
-    pugi::xml_node headersNode = rootNode.append_child("Headers");
+    pugi::xml_node headersNode = rootNode.append_child("GlobalHeaders");
     for (const UtilFRequest::HttpHeader &currentHeader: newProjectData.globalHeaders) {
         pugi::xml_node currentHeaderNode = headersNode.append_child("Header");
 
@@ -449,6 +451,16 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
 
         fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, pugiIdentChars::tabChar);
 
+        projectVersion = versionAfterUpgrade;
+    }
+    if (projectVersion == "1.1c") {
+        const QString versionAfterUpgrade = "1.2";
+        pugi::xml_node projectNode = doc.select_single_node("/FrequestProject").node();
+        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+        bool indentWithSpaces = projectNode.attribute("saveIndentCaracter").value();
+
+        projectNode.append_child("GlobalHeaders");
+        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, indentWithSpaces ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar);
         projectVersion = versionAfterUpgrade;
     }
 

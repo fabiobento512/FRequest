@@ -98,6 +98,7 @@ public:
         ProxySettings proxySettings;
 		// the hash map below contains the authentication data of the projects that specified it to be saved on config file instead of in project file
 		QHash<QString, ConfigurationProjectAuthentication> mapOfConfigAuths_UuidToConfigAuth;
+        bool hideProjectSavedDialog = false;
     };
 
 public:

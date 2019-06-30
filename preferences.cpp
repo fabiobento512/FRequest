@@ -154,6 +154,8 @@ void Preferences::accept (){
     }
 
     this->currentSettings.theme = newTheme;
+
+    this->currentSettings.hideProjectSavedDialog = ui->cbHideProjectSavedDialog->isChecked();
 	
     emit saveSettings();
 
@@ -248,6 +250,7 @@ void Preferences::loadExistingSettings(){
     ui->cbUseDefaultHeaders->setChecked(this->currentSettings.defaultHeaders.useDefaultHeaders);
     ui->cbSaveWindowGeometryWhenExiting->setChecked(this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting);
     ui->cbProxyUseProxy->setChecked(this->currentSettings.useProxy);
+    ui->cbHideProjectSavedDialog->setChecked(this->currentSettings.hideProjectSavedDialog);
 
     // TODO Check if there's a better alternative to do this switches / ifs (maybe using enums??)
     // (without do direct string comparisons), because as it is, it is easy to break if we change any of the strings

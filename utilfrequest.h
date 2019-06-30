@@ -119,6 +119,7 @@ struct RequestInfo{
 	bool bDownloadResponseAsFile = false;
 	QString uuid;
 	unsigned long long int order = 0;
+    bool bDisableGlobalHeaders = true;
 };
 
 static QMimeDatabase mimeDatabase;

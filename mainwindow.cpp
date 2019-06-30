@@ -255,9 +255,11 @@ void MainWindow::on_pbSendRequest_clicked()
 
         // we add the global headers only if they doesn't exist in the request
         // this is specially useful if we want to overwrite some existing header
-        for (UtilFRequest::HttpHeader const& header : this->currentProjectItem->globalHeaders) {
-            if (!headerMap.contains(header.name)) {
-                headerMap.insert(header.name, header.value);
+        if (!ui->cbGlobalHeaders->isChecked()) {
+            for (UtilFRequest::HttpHeader const& header : this->currentProjectItem->globalHeaders) {
+                if (!headerMap.contains(header.name)) {
+                    headerMap.insert(header.name, header.value);
+                }
             }
         }
 
@@ -1157,12 +1159,14 @@ QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
 
     for(int i = 0; i < ui->twRequestHeadersKeyValue->rowCount(); i++){
 
-        UtilFRequest::HttpHeader currentHeader;
+        if (ui->twRequestHeadersKeyValue->item(i, 0)->flags() != Qt::NoItemFlags) {
+            UtilFRequest::HttpHeader currentHeader;
 
-        currentHeader.name = ui->twRequestHeadersKeyValue->item(i, 0)->text();
-        currentHeader.value = ui->twRequestHeadersKeyValue->item(i, 1)->text();
+            currentHeader.name = ui->twRequestHeadersKeyValue->item(i, 0)->text();
+            currentHeader.value = ui->twRequestHeadersKeyValue->item(i, 1)->text();
 
-        requestHeaders.append(currentHeader);
+            requestHeaders.append(currentHeader);
+        }
     }
 
     return requestHeaders;
@@ -1194,6 +1198,7 @@ void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * con
 
     requestItem->itemContent.bOverridesMainUrl = ui->cbRequestOverrideMainUrl->isChecked();
     requestItem->itemContent.overrideMainUrl = ui->leRequestOverrideMainUrl->text();
+    requestItem->itemContent.bDisableGlobalHeaders = ui->cbGlobalHeaders->isChecked();
 
     requestItem->itemContent.headers = getRequestHeaders();
 
@@ -1475,6 +1480,7 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     ui->lePath->setText(info.path);
     ui->cbRequestOverrideMainUrl->setChecked(info.bOverridesMainUrl);
     ui->leRequestOverrideMainUrl->setText(info.overrideMainUrl);
+    ui->cbGlobalHeaders->setChecked(info.bDisableGlobalHeaders);
 
     setRequestType(info.requestType);
 
@@ -1513,6 +1519,12 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     }
 
     formatRequestBody(getRequestCurrentSerializationFormatType());
+
+    if (!ui->cbGlobalHeaders->isChecked()) {
+        for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
+            Util::TableWidget::addDisabledRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
+        }
+    }
 
     for(const UtilFRequest::HttpHeader &currentHeader : info.headers){
         Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << currentHeader.name << currentHeader.value);
@@ -1867,6 +1879,13 @@ void MainWindow::on_cbRequestOverrideMainUrl_toggled(bool checked)
 
     buildFullPath();
 }
+
+void MainWindow::on_cbGlobalHeaders_toggled(bool checked)
+{
+    setProjectHasChanged();
+    buildFullPath();
+}
+
 
 void MainWindow::on_actionShow_Request_Types_Icons_triggered(bool checked)
 {
@@ -2286,8 +2305,12 @@ void MainWindow::saveProjectProperties(){
 
 
     }
-
-    if (this->unsavedChangesExist) {
+    if(!this->unsavedChangesExist){
+        if (!this->currentSettings.hideProjectSavedDialog) {
+            Util::Dialogs::showInfo("Project properties saved with success!");
+        }
+    }
+    else{
         Util::Dialogs::showWarning("Project properties weren't saved. Please save the project manually from file menu.");
     }
 }
