@@ -329,7 +329,7 @@ SerializationFormatType getSerializationFormatTypeForString(const QString &conte
 
 QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, const QString &input){
 
-	QByteArray saltByteArray = ofuscationSalt.toUtf8();
+    QByteArray saltByteArray = ofuscationSalt.toUtf8();
     QByteArray inputByteArray = input.toUtf8();
 
     // Using unsigned types as they have a defined truncation in iso c++:
@@ -346,9 +346,19 @@ QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, c
 }
 
 QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, const QString &username, const QString &password){
-	return QString(textToReplace).
-	replace(GlobalVars::FRequestAuthenticationPlaceholderUsername, username).
-	replace(GlobalVars::FRequestAuthenticationPlaceholderPassword, password);
+    return QString(textToReplace).
+            replace(GlobalVars::FRequestAuthenticationPlaceholderUsername, username).
+            replace(GlobalVars::FRequestAuthenticationPlaceholderPassword, password);
+}
+
+void disableTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    for(int i=0; i<myTable->columnCount(); i++){
+        QTableWidgetItem * const currentItem = myTable->item(rowNumber, i);
+
+        currentItem->setFlags(currentItem->flags() & ~Qt::ItemIsEditable);
+    }
+
 }
 
 }

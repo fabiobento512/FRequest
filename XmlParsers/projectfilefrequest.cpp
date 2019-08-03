@@ -65,17 +65,17 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         FRequestAuthentication::AuthenticationType authType =
                 static_cast<FRequestAuthentication::AuthenticationType>(authNode.attribute("type").as_int());
 
-		const bool retryLoginIfError401 = authNode.attribute("bRetryLoginIfError").as_bool();
-				
+        const bool retryLoginIfError401 = authNode.attribute("bRetryLoginIfError").as_bool();
+
         switch(authType){
         case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
         {
             QString username = authNode.child("Username").child_value();
-			QString passwordSalt = authNode.child("PasswordSalt").child_value();
+            QString passwordSalt = authNode.child("PasswordSalt").child_value();
             QString password = QString(UtilFRequest::simpleStringObfuscationDeobfuscation(passwordSalt,
-                                           QByteArray::fromBase64(authNode.child("Password").child_value())));
+                                                                                          QByteArray::fromBase64(authNode.child("Password").child_value())));
             QString requestUuid = authNode.attribute("requestUuid").value();
-			
+
             currentProjectData.authData = std::make_shared<RequestAuthentication>(RequestAuthentication(false, retryLoginIfError401, username, passwordSalt, password, requestUuid));
 
             break;
@@ -83,9 +83,9 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
         {
             QString username = authNode.child("Username").child_value();
-			QString passwordSalt = authNode.child("PasswordSalt").child_value();
+            QString passwordSalt = authNode.child("PasswordSalt").child_value();
             QString password = QString(UtilFRequest::simpleStringObfuscationDeobfuscation(passwordSalt,
-                                           QByteArray::fromBase64(authNode.child("Password").child_value())));
+                                                                                          QByteArray::fromBase64(authNode.child("Password").child_value())));
 
             currentProjectData.authData = std::make_shared<BasicAuthentication>(BasicAuthentication(false, retryLoginIfError401, username, passwordSalt, password));
             break;
@@ -239,10 +239,10 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
 
     // Save authentication data if it exists
     if(newProjectData.authData != nullptr && !newProjectData.authData->saveAuthToConfigFile){
-		// please add it as the first node, since it is less likely to be removed than some request
+        // please add it as the first node, since it is less likely to be removed than some request
         pugi::xml_node currentAuth = rootNode.prepend_child("Authentication");
         currentAuth.append_attribute("type").set_value(static_cast<int>(newProjectData.authData->type));
-		currentAuth.append_attribute("bRetryLoginIfError").set_value(newProjectData.authData->retryLoginIfError401);
+        currentAuth.append_attribute("bRetryLoginIfError").set_value(newProjectData.authData->retryLoginIfError401);
 
         switch(newProjectData.authData->type){
         case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
@@ -251,7 +251,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
 
             currentAuth.append_attribute("requestUuid").set_value(QSTR_TO_CSTR(requestAuth.requestForAuthenticationUuid));
             currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.username));
-			currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.passwordSalt));
+            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.passwordSalt));
             currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
                     set_value((QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(requestAuth.passwordSalt, requestAuth.password).toBase64()))));
             break;
@@ -260,7 +260,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         {
             const BasicAuthentication &basicAuth = static_cast<BasicAuthentication&>(*newProjectData.authData.get());
             currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.username));
-			currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.passwordSalt));
+            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.passwordSalt));
             currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
                     set_value(QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(basicAuth.passwordSalt, basicAuth.password).toBase64())));
 
@@ -394,9 +394,9 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
         throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
     }
 
-    QString projectVersion = QString(doc.select_single_node("/FRequestProject").node().attribute("frequestVersion").as_string());
+    QString currProjectVersion = QString(doc.select_single_node("/FRequestProject").node().attribute("frequestVersion").as_string());
 
-    if(projectVersion != GlobalVars::LastCompatibleVersionProjects){
+    if(currProjectVersion != GlobalVars::LastCompatibleVersionProjects){
         if(!Util::FileSystem::backupFile(filePath, filePath + UtilFRequest::getDateTimeFormatForFilename(QDateTime::currentDateTime()))){
             QString errorMessage = "Couldn't backup the existing project file for version upgrade, program can't proceed.";
             Util::Dialogs::showError(errorMessage);
@@ -405,20 +405,35 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
         }
     }
 
-    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion, const pugi::char_t* const identChar){
-        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), identChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + upgradeVersion + " )"));
+    auto fUpgradeFileIfNecessary = [&doc, &filePath, &currProjectVersion](
+            const QString &oldVersion,
+            const QString &newVersion,
+            const pugi::char_t* const identChar,
+            std::function<void()> upgradeFunction){
+
+        // Upgrade necessary?
+        if(currProjectVersion == oldVersion){
+
+            pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
+
+            // Update version
+            projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(newVersion));
+
+            // do specific upgrade changes
+            upgradeFunction();
+
+            if(!doc.save_file(QSTR_TO_CSTR(filePath), identChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+                throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + filePath + "'. After file version upgrade. (to version " + newVersion + " )"));
+            }
+
+            currProjectVersion = newVersion;
         }
+
     };
 
-    if(projectVersion == "1.0"){
-
-        const QString versionAfterUpgrade = "1.1";
+    fUpgradeFileIfNecessary("1.0", "1.1", pugiIdentChars::tabChar, [&](){
 
         pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
-
-        // Update version
-        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
 
         // Generate an uuid to the project
         projectNode.append_attribute("uuid").set_value(QSTR_TO_CSTR(QUuid::createUuid().toString()));
@@ -432,39 +447,56 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
             formKeyValuesNodes[i].node().append_child("Type").append_child(pugi::node_pcdata).set_value("0"); // 0 is Text in 1.1
         }
 
-        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, pugiIdentChars::tabChar);
+    });
 
-        projectVersion = versionAfterUpgrade;
-    }
-    if(projectVersion == "1.1"){
-        const QString versionAfterUpgrade = "1.1c";
+    fUpgradeFileIfNecessary("1.1", "1.1c", pugiIdentChars::tabChar, [&](){
 
         pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
-
-        // Update version
-        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
 
         // Set the default ident character
         // Previous to 1.1c all versions use tab as separator, so we want to keep that
         // until user changes, even though now space is the default
         projectNode.append_attribute("saveIdentCharacter").set_value("1"); // 0 is tab in 1.1c
 
-        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, pugiIdentChars::tabChar);
+    });
 
-        projectVersion = versionAfterUpgrade;
-    }
-    if (projectVersion == "1.1c") {
-        const QString versionAfterUpgrade = "1.2";
+    const pugi::char_t* const currSaveIdentCharacter =
+    pugiIdentChars::getIdentCharaterForEnum(static_cast<UtilFRequest::IdentCharacter>(
+                                                doc.select_node("/FRequestProject/@saveIdentCharacter").attribute().as_int()));
+
+    fUpgradeFileIfNecessary("1.1c", "1.2", currSaveIdentCharacter, [&](){
+
         pugi::xml_node projectNode = doc.select_single_node("/FrequestProject").node();
-        projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
-        bool indentWithSpaces = projectNode.attribute("saveIndentCaracter").value();
 
         projectNode.append_child("GlobalHeaders");
-        fSaveFileAfterUpgrade(filePath, versionAfterUpgrade, indentWithSpaces ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar);
-        projectVersion = versionAfterUpgrade;
-    }
 
-    if(projectVersion != GlobalVars::LastCompatibleVersionProjects){
+    });
+
+    if(currProjectVersion != GlobalVars::LastCompatibleVersionProjects){
         throw std::runtime_error("Can't load the project file, it is from an incompatible version. Probably newer?");
     }
+}
+
+namespace pugiIdentChars {
+
+const pugi::char_t* getIdentCharaterForEnum(const UtilFRequest::IdentCharacter identEnum){
+    switch(identEnum){
+    case UtilFRequest::IdentCharacter::SPACE:
+    {
+        return pugiIdentChars::spaceChar;
+    }
+    case UtilFRequest::IdentCharacter::TAB:
+    {
+        return pugiIdentChars::tabChar;
+    }
+    default:
+    {
+        QString errorMessage = "UtilFRequest::IdentCharacter type unknown: '" + QString::number(static_cast<int>(identEnum)) + "'. Program can't proceed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_FATAL << errorMessage;
+        exit(1);
+    }
+    }
+}
+
 }

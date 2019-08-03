@@ -154,6 +154,8 @@ QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, c
 // Replaces the textToReplace string with the actual username and password given (uses the FRequest Auth Placeholders for the replace)
 QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, const QString &username, const QString &password);
 
+void disableTableWidgetRow(QTableWidget *myTable, const int rowNumber);
+
 }
 
 #endif // UTILFREQUEST_H

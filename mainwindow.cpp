@@ -1522,7 +1522,8 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
 
     if (!ui->cbGlobalHeaders->isChecked()) {
         for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
-            Util::TableWidget::addDisabledRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
+            Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
+            UtilFRequest::disableTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
         }
     }
 
@@ -1880,7 +1881,7 @@ void MainWindow::on_cbRequestOverrideMainUrl_toggled(bool checked)
     buildFullPath();
 }
 
-void MainWindow::on_cbGlobalHeaders_toggled(bool checked)
+void MainWindow::on_cbGlobalHeaders_toggled(bool /*checked*/)
 {
     setProjectHasChanged();
     buildFullPath();

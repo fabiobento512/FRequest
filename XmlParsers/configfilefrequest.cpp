@@ -528,9 +528,9 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
         throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
     }
 
-    QString configVersion = QString(doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").as_string());
+    QString currentConfigVersion = QString(doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").as_string());
 
-    if(configVersion != GlobalVars::LastCompatibleVersionConfig){
+    if(currentConfigVersion != GlobalVars::LastCompatibleVersionConfig){
         if(!Util::FileSystem::backupFile(this->fileFullPath, this->fileFullPath + UtilFRequest::getDateTimeFormatForFilename(QDateTime::currentDateTime()))){
             QString errorMessage = "Couldn't backup the existing config file for version upgrade, program can't proceed.";
             Util::Dialogs::showError(errorMessage);
@@ -539,17 +539,30 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
         }
     }
 	
-    auto fSaveFileAfterUpgrade = [&doc](const QString &fileFullPath, const QString &upgradeVersion){
-        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + upgradeVersion + " )"));
+    auto fUpgradeFileIfNecessary = [&doc, fileFullPath = this->fileFullPath, &currentConfigVersion](
+            const QString &oldVersion,
+            const QString &newVersion,
+            std::function<void()> upgradeFunction){
+
+        // Upgrade necessary?
+        if(currentConfigVersion == oldVersion){
+
+            // Update version
+            doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(newVersion));
+
+            // do specific upgrade changes
+            upgradeFunction();
+
+            if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+                throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + newVersion + " )"));
+            }
+
+            currentConfigVersion = newVersion;
         }
-	};
+
+    };
 	
-    if(configVersion == "1.0"){
-
-		const QString versionAfterUpgrade = "1.1";
-
-        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+    fUpgradeFileIfNecessary("1.0", "1.1", [&](){
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
@@ -563,66 +576,47 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
             proxyNode.set_name("Proxy");
         }
 
-        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
-		
-		configVersion = versionAfterUpgrade;
-    }
-	if(configVersion == "1.1"){
-		const QString versionAfterUpgrade = "1.1a";
+    });
 
-        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+    fUpgradeFileIfNecessary("1.1", "1.1a", [&](){
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
-		// Delete old attribute 'askToOpenLastProject'
+        // Delete old attribute 'askToOpenLastProject'
         pugi::xml_attribute askToOpenLastProjectAttribute = generalNode.attribute("askToOpenLastProject");
 
         if(!askToOpenLastProjectAttribute.empty()){
             generalNode.remove_attribute(askToOpenLastProjectAttribute);
         }
-		
-		// Add new attribute that replaces 'askToOpenLastProject'
-		
-		// use ASK_TO_LOAD_LAST_PROJECT as default
-        generalNode.append_attribute("onStartupOption").set_value("0"); // 0 = ASK_TO_LOAD_LAST_PROJECT in 1.1a
-		
-		// Add new attribute that specifies the max response size for display in ui
-		generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(200); // 200 kb default
-		
-        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
-		
-		configVersion = versionAfterUpgrade;
-	}
-	if(configVersion == "1.1a"){
-		const QString versionAfterUpgrade = "1.1b";
 
-        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+        // Add new attribute that replaces 'askToOpenLastProject'
+
+        // use ASK_TO_LOAD_LAST_PROJECT as default
+        generalNode.append_attribute("onStartupOption").set_value("0"); // 0 = ASK_TO_LOAD_LAST_PROJECT in 1.1a
+
+        // Add new attribute that specifies the max response size for display in ui
+        generalNode.append_attribute("maxRequestResponseDataSizeToDisplay").set_value(200); // 200 kb default
+
+    });
+
+    fUpgradeFileIfNecessary("1.1a", "1.1b", [&](){
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
-		// Add new attribute for themes
+        // Add new attribute for themes
         generalNode.append_attribute("theme").set_value("0"); // 0 = OS_DEFAULT in 1.1b
-		
-        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
-		
-		configVersion = versionAfterUpgrade;
-	}
 
-    if (configVersion =="1.1b") {
-        const QString versionAfterUpgrade = "1.2";
+    });
 
-        doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(versionAfterUpgrade));
+    fUpgradeFileIfNecessary("1.1b", "1.2", [&](){
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
         generalNode.append_attribute("hideProjectSavedDialog").set_value(false);
 
-        fSaveFileAfterUpgrade(this->fileFullPath, versionAfterUpgrade);
-
-        configVersion = versionAfterUpgrade;
-    }
+    });
 	
-    if(configVersion != GlobalVars::LastCompatibleVersionConfig){
+    if(currentConfigVersion != GlobalVars::LastCompatibleVersionConfig){
         throw std::runtime_error("Can't load the config file, it is from an incompatible version. Probably newer?");
     }
 }
