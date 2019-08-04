@@ -210,10 +210,7 @@ void MainWindow::on_pbSendRequest_clicked()
         // Apply proxy type
         ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
 
-        QMap<QString, QString> requestFinalHeadersMap;
-        for (const UtilFRequest::HttpHeader &currRequestHeader : getRequestHeaders()) {
-            requestFinalHeadersMap.insert(currRequestHeader.name, currRequestHeader.value);
-        }
+        QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
 
         // Attempt to authenticate if we have authentication and its the first request in this project
         if(this->currentProjectItem->authData != nullptr){
@@ -239,7 +236,12 @@ void MainWindow::on_pbSendRequest_clicked()
                 case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
                 {
                     const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
-                    requestFinalHeadersMap.insert("Authorization", "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64());
+
+                    UtilFRequest::HttpHeader authHeader;
+                    authHeader.name = "Authorization";
+                    authHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
+
+                    requestFinalHeaders.append(authHeader);
                     break;
                 }
                 default:
@@ -253,30 +255,11 @@ void MainWindow::on_pbSendRequest_clicked()
             }
         }
 
-        // we add the global headers only if they doesn't exist in the request
-        // this is specially useful if we want to overwrite some existing header
+        // we always add the global headers, except in case that the user check the disable checkbox
+        // multiple headers with the same key should be possible accordingly to here:
+        // https://stackoverflow.com/a/4371395
         if (!ui->cbDisableGlobalHeaders->isChecked()) {
-            for (const UtilFRequest::HttpHeader &currGlobalHeader : this->currentProjectItem->globalHeaders) {
-                if (!requestFinalHeadersMap.contains(currGlobalHeader.name)) {
-                    requestFinalHeadersMap.insert(currGlobalHeader.name, currGlobalHeader.value);
-                }
-            }
-        }
-
-        QVector<UtilFRequest::HttpHeader> requestFinalHeadersVector;
-        requestFinalHeadersVector.reserve(requestFinalHeadersMap.size());
-
-
-        // Convert back to a vector of headers
-        QMap<QString, QString>::const_iterator headerIterator = requestFinalHeadersMap.begin();
-        for (;headerIterator != requestFinalHeadersMap.end(); headerIterator++) {
-
-            UtilFRequest::HttpHeader currHeader;
-            currHeader.name = headerIterator.key();
-            currHeader.value = headerIterator.value();
-
-            requestFinalHeadersVector.append(currHeader);
-
+            requestFinalHeaders.append(this->currentProjectItem->globalHeaders);
         }
 
         this->ignoreAnyChangesToProject.SetCondition();
@@ -295,7 +278,7 @@ void MainWindow::on_pbSendRequest_clicked()
                     ui->leFullPath->text(),
                     ui->cbBodyType->currentText(),
                     ui->pteRequestBody->toPlainText(),
-                    requestFinalHeadersVector
+                    requestFinalHeaders
                     );
 
         lastStartTime = QDateTime::currentDateTime();
@@ -1165,8 +1148,7 @@ QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
 
     for(int i = 0; i < ui->twRequestHeadersKeyValue->rowCount(); i++){
 
-#warning check what this condition is for
-        if ((ui->twRequestHeadersKeyValue->item(i, 0)->flags() & Qt::NoItemFlags) != Qt::NoItemFlags) {
+        if (!UtilFRequest::isGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, i)) {
             UtilFRequest::HttpHeader currentHeader;
 
             currentHeader.name = ui->twRequestHeadersKeyValue->item(i, 0)->text();
@@ -1527,11 +1509,9 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
 
     formatRequestBody(getRequestCurrentSerializationFormatType());
 
-    if (!ui->cbDisableGlobalHeaders->isChecked()) {
-        for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
-            Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
-            UtilFRequest::disableTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
-        }
+    for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
+        Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
+        UtilFRequest::setGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
     }
 
     for(const UtilFRequest::HttpHeader &currentHeader : info.headers){
@@ -2531,4 +2511,13 @@ void MainWindow::setTheme(){
     }
 
     setThemePaletteForCustomWidgets();
+}
+
+void MainWindow::on_twRequestHeadersKeyValue_currentItemChanged(QTableWidgetItem *current, QTableWidgetItem */*previous*/)
+{
+    // We can't remove global headers here... (global headers are always disabled)
+    if(current != nullptr){
+        ui->tbRequestHeadersKeyValueRemove->setEnabled(
+                    !UtilFRequest::isGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, current->row()));
+    }
 }

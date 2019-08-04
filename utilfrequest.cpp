@@ -351,14 +351,60 @@ QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, 
             replace(GlobalVars::FRequestAuthenticationPlaceholderPassword, password);
 }
 
-void disableTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+void setGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber){
 
     for(int i=0; i<myTable->columnCount(); i++){
         QTableWidgetItem * const currentItem = myTable->item(rowNumber, i);
 
         currentItem->setFlags(currentItem->flags() & ~Qt::ItemIsEditable);
+
+        currentItem->setBackground(getTableWidgetRowDisabledBackStyle());
+        currentItem->setForeground(getTableWidgetRowDisabledTextStyle());
+
     }
 
+}
+
+//Reset a item to its initial style
+void resetGlobalTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    for(int i=0; i<myTable->columnCount(); i++){
+
+        QTableWidgetItem * const currentItem = myTable->item(rowNumber, i);
+
+        currentItem->setFlags(currentItem->flags() & Qt::ItemIsEditable);
+
+        if((currentItem->row()+1)%2==0){ //if the row number is par it use the alternate color scheme
+            currentItem->setBackground(QPalette().brush(QPalette::Normal,QPalette::AlternateBase));
+        }
+        else{
+            currentItem->setBackground(QPalette().brush(QPalette::Normal,QPalette::Base));
+        }
+
+        currentItem->setForeground(QPalette().brush(QPalette::Normal,QPalette::WindowText));
+
+    }
+
+}
+
+bool isGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    if(myTable->columnCount() <= 0){
+        return true;
+    }
+
+    const QTableWidgetItem * const currItem = myTable->item(rowNumber, 0);
+
+    return currItem->background() == getTableWidgetRowDisabledBackStyle() &&
+            currItem->foreground() == getTableWidgetRowDisabledTextStyle();
+}
+
+QBrush getTableWidgetRowDisabledBackStyle(){
+    return QTableWidget().palette().brush(QPalette::Disabled,QPalette::Base);
+}
+
+QBrush getTableWidgetRowDisabledTextStyle(){
+    return QTableWidget().palette().brush(QPalette::Disabled,QPalette::WindowText);
 }
 
 }
