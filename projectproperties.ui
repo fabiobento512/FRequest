@@ -128,6 +128,19 @@
             </layout>
            </widget>
           </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </widget>
        </item>
@@ -160,7 +173,7 @@
           <enum>QLayout::SetMaximumSize</enum>
          </property>
          <item>
-          <widget class="QTableWidget" name="headerKeyValue">
+          <widget class="QTableWidget" name="twGlobalHeaderKeyValue">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -188,7 +201,7 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <item>
-            <widget class="QToolButton" name="headerKeyValueAdd">
+            <widget class="QToolButton" name="tbGlobalHeaderKeyValueAdd">
              <property name="toolTip">
               <string>Add new row</string>
              </property>
@@ -202,7 +215,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="headerKeyValueRemove">
+            <widget class="QToolButton" name="tbGlobalHeaderKeyValueRemove">
              <property name="toolTip">
               <string>Remove selected rows</string>
              </property>
@@ -241,108 +254,112 @@
          <property name="title">
           <string>Authentication</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_9">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QLabel" name="lbSaveProjectAuthTo">
-            <property name="text">
-             <string>Save Project Authentication to:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QRadioButton" name="rbSaveProjectAuthToConfigurationFile">
-              <property name="toolTip">
-               <string>Saves the authentication data to Frequest configuration file, even if you share the project file the authentication data is not shared</string>
-              </property>
+           <layout class="QFormLayout" name="formLayout_2">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lbSaveProjectAuthTo">
               <property name="text">
-               <string>FRequest Configuration File</string>
+               <string>Save Project Authentication to:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <widget class="QRadioButton" name="rbSaveProjectAuthToConfigurationFile">
+                <property name="toolTip">
+                 <string>Saves the authentication data to Frequest configuration file, even if you share the project file the authentication data is not shared</string>
+                </property>
+                <property name="text">
+                 <string>FRequest Configuration File</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="rbSaveProjectAuthToProjectFile">
+                <property name="toolTip">
+                 <string>Saves the authentication data to the Frequest project file, so if you share your project file the authentication data is also shared</string>
+                </property>
+                <property name="text">
+                 <string>FRequest Project File</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lbAuthType">
+              <property name="text">
+               <string>Authentication Type:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="cbRequestType">
+              <item>
+               <property name="text">
+                <string>Request Authentication</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Basic Authentication</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lbRequestForAuthentication">
+              <property name="text">
+               <string>Request for Authentication:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="cbRequestForAuthentication"/>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lbUsername">
+              <property name="text">
+               <string>Username:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="leUsername"/>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="lbPassword">
+              <property name="text">
+               <string>Password:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="lePassword">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="echoMode">
+               <enum>QLineEdit::Password</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0" colspan="2">
+             <widget class="QCheckBox" name="cbRetryLoginIfError401">
+              <property name="text">
+               <string>Retry login if the HTTP error 401 (Unauthorized) is received on a request</string>
               </property>
               <property name="checked">
                <bool>true</bool>
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QRadioButton" name="rbSaveProjectAuthToProjectFile">
-              <property name="toolTip">
-               <string>Saves the authentication data to the Frequest project file, so if you share your project file the authentication data is also shared</string>
-              </property>
-              <property name="text">
-               <string>FRequest Project File</string>
-              </property>
-             </widget>
-            </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QLabel" name="lbAuthType">
-            <property name="text">
-             <string>Authentication Type:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="cbRequestType">
-            <item>
-             <property name="text">
-              <string>Request Authentication</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Basic Authentication</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="lbRequestForAuthentication">
-            <property name="text">
-             <string>Request for Authentication:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="cbRequestForAuthentication"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="lbUsername">
-            <property name="text">
-             <string>Username:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="leUsername"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="lbPassword">
-            <property name="text">
-             <string>Password:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lePassword">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="echoMode">
-             <enum>QLineEdit::Password</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="cbRetryLoginIfError401">
-            <property name="text">
-             <string>Retry login if the HTTP error 401 (Unauthorized) is received on a request</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
           </item>
           <item>
            <widget class="QScrollArea" name="saProjectPropertiesNote">
@@ -355,7 +372,7 @@
                <x>0</x>
                <y>0</y>
                <width>623</width>
-               <height>179</height>
+               <height>175</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -375,6 +392,19 @@
              </layout>
             </widget>
            </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>

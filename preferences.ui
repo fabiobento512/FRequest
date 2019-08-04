@@ -321,7 +321,7 @@ As alternative try to download the response as file (since this way it writes al
        <item>
         <widget class="QCheckBox" name="cbHideProjectSavedDialog">
          <property name="text">
-          <string>Hide confirmation when saving a project</string>
+          <string>Hide confirmation dialog when saving a project</string>
          </property>
         </widget>
        </item>

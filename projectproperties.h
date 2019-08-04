@@ -48,13 +48,14 @@ private slots:
     void accept ();
 
     void on_cbUseAuthentication_toggled(bool checked);
-    void on_headerKeyValueAdd_clicked();
-    void on_headerKeyValueRemove_clicked();
+    void on_tbGlobalHeaderKeyValueAdd_clicked();
+    void on_tbGlobalHeaderKeyValueRemove_clicked();
 
 private:
     void fillInterface();
 	void fillAuthenticationData(FRequestAuthentication &auth);
 	QString getComboBoxNameForRequest(const FRequestTreeWidgetRequestItem* const currentRequest);
+    void setRequestAuthenticationNote();
 	
 private:
     Ui::ProjectProperties *ui;

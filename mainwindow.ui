@@ -437,7 +437,7 @@
                     </layout>
                    </item>
                    <item>
-                    <widget class="QCheckBox" name="cbGlobalHeaders">
+                    <widget class="QCheckBox" name="cbDisableGlobalHeaders">
                      <property name="text">
                       <string>Disable global headers</string>
                      </property>
@@ -702,7 +702,7 @@ or alternatively just download the response as file.</string>
      <x>0</x>
      <y>0</y>
      <width>803</width>
-     <height>24</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

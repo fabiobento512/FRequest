@@ -38,12 +38,7 @@ ProjectProperties::ProjectProperties(QWidget *parent, FRequestTreeWidgetProjectI
         this->currentPasswordSalt = QCryptographicHash::hash(QByteArray().setNum(QDateTime::currentDateTime().toSecsSinceEpoch()), QCryptographicHash::Sha256).toHex();
     }
 
-    if(ui->cbRequestType->currentText() == "Request Authentication"){
-        ui->saProjectPropertiesNote->setVisible(true);
-    }
-    else{
-        ui->saProjectPropertiesNote->setVisible(false);
-    }
+    setRequestAuthenticationNote();
 
     ui->lbProjectPropertiesNote->setText(
                 "<b>Note:</b> Request authentication works by selecting one of your requests as the one for the authentication.<br/><br/>"
@@ -73,9 +68,9 @@ void ProjectProperties::fillInterface(){
     ui->cbIdentCharacter->setCurrentText(UtilFRequest::getIdentCharacterString(this->projectItem->saveIdentCharacter));
 
     for (int i = 0; i < this->projectItem->globalHeaders.size(); i++) {
-        Util::TableWidget::addRow(
-            ui->headerKeyValue,
-            QStringList() << this->projectItem->globalHeaders.at(i).name << this->projectItem->globalHeaders.at(i).value);
+        const UtilFRequest::HttpHeader &currGlobalHeader = this->projectItem->globalHeaders.at(i);
+
+        Util::TableWidget::addRow(ui->twGlobalHeaderKeyValue, QStringList() << currGlobalHeader.name << currGlobalHeader.value);
     }
 }
 
@@ -91,6 +86,8 @@ void ProjectProperties::on_cbRequestType_currentIndexChanged(const QString &arg1
     if(arg1 == "Request Authentication"){
         ui->cbRequestForAuthentication->setEnabled(true);
     }
+
+    setRequestAuthenticationNote();
 }
 
 // Need to override to do the verification
@@ -174,10 +171,13 @@ void ProjectProperties::accept (){
     }
     }
 
+    // Save global headers
     this->projectItem->globalHeaders.clear();
-    for (int i = 0; i < ui->headerKeyValue->rowCount(); i++) {
-        UtilFRequest::HttpHeader h = {ui->headerKeyValue->item(i, 0)->text(), ui->headerKeyValue->item(i, 1)->text()};
-        this->projectItem->globalHeaders.append(h);
+    for (int i = 0; i < ui->twGlobalHeaderKeyValue->rowCount(); i++) {
+        UtilFRequest::HttpHeader currentHeader;
+        currentHeader.name =  ui->twGlobalHeaderKeyValue->item(i, 0)->text();
+        currentHeader.value = ui->twGlobalHeaderKeyValue->item(i, 1)->text();
+        this->projectItem->globalHeaders.append(currentHeader);
     }
 
     QDialog::accept();
@@ -190,15 +190,15 @@ void ProjectProperties::on_cbUseAuthentication_toggled(bool checked)
     ui->gbAuthentication->setEnabled(checked);
 }
 
-void ProjectProperties::on_headerKeyValueAdd_clicked()
+void ProjectProperties::on_tbGlobalHeaderKeyValueAdd_clicked()
 {
-    Util::TableWidget::addRow(ui->headerKeyValue, QStringList() << "" << "");
+    Util::TableWidget::addRow(ui->twGlobalHeaderKeyValue, QStringList() << "" << "");
 }
 
-void ProjectProperties::on_headerKeyValueRemove_clicked()
+void ProjectProperties::on_tbGlobalHeaderKeyValueRemove_clicked()
 {
 
-    int size = Util::TableWidget::getSelectedRows(ui->headerKeyValue).size();
+    int size = Util::TableWidget::getSelectedRows(ui->twGlobalHeaderKeyValue).size();
 
     if(size==0){
         Util::Dialogs::showInfo("Select a row first!");
@@ -207,7 +207,7 @@ void ProjectProperties::on_headerKeyValueRemove_clicked()
 
     if(Util::Dialogs::showQuestion(this, "Are you sure you want to remove all selected rows?")){
         for(int i=0; i < size; i++){
-            ui->headerKeyValue->removeRow(Util::TableWidget::getSelectedRows(ui->headerKeyValue).at(size-i-1).row());
+            ui->twGlobalHeaderKeyValue->removeRow(Util::TableWidget::getSelectedRows(ui->twGlobalHeaderKeyValue).at(size-i-1).row());
         }
         Util::Dialogs::showInfo("Key-Value rows deleted");
     }
@@ -263,4 +263,13 @@ void ProjectProperties::fillAuthenticationData(FRequestAuthentication &auth){
 
 QString ProjectProperties::getComboBoxNameForRequest(const FRequestTreeWidgetRequestItem* const currentRequest){
     return currentRequest->itemContent.name + " (" + UtilFRequest::getRequestTypeString(currentRequest->itemContent.requestType) + ")";
+}
+
+void ProjectProperties::setRequestAuthenticationNote(){
+    if(ui->cbRequestType->currentText() == "Request Authentication"){
+        ui->saProjectPropertiesNote->setVisible(true);
+    }
+    else{
+        ui->saProjectPropertiesNote->setVisible(false);
+    }
 }

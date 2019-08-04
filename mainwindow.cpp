@@ -210,9 +210,9 @@ void MainWindow::on_pbSendRequest_clicked()
         // Apply proxy type
         ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
 
-        QMap<QString, QString> headerMap;
-        for (UtilFRequest::HttpHeader const& header : getRequestHeaders()) {
-            headerMap.insert(header.name, header.value);
+        QMap<QString, QString> requestFinalHeadersMap;
+        for (const UtilFRequest::HttpHeader &currRequestHeader : getRequestHeaders()) {
+            requestFinalHeadersMap.insert(currRequestHeader.name, currRequestHeader.value);
         }
 
         // Attempt to authenticate if we have authentication and its the first request in this project
@@ -239,7 +239,7 @@ void MainWindow::on_pbSendRequest_clicked()
                 case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
                 {
                     const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
-                    headerMap.insert("Authorization", "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64());
+                    requestFinalHeadersMap.insert("Authorization", "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64());
                     break;
                 }
                 default:
@@ -255,19 +255,28 @@ void MainWindow::on_pbSendRequest_clicked()
 
         // we add the global headers only if they doesn't exist in the request
         // this is specially useful if we want to overwrite some existing header
-        if (!ui->cbGlobalHeaders->isChecked()) {
-            for (UtilFRequest::HttpHeader const& header : this->currentProjectItem->globalHeaders) {
-                if (!headerMap.contains(header.name)) {
-                    headerMap.insert(header.name, header.value);
+        if (!ui->cbDisableGlobalHeaders->isChecked()) {
+            for (const UtilFRequest::HttpHeader &currGlobalHeader : this->currentProjectItem->globalHeaders) {
+                if (!requestFinalHeadersMap.contains(currGlobalHeader.name)) {
+                    requestFinalHeadersMap.insert(currGlobalHeader.name, currGlobalHeader.value);
                 }
             }
         }
 
-        QVector<UtilFRequest::HttpHeader> requestFinalHeaders(headerMap.size());
-        QMap<QString, QString>::const_iterator headerIterator = headerMap.constBegin();
-        while (headerIterator != headerMap.constEnd()) {
-            requestFinalHeaders.append({headerIterator.key(), headerIterator.value()});
-            headerIterator++;
+        QVector<UtilFRequest::HttpHeader> requestFinalHeadersVector;
+        requestFinalHeadersVector.reserve(requestFinalHeadersMap.size());
+
+
+        // Convert back to a vector of headers
+        QMap<QString, QString>::const_iterator headerIterator = requestFinalHeadersMap.begin();
+        for (;headerIterator != requestFinalHeadersMap.end(); headerIterator++) {
+
+            UtilFRequest::HttpHeader currHeader;
+            currHeader.name = headerIterator.key();
+            currHeader.value = headerIterator.value();
+
+            requestFinalHeadersVector.append(currHeader);
+
         }
 
         this->ignoreAnyChangesToProject.SetCondition();
@@ -286,7 +295,7 @@ void MainWindow::on_pbSendRequest_clicked()
                     ui->leFullPath->text(),
                     ui->cbBodyType->currentText(),
                     ui->pteRequestBody->toPlainText(),
-                    requestFinalHeaders
+                    requestFinalHeadersVector
                     );
 
         lastStartTime = QDateTime::currentDateTime();
@@ -507,10 +516,7 @@ void MainWindow::replyFinished(QNetworkReply *reply){
                 QString statusErrorMessage = requestType + " wasn't successful." +
                         (overridenRequest ? " Since this was an url overriden request, the authentication was not applied." : "");
 
-                // We show status bar error twice because if the user takes too long to click ok in error popup the message may not be seen by him
                 Util::StatusBar::showError(ui->statusBar, statusErrorMessage); // this one is necessary to override any previous message
-//                Util::Dialogs::showError("An error occurred while performing the " + requestType + ".\n" + requestReturnMessage);
-                Util::StatusBar::showError(ui->statusBar, statusErrorMessage);
             }
 
             isError = true;
@@ -1159,7 +1165,8 @@ QVector<UtilFRequest::HttpHeader> MainWindow::getRequestHeaders(){
 
     for(int i = 0; i < ui->twRequestHeadersKeyValue->rowCount(); i++){
 
-        if (ui->twRequestHeadersKeyValue->item(i, 0)->flags() != Qt::NoItemFlags) {
+#warning check what this condition is for
+        if ((ui->twRequestHeadersKeyValue->item(i, 0)->flags() & Qt::NoItemFlags) != Qt::NoItemFlags) {
             UtilFRequest::HttpHeader currentHeader;
 
             currentHeader.name = ui->twRequestHeadersKeyValue->item(i, 0)->text();
@@ -1198,7 +1205,7 @@ void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * con
 
     requestItem->itemContent.bOverridesMainUrl = ui->cbRequestOverrideMainUrl->isChecked();
     requestItem->itemContent.overrideMainUrl = ui->leRequestOverrideMainUrl->text();
-    requestItem->itemContent.bDisableGlobalHeaders = ui->cbGlobalHeaders->isChecked();
+    requestItem->itemContent.bDisableGlobalHeaders = ui->cbDisableGlobalHeaders->isChecked();
 
     requestItem->itemContent.headers = getRequestHeaders();
 
@@ -1480,7 +1487,7 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     ui->lePath->setText(info.path);
     ui->cbRequestOverrideMainUrl->setChecked(info.bOverridesMainUrl);
     ui->leRequestOverrideMainUrl->setText(info.overrideMainUrl);
-    ui->cbGlobalHeaders->setChecked(info.bDisableGlobalHeaders);
+    ui->cbDisableGlobalHeaders->setChecked(info.bDisableGlobalHeaders);
 
     setRequestType(info.requestType);
 
@@ -1520,7 +1527,7 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
 
     formatRequestBody(getRequestCurrentSerializationFormatType());
 
-    if (!ui->cbGlobalHeaders->isChecked()) {
+    if (!ui->cbDisableGlobalHeaders->isChecked()) {
         for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
             Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
             UtilFRequest::disableTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
@@ -1881,10 +1888,9 @@ void MainWindow::on_cbRequestOverrideMainUrl_toggled(bool checked)
     buildFullPath();
 }
 
-void MainWindow::on_cbGlobalHeaders_toggled(bool /*checked*/)
+void MainWindow::on_cbDisableGlobalHeaders_toggled(bool /*checked*/)
 {
     setProjectHasChanged();
-    buildFullPath();
 }
 
 
@@ -2306,13 +2312,14 @@ void MainWindow::saveProjectProperties(){
 
 
     }
-    if(!this->unsavedChangesExist){
-        if (!this->currentSettings.hideProjectSavedDialog) {
+
+    if (!this->currentSettings.hideProjectSavedDialog) {
+        if(!this->unsavedChangesExist){
             Util::Dialogs::showInfo("Project properties saved with success!");
         }
-    }
-    else{
-        Util::Dialogs::showWarning("Project properties weren't saved. Please save the project manually from file menu.");
+        else{
+            Util::Dialogs::showWarning("Project properties weren't saved. Please save the project manually from file menu.");
+        }
     }
 }
 

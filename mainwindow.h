@@ -168,7 +168,7 @@ private slots:
 
     void on_actionCheck_for_updates_triggered();
 
-    void on_cbGlobalHeaders_toggled(bool checked);
+    void on_cbDisableGlobalHeaders_toggled(bool checked);
 
 signals:
     void signalAppIsLoaded();

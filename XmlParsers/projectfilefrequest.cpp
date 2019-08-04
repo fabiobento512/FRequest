@@ -160,12 +160,12 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         QVector<UtilFRequest::HttpHeader> requestHeaders;
 
         for(const pugi::xml_node &currentHeaderNode : currNode.child("Headers").children()){
-            UtilFRequest::HttpHeader currentHeader;
+            UtilFRequest::HttpHeader currentRequestHeader;
 
-            currentHeader.name = QString(currentHeaderNode.child("Key").child_value());
-            currentHeader.value = currentHeaderNode.child("Value").child_value();
+            currentRequestHeader.name = QString(currentHeaderNode.child("Key").child_value());
+            currentRequestHeader.value = currentHeaderNode.child("Value").child_value();
 
-            requestHeaders.append(currentHeader);
+            requestHeaders.append(currentRequestHeader);
         }
 
         currentRequestInfo.headers = requestHeaders;
@@ -181,17 +181,17 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
         currentProjectData.projectRequests.append(currentRequestInfo);
     }
 
-    pugi::xml_node headers = doc.select_node("/FRequestProject/GlobalHeaders").node();
+    pugi::xml_node globalHeadersNode = doc.select_node("/FRequestProject/GlobalHeaders").node();
 
     QVector<UtilFRequest::HttpHeader> globalHeaders;
 
-    for(const pugi::xml_node &currentHeaderNode : headers.children()){
-        UtilFRequest::HttpHeader currentHeader;
+    for(const pugi::xml_node &currentGlobalHeaderNode : globalHeadersNode.children()){
+        UtilFRequest::HttpHeader currentGlobalHeader;
 
-        currentHeader.name = QString(currentHeaderNode.child("Key").child_value());
-        currentHeader.value = currentHeaderNode.child("Value").child_value();
+        currentGlobalHeader.name = QString(currentGlobalHeaderNode.child("Key").child_value());
+        currentGlobalHeader.value = currentGlobalHeaderNode.child("Value").child_value();
 
-        globalHeaders.append(currentHeader);
+        globalHeaders.append(currentGlobalHeader);
     }
     currentProjectData.globalHeaders = globalHeaders;
 
@@ -344,25 +344,25 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         // remove headers if they exist, we will rebuild them
         requestNode.remove_child("Headers");
 
-        pugi::xml_node headersNode = requestNode.append_child("Headers");
+        pugi::xml_node requestHeadersNode = requestNode.append_child("Headers");
 
-        for(const UtilFRequest::HttpHeader &currentHeader : currentRequest.headers){
-            pugi::xml_node currentHeaderNode = headersNode.append_child("Header");
+        for(const UtilFRequest::HttpHeader &currentRequestHeader : currentRequest.headers){
+            pugi::xml_node currentRequestHeaderNode = requestHeadersNode.append_child("Header");
 
-            currentHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.name));
-            currentHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.value));
+            currentRequestHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequestHeader.name));
+            currentRequestHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequestHeader.value));
         }
 
     }
 
     rootNode.remove_child("GlobalHeaders");
 
-    pugi::xml_node headersNode = rootNode.append_child("GlobalHeaders");
-    for (const UtilFRequest::HttpHeader &currentHeader: newProjectData.globalHeaders) {
-        pugi::xml_node currentHeaderNode = headersNode.append_child("Header");
+    pugi::xml_node globalHeadersNode = rootNode.append_child("GlobalHeaders");
+    for (const UtilFRequest::HttpHeader &currentGlobalHeader: newProjectData.globalHeaders) {
+        pugi::xml_node currentGlobalHeaderNode = globalHeadersNode.append_child("Header");
 
-        currentHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.name));
-        currentHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentHeader.value));
+        currentGlobalHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentGlobalHeader.name));
+        currentGlobalHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentGlobalHeader.value));
     }
 
     const pugi::char_t* const identCharacterChar = newProjectData.saveIdentCharacter == UtilFRequest::IdentCharacter::SPACE ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar;
