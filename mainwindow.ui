@@ -33,14 +33,14 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
            <item>
-              <widget class="QLineEdit" name="leRequestsFilter">
-               <property name="placeholderText">
-                <string>Requests Filter</string>
-               </property>
-               <property name="clearButtonEnabled">
-                <bool>true</bool>
-               </property>
-              </widget>
+            <widget class="QLineEdit" name="leRequestsFilter">
+             <property name="placeholderText">
+              <string>Requests Filter</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="FRequestTreeWidget" name="treeWidget">
@@ -264,6 +264,9 @@
                        <property name="alternatingRowColors">
                         <bool>true</bool>
                        </property>
+                       <attribute name="horizontalHeaderStretchLastSection">
+                        <bool>true</bool>
+                       </attribute>
                        <column>
                         <property name="text">
                          <string>Key</string>
@@ -381,6 +384,12 @@
                        <property name="alternatingRowColors">
                         <bool>true</bool>
                        </property>
+                       <property name="wordWrap">
+                        <bool>true</bool>
+                       </property>
+                       <attribute name="horizontalHeaderStretchLastSection">
+                        <bool>true</bool>
+                       </attribute>
                        <column>
                         <property name="text">
                          <string>Key</string>
@@ -426,6 +435,19 @@
                       </layout>
                      </item>
                     </layout>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbDisableGlobalHeaders">
+                     <property name="toolTip">
+                      <string>Click to disable global headers for THIS request. Useful if you want to override the global headers or simply do not want to send them.</string>
+                     </property>
+                     <property name="text">
+                      <string>Disable global headers</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>

@@ -329,7 +329,7 @@ SerializationFormatType getSerializationFormatTypeForString(const QString &conte
 
 QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, const QString &input){
 
-	QByteArray saltByteArray = ofuscationSalt.toUtf8();
+    QByteArray saltByteArray = ofuscationSalt.toUtf8();
     QByteArray inputByteArray = input.toUtf8();
 
     // Using unsigned types as they have a defined truncation in iso c++:
@@ -346,9 +346,65 @@ QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, c
 }
 
 QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, const QString &username, const QString &password){
-	return QString(textToReplace).
-	replace(GlobalVars::FRequestAuthenticationPlaceholderUsername, username).
-	replace(GlobalVars::FRequestAuthenticationPlaceholderPassword, password);
+    return QString(textToReplace).
+            replace(GlobalVars::FRequestAuthenticationPlaceholderUsername, username).
+            replace(GlobalVars::FRequestAuthenticationPlaceholderPassword, password);
+}
+
+void setGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    for(int i=0; i<myTable->columnCount(); i++){
+        QTableWidgetItem * const currentItem = myTable->item(rowNumber, i);
+
+        currentItem->setFlags(currentItem->flags() & ~Qt::ItemIsEditable);
+
+        currentItem->setBackground(getTableWidgetRowDisabledBackStyle());
+        currentItem->setForeground(getTableWidgetRowDisabledTextStyle());
+
+    }
+
+}
+
+//Reset a item to its initial style
+void resetGlobalTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    for(int i=0; i<myTable->columnCount(); i++){
+
+        QTableWidgetItem * const currentItem = myTable->item(rowNumber, i);
+
+        currentItem->setFlags(currentItem->flags() & Qt::ItemIsEditable);
+
+        if((currentItem->row()+1)%2==0){ //if the row number is par it use the alternate color scheme
+            currentItem->setBackground(QPalette().brush(QPalette::Normal,QPalette::AlternateBase));
+        }
+        else{
+            currentItem->setBackground(QPalette().brush(QPalette::Normal,QPalette::Base));
+        }
+
+        currentItem->setForeground(QPalette().brush(QPalette::Normal,QPalette::WindowText));
+
+    }
+
+}
+
+bool isGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber){
+
+    if(myTable->columnCount() <= 0){
+        return true;
+    }
+
+    const QTableWidgetItem * const currItem = myTable->item(rowNumber, 0);
+
+    return currItem->background() == getTableWidgetRowDisabledBackStyle() &&
+            currItem->foreground() == getTableWidgetRowDisabledTextStyle();
+}
+
+QBrush getTableWidgetRowDisabledBackStyle(){
+    return QTableWidget().palette().brush(QPalette::Disabled,QPalette::Base);
+}
+
+QBrush getTableWidgetRowDisabledTextStyle(){
+    return QTableWidget().palette().brush(QPalette::Disabled,QPalette::WindowText);
 }
 
 }

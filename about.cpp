@@ -33,13 +33,18 @@ About::About(QWidget *parent) :
                          "Written by Fábio Bento <a href='https://github.com/fabiobento512'>(fabiobento512)</a><br /><br/>"
                          "Build Date " + __DATE__ + " " + __TIME__ + "<br /><br />"
                          "Thanks to:<br/><br/>"
+                         "<b>Main contributors:</b><br />"
+                         "Alejandro Valdés (alevalv) for global headers feature<br />"
+                         "<br />"
+                         "<b>Libraries contributors:</b><br />"
                          "Arseny Kapoulkine and the remaining contributors for pugixml library<br />"
                          "Andrzej Krzemienski and the remaining contributors for C++14 optional library<br />"
                          "Sergey Podobry and the remaining contributors for plog library<br />"
                          "Jane G. (isomoar) for the JSON syntax highlighter (from SchemaBasedJSONEditor)<br />"
                          "Dmitry Ivanov for the XML syntax highlighter (from SchemaBasedJSONEditor)<br />"
-						 "Jürgen Skrotzky (Jorgen-VikingGod) for the Dark Theme<br />"
-                         "<br/>"
+                         "<br />"
+                         "<b>UI contributors:</b><br />"
+                         "Jürgen Skrotzky (Jorgen-VikingGod) for the Dark Theme<br />"
                          "Murakumon for project folder icon (found in findicons.com)<br />"
                          "Woothemes for application icon (found in findicons.com)<br />"
                          "ana nirwana for send request icon (found in iconfinder.com)<br />"
@@ -48,6 +53,7 @@ About::About(QWidget *parent) :
                          "Aha-Soft Team for abort icon (found in findicons.com)<br />"
                          "FatCow Web Hosting for warning icon (found in iconfinder.com) <a href='http://creativecommons.org/licenses/by/3.0/us/'>(license)</a><br />"
 						 "Icons8 for delete icon (found in <a href='https://icons8.com/'>here</a>) <a href='https://creativecommons.org/licenses/by-nd/3.0/'>(license)</a>"
+                         "<br />"
                          + R"(<hr/>
                          This program is free software: you can redistribute it and/or modify
                          it under the terms of the GNU General Public License as published by

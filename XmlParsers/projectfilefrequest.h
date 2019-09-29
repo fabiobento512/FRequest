@@ -38,6 +38,7 @@ public:
         std::shared_ptr<FRequestAuthentication> authData = nullptr;
         bool retryLoginIfError401 = false;
         UtilFRequest::IdentCharacter saveIdentCharacter;
+        QVector<UtilFRequest::HttpHeader> globalHeaders;
     };
 
 public:
@@ -52,6 +53,8 @@ private:
 namespace pugiIdentChars {
     static constexpr pugi::char_t spaceChar[] = PUGIXML_TEXT("    "); // we use 4 spaces as default
     static constexpr pugi::char_t tabChar[] = PUGIXML_TEXT("\t");
+
+    const pugi::char_t* getIdentCharaterForEnum(const UtilFRequest::IdentCharacter identEnum);
 }
 
 #endif // PROJECTFILEFREQUEST_H

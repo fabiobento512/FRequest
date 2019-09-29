@@ -119,6 +119,7 @@ struct RequestInfo{
 	bool bDownloadResponseAsFile = false;
 	QString uuid;
 	unsigned long long int order = 0;
+    bool bDisableGlobalHeaders = true;
 };
 
 static QMimeDatabase mimeDatabase;
@@ -153,6 +154,13 @@ QByteArray simpleStringObfuscationDeobfuscation(const QString& ofuscationSalt, c
 // Replaces the textToReplace string with the actual username and password given (uses the FRequest Auth Placeholders for the replace)
 QString replaceFRequestAuthenticationPlaceholders(const QString &textToReplace, const QString &username, const QString &password);
 
+void setGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber);
+void resetGlobalTableWidgetRow(QTableWidget *myTable, const int rowNumber);
+bool isGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber);
+// we can't use a static object for this because we will receive an error:
+// "QWidget: Must construct a QApplication before a QWidget"
+QBrush getTableWidgetRowDisabledBackStyle();
+QBrush getTableWidgetRowDisabledTextStyle();
 }
 
 #endif // UTILFREQUEST_H

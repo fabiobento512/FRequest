@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FREQUESTTREEWIDGETPROJECTITEM_H
 
 #include "frequesttreewidgetrequestitem.h"
+#include "utilfrequest.h"
 
 class FRequestTreeWidgetProjectItem : public FRequestTreeWidgetItem
 {
@@ -38,6 +39,7 @@ public:
 	// can't use optional because it is an abstract base class, using unique_ptr as nullptr as alternative
     std::shared_ptr<FRequestAuthentication> authData = nullptr;
     UtilFRequest::IdentCharacter saveIdentCharacter = UtilFRequest::IdentCharacter::SPACE; // space by default
+    QVector<UtilFRequest::HttpHeader> globalHeaders;
 private:
     QString uuid;
     QHash<QString, FRequestTreeWidgetRequestItem *> mapOfChilds_UuidToRequest;

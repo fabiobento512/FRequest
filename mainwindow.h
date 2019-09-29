@@ -168,6 +168,10 @@ private slots:
 
     void on_actionCheck_for_updates_triggered();
 
+    void on_cbDisableGlobalHeaders_toggled(bool checked);
+
+    void on_twRequestHeadersKeyValue_currentItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous);
+
 signals:
     void signalAppIsLoaded();
 	void signalRequestFinishedAndProcessed();

@@ -89,8 +89,8 @@ void Preferences::accept (){
 
     // https://stackoverflow.com/a/16487964/1499019
     this->currentSettings.requestTimeout = QTime(0, 0, 0).secsTo(ui->teRequestTimeout->time());
-	
-	this->currentSettings.maxRequestResponseDataSizeToDisplay = ui->sbMaxRequestResponseDataSizeToDisplay->value();
+
+    this->currentSettings.maxRequestResponseDataSizeToDisplay = ui->sbMaxRequestResponseDataSizeToDisplay->value();
 
     if(ui->cbOnStartup->currentText() == "Load last project"){
         this->currentSettings.onStartupSelectedOption = ConfigFileFRequest::OnStartupOption::LOAD_LAST_PROJECT;
@@ -154,7 +154,9 @@ void Preferences::accept (){
     }
 
     this->currentSettings.theme = newTheme;
-	
+
+    this->currentSettings.hideProjectSavedDialog = ui->cbHideProjectSavedDialog->isChecked();
+
     emit saveSettings();
 
     QDialog::accept();
@@ -244,10 +246,11 @@ void Preferences::on_tbRequestBodyKeyValueRemove_clicked()
 
 void Preferences::loadExistingSettings(){
     ui->teRequestTimeout->setTime(QTime(0,0).addSecs(this->currentSettings.requestTimeout));
-	ui->sbMaxRequestResponseDataSizeToDisplay->setValue(this->currentSettings.maxRequestResponseDataSizeToDisplay);
+    ui->sbMaxRequestResponseDataSizeToDisplay->setValue(this->currentSettings.maxRequestResponseDataSizeToDisplay);
     ui->cbUseDefaultHeaders->setChecked(this->currentSettings.defaultHeaders.useDefaultHeaders);
     ui->cbSaveWindowGeometryWhenExiting->setChecked(this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting);
     ui->cbProxyUseProxy->setChecked(this->currentSettings.useProxy);
+    ui->cbHideProjectSavedDialog->setChecked(this->currentSettings.hideProjectSavedDialog);
 
     // TODO Check if there's a better alternative to do this switches / ifs (maybe using enums??)
     // (without do direct string comparisons), because as it is, it is easy to break if we change any of the strings
@@ -311,8 +314,8 @@ void Preferences::loadExistingSettings(){
     ui->leProxyPort->setText(QString::number(this->currentSettings.proxySettings.portNumber));
 
     loadCurrentDefaultHeaders();
-	
-	ui->cbTheme->setCurrentText(ConfigFileFRequest::getFRequestThemeString(this->currentSettings.theme));
+
+    ui->cbTheme->setCurrentText(ConfigFileFRequest::getFRequestThemeString(this->currentSettings.theme));
 }
 
 void Preferences::loadCurrentDefaultHeaders(){
