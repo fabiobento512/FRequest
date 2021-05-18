@@ -35,6 +35,7 @@ About::About(QWidget *parent) :
                          "Thanks to:<br/><br/>"
                          "<b>Main contributors:</b><br />"
                          "Alejandro Valdés (alevalv) for global headers feature<br />"
+                         "fcolecumberri for scrollable area for request and response areas<br />"
                          "<br />"
                          "<b>Libraries contributors:</b><br />"
                          "Arseny Kapoulkine and the remaining contributors for pugixml library<br />"

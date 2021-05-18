@@ -98,8 +98,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>472</width>
-             <height>772</height>
+             <width>470</width>
+             <height>780</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout">
@@ -270,6 +270,11 @@
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="font">
+                          <font>
+                           <family>Courier New</family>
+                          </font>
+                         </property>
                         </widget>
                        </item>
                        <item>
@@ -278,6 +283,11 @@
                           <widget class="QTableWidget" name="twRequestBodyKeyValue">
                            <property name="enabled">
                             <bool>false</bool>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <family>Courier New</family>
+                            </font>
                            </property>
                            <property name="alternatingRowColors">
                             <bool>true</bool>
@@ -399,6 +409,11 @@
                         <layout class="QHBoxLayout" name="horizontalLayout_8">
                          <item>
                           <widget class="QTableWidget" name="twRequestHeadersKeyValue">
+                           <property name="font">
+                            <font>
+                             <family>Courier New</family>
+                            </font>
+                           </property>
                            <property name="alternatingRowColors">
                             <bool>true</bool>
                            </property>
@@ -613,6 +628,11 @@ or alternatively just download the response as file.</string>
                          </item>
                          <item>
                           <widget class="QPlainTextEdit" name="pteResponseBody">
+                           <property name="font">
+                            <font>
+                             <family>Courier New</family>
+                            </font>
+                           </property>
                            <property name="readOnly">
                             <bool>true</bool>
                            </property>
@@ -627,6 +647,11 @@ or alternatively just download the response as file.</string>
                         <layout class="QVBoxLayout" name="verticalLayout_8">
                          <item>
                           <widget class="QPlainTextEdit" name="pteResponseHeaders">
+                           <property name="font">
+                            <font>
+                             <family>Courier New</family>
+                            </font>
+                           </property>
                            <property name="readOnly">
                             <bool>true</bool>
                            </property>
@@ -727,7 +752,7 @@ or alternatively just download the response as file.</string>
      <x>0</x>
      <y>0</y>
      <width>803</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
