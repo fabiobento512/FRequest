@@ -118,21 +118,21 @@ MainWindow::MainWindow(QWidget *parent) :
     if(this->currentSettings.windowsGeometry.saveWindowsGeometryWhenExiting){
         if(!this->currentSettings.windowsGeometry.mainWindow_MainWindowGeometry.isEmpty()){
             if(!this->restoreGeometry(this->currentSettings.windowsGeometry.mainWindow_MainWindowGeometry)){
-                QString errorMessage = "Couldn't restore saved main window geometry.";
+                const QString errorMessage = "Couldn't restore saved main window geometry.";
                 Util::Dialogs::showError(errorMessage);
                 LOG_ERROR << errorMessage;
                 return;
             }
 
             if(!ui->splitter->restoreState(this->currentSettings.windowsGeometry.mainWindow_RequestsSplitterState)){
-                QString errorMessage = "Couldn't restore saved requests splitter state.";
+                const QString errorMessage = "Couldn't restore saved requests splitter state.";
                 Util::Dialogs::showError(errorMessage);
                 LOG_ERROR << errorMessage;
                 return;
             }
 
             if(!ui->splitter_2->restoreState(this->currentSettings.windowsGeometry.mainWindow_RequestResponseSplitterState)){
-                QString errorMessage = "Couldn't restore saved request response splitter state.";
+                const QString errorMessage = "Couldn't restore saved request response splitter state.";
                 Util::Dialogs::showError(errorMessage);
                 LOG_ERROR << errorMessage;
                 return;
@@ -198,92 +198,106 @@ void MainWindow::on_pbSendRequest_clicked()
 
     if(formKeyValueInBodyIsValid()){
 
-        // Disable until this request is finished
-        ui->pbSendRequest->setEnabled(false);
-        this->lbRequestInfo.show();
-        this->pbRequestProgress.show();
-        this->tbAbortRequest.show();
-        this->pbRequestProgress.setValue(0);
-        ui->gbProject->setEnabled(false);
-        ui->gbRequest->setEnabled(false);
-
-        // Apply proxy type
-        ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
-
         QVector<UtilFRequest::HttpHeader> requestFinalHeaders = getRequestHeaders();
 
-        // Attempt to authenticate if we have authentication and its the first request in this project
-        if(this->currentProjectItem->authData != nullptr){
+        if(noDuplicatedKeyExistsInRequestHeaders(requestFinalHeaders)) {
 
-            // We only apply the authentication to urls of the project, overriden urls don't have the auth applied
-            if(!ui->cbRequestOverrideMainUrl->isChecked()){
-                switch(this->currentProjectItem->authData->type){
-                case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
-                {
-                    if(!this->currentProjectAuthenticationWasMade)
+            // Disable until this request is finished
+            ui->pbSendRequest->setEnabled(false);
+            this->lbRequestInfo.show();
+            this->pbRequestProgress.show();
+            this->tbAbortRequest.show();
+            this->pbRequestProgress.setValue(0);
+            ui->gbProject->setEnabled(false);
+            ui->gbRequest->setEnabled(false);
+
+            // Apply proxy type
+            ProxySetup::setupProxyForNetworkManager(this->currentSettings, &this->networkAccessManager);
+
+            // Attempt to authenticate if we have authentication and its the first request in this project
+            if(this->currentProjectItem->authData != nullptr){
+
+                // We only apply the authentication to urls of the project, overriden urls don't have the auth applied
+                if(!ui->cbRequestOverrideMainUrl->isChecked()){
+                    switch(this->currentProjectItem->authData->type){
+                    case FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION:
                     {
-                        this->lbRequestInfo.setText("Authenticating using the request provided...");
+                        if(!this->currentProjectAuthenticationWasMade)
+                        {
+                            this->lbRequestInfo.setText("Authenticating using the request provided...");
 
-                        applyRequestAuthentication();
+                            applyRequestAuthentication();
 
-                        // If there was an error with the authorization don't proceed
-                        if(!this->currentProjectAuthenticationWasMade){
-                            return;
+                            // If there was an error with the authorization don't proceed
+                            if(!this->currentProjectAuthenticationWasMade){
+                                return;
+                            }
                         }
+                        break;
                     }
-                    break;
-                }
-                case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
-                {
-                    const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
+                    case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
+                    {
+                        const RequestAuthentication * const concreteAuthData = static_cast<RequestAuthentication*>(this->currentProjectItem->authData.get());
 
-                    UtilFRequest::HttpHeader authHeader;
-                    authHeader.name = "Authorization";
-                    authHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
+                        UtilFRequest::HttpHeader authHeader;
+                        authHeader.name = "Authorization";
+                        authHeader.value = "Basic " + QString(concreteAuthData->username + ":" + concreteAuthData->password).toUtf8().toBase64();
 
-                    requestFinalHeaders.append(authHeader);
-                    break;
-                }
-                default:
-                {
-                    QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(this->currentProjectItem->authData->type)) + "'. Program can't proceed.";
-                    Util::Dialogs::showError(errorMessage);
-                    LOG_FATAL << errorMessage;
-                    exit(1);
-                }
+                        requestFinalHeaders.append(authHeader);
+                        break;
+                    }
+                    default:
+                    {
+                        const QString errorMessage = "Invalid authentication type " + QString::number(static_cast<int>(this->currentProjectItem->authData->type)) + "'. Program can't proceed.";
+                        Util::Dialogs::showError(errorMessage);
+                        LOG_FATAL << errorMessage;
+                        exit(1);
+                    }
+                    }
                 }
             }
+
+            // we always add the global headers, except in case that the user check the disable checkbox
+            // this is specially useful if we want to overwrite some existing header
+            if (!ui->cbDisableGlobalHeaders->isChecked()) {
+                for (const UtilFRequest::HttpHeader &currGlobalHeader : this->currentProjectItem->globalHeaders) {
+
+                    // Check if there is already a local header with the same key of the current global variable
+                    QVector<UtilFRequest::HttpHeader>::iterator itLocalHeader = std::find_if(requestFinalHeaders.begin(), requestFinalHeaders.end(),
+                                                                                             [&currGlobalHeader](const UtilFRequest::HttpHeader &h){return h.name == currGlobalHeader.name;});
+
+                    // It doesn't exist so we are free to add our global header (otherwise we prefer the local
+                    // over the global as overriding mechanism)
+                    if(itLocalHeader == requestFinalHeaders.end()) {
+                        requestFinalHeaders.append(currGlobalHeader);
+                    }
+
+                }
+            }
+
+            this->ignoreAnyChangesToProject.SetCondition();
+            formatRequestBody(getRequestCurrentSerializationFormatType());
+            this->ignoreAnyChangesToProject.UnsetCondition();
+
+            // Display info about when request was started
+            this->lbRequestInfo.setText("Requested started at " + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+
+            // Clear previous request data:
+            clearOlderResponse();
+
+            this->currentReply = processHttpRequest
+                    (
+                        UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText()),
+                        ui->leFullPath->text(),
+                        ui->cbBodyType->currentText(),
+                        ui->pteRequestBody->toPlainText(),
+                        requestFinalHeaders
+                        );
+
+            lastStartTime = QDateTime::currentDateTime();
+
+            checkForQNetworkAccessManagerTimeout(this->currentReply.value());
         }
-
-        // we always add the global headers, except in case that the user check the disable checkbox
-        // multiple headers with the same key should be possible accordingly to here:
-        // https://stackoverflow.com/a/4371395
-        if (!ui->cbDisableGlobalHeaders->isChecked()) {
-            requestFinalHeaders.append(this->currentProjectItem->globalHeaders);
-        }
-
-        this->ignoreAnyChangesToProject.SetCondition();
-        formatRequestBody(getRequestCurrentSerializationFormatType());
-        this->ignoreAnyChangesToProject.UnsetCondition();
-
-        // Display info about when request was started
-        this->lbRequestInfo.setText("Requested started at " + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-
-        // Clear previous request data:
-        clearOlderResponse();
-
-        this->currentReply = processHttpRequest
-                (
-                    UtilFRequest::getRequestTypeByString(ui->cbRequestType->currentText()),
-                    ui->leFullPath->text(),
-                    ui->cbBodyType->currentText(),
-                    ui->pteRequestBody->toPlainText(),
-                    requestFinalHeaders
-                    );
-
-        lastStartTime = QDateTime::currentDateTime();
-
-        checkForQNetworkAccessManagerTimeout(this->currentReply.value());
     }
 }
 
@@ -294,7 +308,7 @@ void MainWindow::applyRequestAuthentication(){
 
     if(authData->type != FRequestAuthentication::AuthenticationType::REQUEST_AUTHENTICATION)
     {
-        QString errorMessage = "Authentication is not a REQUEST_AUTHENTICATION. Please report this error.";
+        const QString errorMessage = "Authentication is not a REQUEST_AUTHENTICATION. Please report this error.";
         Util::Dialogs::showError(errorMessage);
         LOG_ERROR << errorMessage;
         return;
@@ -364,7 +378,7 @@ void MainWindow::checkForQNetworkAccessManagerTimeout(QNetworkReply *reply)
     {
         // timeout
 
-        QString errorMessage = "Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds";
+        const QString errorMessage = "Timeout after " + QString::number(this->currentSettings.requestTimeout) + " seconds";
 
         if(this->authenticationIsRunning){
             Util::Dialogs::showError(errorMessage);
@@ -570,7 +584,7 @@ void MainWindow::downloadResponseAsFile(QNetworkReply *reply, QByteArray &totalL
 
             if(ui->actionOpen_file_after_download->isChecked()){
                 if(!QDesktopServices::openUrl("file:///"+filePath)){
-                    QString errorMessage = "Could not open downloaded file: " + filePath;
+                    const QString errorMessage = "Could not open downloaded file: " + filePath;
                     Util::Dialogs::showError(errorMessage);
                     LOG_ERROR << errorMessage;
                     Util::StatusBar::showError(ui->statusBar, errorMessage);
@@ -580,7 +594,7 @@ void MainWindow::downloadResponseAsFile(QNetworkReply *reply, QByteArray &totalL
             Util::StatusBar::showSuccess(ui->statusBar, "File saved with success.");
         }
         else{ // use just one exit point so we don't need to duplicate the code to enable the send request button
-            QString errorMessage = "Could not open file for writing: " + filePath;
+            const QString errorMessage = "Could not open file for writing: " + filePath;
             Util::Dialogs::showError(errorMessage);
             Util::StatusBar::showSuccess(ui->statusBar, errorMessage);
             LOG_ERROR << errorMessage;
@@ -683,7 +697,7 @@ QNetworkReply* MainWindow::processHttpRequest
         break;
     }
     default:{
-        QString errorMessage = "Request type unknown: '" + ui->cbRequestType->currentText() + "'. Application must exit.";
+        const QString errorMessage = "Request type unknown: '" + ui->cbRequestType->currentText() + "'. Application must exit.";
         Util::Dialogs::showError(errorMessage);
         LOG_FATAL << errorMessage;
         exit(1);
@@ -840,6 +854,8 @@ void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
         clearRequestAndResponse();
 
         ui->treeWidget->editItem(newRequest);
+
+        addGlobalHeaders();
 
         if(this->currentSettings.defaultHeaders.useDefaultHeaders){
             addDefaultHeaders();
@@ -1086,7 +1102,7 @@ void MainWindow::setIconForRequest(FRequestTreeWidgetRequestItem * const item){
             break;
         }
         default:{
-            QString errorMessage = "Couldn't set icon for request " + item->text(0) +
+            const QString errorMessage = "Couldn't set icon for request " + item->text(0) +
                     " unknown request type: " + QString::number(static_cast<int>(item->itemContent.requestType));
             LOG_ERROR << errorMessage;
             Util::Dialogs::showError(errorMessage);
@@ -1213,7 +1229,7 @@ void MainWindow::updateTreeWidgetItemContent(FRequestTreeWidgetRequestItem * con
     }
     default:
     {
-        QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(requestItem->itemContent.bodyType)) + "'. Program can't proceed.";
+        const QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(requestItem->itemContent.bodyType)) + "'. Program can't proceed.";
         Util::Dialogs::showError(errorMessage);
         LOG_FATAL << errorMessage;
         exit(1);
@@ -1248,7 +1264,7 @@ void MainWindow::saveProjectState(const QString &filePath)
         Util::StatusBar::showSuccess(ui->statusBar, "Project saved with success!");
     }
     catch(const std::exception& e){
-        QString errorMessage = QString("Couldn't save project file. Save aborted.\n") + e.what();
+        const QString errorMessage = QString("Couldn't save project file. Save aborted.\n") + e.what();
         LOG_ERROR << errorMessage;
         Util::Dialogs::showError(errorMessage);
         Util::StatusBar::showError(ui->statusBar, "Couldn't save project file.");
@@ -1336,7 +1352,7 @@ void MainWindow::loadProjectState(const QString &filePath)
         Util::StatusBar::showSuccess(ui->statusBar, "Project loaded successfully.");
     }
     catch(const std::exception& e){
-        QString errorMessage = "Couldn't load the FRequest project. Error: " + QString(e.what());
+        const QString errorMessage = "Couldn't load the FRequest project. Error: " + QString(e.what());
         LOG_ERROR << errorMessage;
         Util::Dialogs::showError(errorMessage);
         Util::StatusBar::showError(ui->statusBar, "Couldn't load project.");
@@ -1500,7 +1516,7 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
     }
     default:
     {
-        QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(info.bodyType)) + "'. Program can't proceed.";
+        const QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(info.bodyType)) + "'. Program can't proceed.";
         Util::Dialogs::showError(errorMessage);
         LOG_FATAL << errorMessage;
         exit(1);
@@ -1509,10 +1525,7 @@ void MainWindow::reloadRequest(FRequestTreeWidgetRequestItem* const item){
 
     formatRequestBody(getRequestCurrentSerializationFormatType());
 
-    for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
-        Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
-        UtilFRequest::setGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
-    }
+    addGlobalHeaders();
 
     for(const UtilFRequest::HttpHeader &currentHeader : info.headers){
         Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << currentHeader.name << currentHeader.value);
@@ -2009,7 +2022,7 @@ void MainWindow::on_tbCopyToClipboardRequest_clicked()
         }
         default:
         {
-            QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
+            const QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
             Util::Dialogs::showError(errorMessage);
             LOG_FATAL << errorMessage;
             exit(1);
@@ -2078,7 +2091,7 @@ void MainWindow::addDefaultHeaders(){
         }
         default:
         {
-            QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
+            const QString errorMessage = "Invalid body type " + QString::number(static_cast<int>(UtilFRequest::getBodyTypeByString(ui->cbBodyType->currentText()))) + "'. Program can't proceed.";
             Util::Dialogs::showError(errorMessage);
             LOG_FATAL << errorMessage;
             exit(1);
@@ -2086,7 +2099,7 @@ void MainWindow::addDefaultHeaders(){
         }
 
         if(currentHeaders == nullptr){
-            QString errorMessage = "An error ocurred while trying to insert the default headers. currentHeaders == nullptr";
+            const QString errorMessage = "An error ocurred while trying to insert the default headers. currentHeaders == nullptr";
             LOG_ERROR << errorMessage;
             Util::Dialogs::showError(errorMessage);
             return;
@@ -2132,7 +2145,7 @@ void MainWindow::formatRequestBody(const UtilFRequest::SerializationFormatType s
         }
         default:
         {
-            QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
+            const QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
             Util::Dialogs::showError(errorMessage);
             LOG_FATAL << errorMessage;
             exit(1);
@@ -2162,7 +2175,7 @@ void MainWindow::formatResponseBody(const UtilFRequest::SerializationFormatType 
         }
         default:
         {
-            QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
+            const QString errorMessage = "Invalid serializationType " + QString::number(static_cast<int>(serializationType)) + "'. Program can't proceed.";
             Util::Dialogs::showError(errorMessage);
             LOG_FATAL << errorMessage;
             exit(1);
@@ -2181,7 +2194,7 @@ bool MainWindow::formKeyValueInBodyIsValid(){
 
         if(currFormKeyValueType == UtilFRequest::FormKeyValueType::FILE){
             if(!QFile::exists(currValue)){
-                QString errorMessage = "File '" + currValue + "' doesn't exist.\n\nPlease fix it in your request body form data and try again.";
+                const QString errorMessage = "File '" + currValue + "' doesn't exist.\n\nPlease fix it in your request body form data and try again.";
                 Util::Dialogs::showError(errorMessage);
                 LOG_ERROR << errorMessage;
                 return false;
@@ -2203,6 +2216,23 @@ bool MainWindow::formKeyValueInBodyHasFiles(){
     }
 
     return false;
+}
+
+bool MainWindow::noDuplicatedKeyExistsInRequestHeaders(const QVector<UtilFRequest::HttpHeader> &headers){
+
+    // Check for duplicated headers (user error as that does not seem to be allowed by RFCs)
+    QVector<UtilFRequest::HttpHeader>::const_iterator itDuplicatedHeader =
+            std::adjacent_find(headers.begin(), headers.end(),
+                               [](const UtilFRequest::HttpHeader &first, const UtilFRequest::HttpHeader &second){return first.name == second.name;});
+
+    if(itDuplicatedHeader != headers.end()) {
+        const QString errorMessage = "The header '" + itDuplicatedHeader->name + "' is duplicated in the request. This is not allowed.";
+        Util::Dialogs::showError(errorMessage);
+        LOG_ERROR << errorMessage;
+        return false;
+    }
+
+    return true;
 }
 
 void MainWindow::removeAllFilesRowsFromFormKeyValueInBody(){
@@ -2291,6 +2321,11 @@ void MainWindow::saveProjectProperties(){
         }
 
 
+    }
+
+    // necessary because global headers may have changed
+    if(this->currentItem != nullptr) {
+        reloadRequest(this->currentItem);
     }
 
     if (!this->currentSettings.hideProjectSavedDialog) {
@@ -2405,7 +2440,7 @@ void MainWindow::setThemePaletteForCustomWidgets(){
     }
     default:
     {
-        QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+        const QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
         this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
         Util::Dialogs::showError(errorMessage);
         LOG_ERROR << errorMessage;
@@ -2437,7 +2472,7 @@ void MainWindow::setFilterThemePalette(){
         }
         default:
         {
-            QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+            const QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
             this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
             Util::Dialogs::showError(errorMessage);
             LOG_ERROR << errorMessage;
@@ -2462,7 +2497,7 @@ void MainWindow::setTheme(){
         // https://stackoverflow.com/a/45634644/1499019
         // https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle/blob/master/DarkStyle.cpp
         // Just removed font resizing
-        
+
         qApp->setStyle(QStyleFactory::create("Fusion"));
 
         // modify palette to dark
@@ -2503,7 +2538,7 @@ void MainWindow::setTheme(){
     }
     default:
     {
-        QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
+        const QString errorMessage = "Unknown theme selected! '" + QString::number(static_cast<unsigned int>(this->currentSettings.theme)) + "'. Please report this error.";
         this->currentSettings.theme = ConfigFileFRequest::FRequestTheme::OS_DEFAULT;
         Util::Dialogs::showError(errorMessage);
         LOG_ERROR << errorMessage;
@@ -2519,5 +2554,12 @@ void MainWindow::on_twRequestHeadersKeyValue_currentItemChanged(QTableWidgetItem
     if(current != nullptr){
         ui->tbRequestHeadersKeyValueRemove->setEnabled(
                     !UtilFRequest::isGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, current->row()));
+    }
+}
+
+void MainWindow::addGlobalHeaders() {
+    for (UtilFRequest::HttpHeader const& header : currentProjectItem->globalHeaders) {
+        Util::TableWidget::addRow(ui->twRequestHeadersKeyValue, QStringList() << header.name << header.value);
+        UtilFRequest::setGlobalHeaderTableWidgetRow(ui->twRequestHeadersKeyValue, ui->twRequestHeadersKeyValue->rowCount()-1);
     }
 }

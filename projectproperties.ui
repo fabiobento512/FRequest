@@ -160,7 +160,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Any header added here will be appended to all requests in this project. They will be shown in the request table as disabled rows if the checkbox is disabled. Their values can be overwritten if a header with the same key is added.</string>
+          <string>Any header added here will be appended to all requests in this project. They will be shown in the request table as disabled rows. Their values can be overwritten if a header with the same key is added to the specific request headers.</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

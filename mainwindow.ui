@@ -457,7 +457,7 @@
                        <item>
                         <widget class="QCheckBox" name="cbDisableGlobalHeaders">
                          <property name="toolTip">
-                          <string>Click to disable global headers for THIS request. Useful if you want to override the global headers or simply do not want to send them.</string>
+                          <string>Click to disable global headers for THIS request. Useful if you do not want to send them.</string>
                          </property>
                          <property name="text">
                           <string>Disable global headers</string>

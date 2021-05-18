@@ -77,10 +77,10 @@ public:
 private slots:
 
     void applicationHasLoaded();
-	
-	void saveProjectProperties();
-	
-	void treeWidgetDeleteKeyPressed();
+
+    void saveProjectProperties();
+
+    void treeWidgetDeleteKeyPressed();
 
     void on_pbSendRequest_clicked();
 
@@ -163,8 +163,8 @@ private slots:
     void on_actionShow_Request_Types_Icons_triggered(bool checked);
 
     void on_leRequestsFilter_textChanged(const QString &arg1);
-	
-	void on_actionProject_Properties_triggered();
+
+    void on_actionProject_Properties_triggered();
 
     void on_actionCheck_for_updates_triggered();
 
@@ -174,7 +174,7 @@ private slots:
 
 signals:
     void signalAppIsLoaded();
-	void signalRequestFinishedAndProcessed();
+    void signalRequestFinishedAndProcessed();
 
 private:
     void showEvent(QShowEvent *e);
@@ -185,7 +185,7 @@ private:
             const QString &bodyType,
             const QString &requestBody,
             const QVector<UtilFRequest::HttpHeader>& requestHeaders
-    );
+            );
     QString getDownloadFileName(const QNetworkReply * const reply);
     void updateWindowTitle();
     void setNewProject();
@@ -211,29 +211,31 @@ private:
     void addDefaultHeaders();
     void setRequestType(UtilFRequest::RequestType requestType);
     void formatRequestBody(const UtilFRequest::SerializationFormatType serializationType);
-	void formatResponseBody(const UtilFRequest::SerializationFormatType serializationType);
+    void formatResponseBody(const UtilFRequest::SerializationFormatType serializationType);
     bool loadAndValidateFRequestProjectFile(const QString &filePath, pugi::xml_document &doc);
     void setIconForRequest(FRequestTreeWidgetRequestItem * const item);
     void setAllRequestIcons(bool showIcon);
-	ProjectFileFRequest::ProjectData fetchCurrentProjectData();
-	bool formKeyValueInBodyIsValid();
-	bool formKeyValueInBodyHasFiles();
-	void removeAllFilesRowsFromFormKeyValueInBody();
-	UtilFRequest::SerializationFormatType getRequestCurrentSerializationFormatType();
-	UtilFRequest::SerializationFormatType getResponseCurrentSerializationFormatType();
-	QString getNewUuid();
+    ProjectFileFRequest::ProjectData fetchCurrentProjectData();
+    bool formKeyValueInBodyIsValid();
+    bool formKeyValueInBodyHasFiles();
+    bool noDuplicatedKeyExistsInRequestHeaders(const QVector<UtilFRequest::HttpHeader> &headers);
+    void removeAllFilesRowsFromFormKeyValueInBody();
+    UtilFRequest::SerializationFormatType getRequestCurrentSerializationFormatType();
+    UtilFRequest::SerializationFormatType getResponseCurrentSerializationFormatType();
+    QString getNewUuid();
     QString getFullPathFromMainUrlAndPath(const QString & mainUrl, const QString & path);
-	void applyRequestAuthentication();
-	void openProjectProperties();
-	void removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete);
-	void setThemePaletteForCustomWidgets();
-	void setFilterThemePalette();
-	void setTheme();
+    void applyRequestAuthentication();
+    void openProjectProperties();
+    void removeRequest(FRequestTreeWidgetRequestItem * const itemToDelete);
+    void setThemePaletteForCustomWidgets();
+    void setFilterThemePalette();
+    void setTheme();
     void downloadResponseAsFile(QNetworkReply *reply, QByteArray &totalLoadedData, QByteArray &currentData, const int maxBytesForBufferAndDisplay);
+    void addGlobalHeaders();
 
 public:
     static constexpr int recentProjectsMaxSize=6;
-	
+
 private:
     Ui::MainWindow *ui;
     QDateTime lastStartTime;
@@ -244,7 +246,7 @@ private:
     bool applicationIsFullyLoaded = false;
     bool unsavedChangesExist = false;
     // This conditional semaphore allow us to tell to the interface to ignore changes (not mark project as unsaved) within some time interval
-	Cosemaphore::ConditionalSemaphore ignoreAnyChangesToProject;
+    Cosemaphore::ConditionalSemaphore ignoreAnyChangesToProject;
     QString lastProjectFilePath;
     QList<QString> recentProjectsList;
     QString lastResponseFileName;
@@ -260,15 +262,15 @@ private:
     std::experimental::optional<QNetworkReply*> currentReply;
     QMap<UtilFRequest::RequestType, QIcon> generatedIconCache;
     QNetworkAccessManager networkAccessManager;
-	const QString operatingSystemDefaultStyle;
-	
-	// Requests Highlighters
-	FRequestJSONHighlighter jsonRequestBodyHighligher;
+    const QString operatingSystemDefaultStyle;
+
+    // Requests Highlighters
+    FRequestJSONHighlighter jsonRequestBodyHighligher;
     FRequestJSONHighlighter jsonResponseBodyHighligher;
-	FRequestXMLHighlighter xmlRequestBodyHighligher;
-	FRequestXMLHighlighter xmlResponseBodyHighligher;
+    FRequestXMLHighlighter xmlRequestBodyHighligher;
+    FRequestXMLHighlighter xmlResponseBodyHighligher;
     bool currentProjectAuthenticationWasMade = false;
-	bool authenticationIsRunning = false;
+    bool authenticationIsRunning = false;
 
 };
 
