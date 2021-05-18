@@ -361,6 +361,8 @@ void setGlobalHeaderTableWidgetRow(QTableWidget *myTable, const int rowNumber){
         currentItem->setBackground(getTableWidgetRowDisabledBackStyle());
         currentItem->setForeground(getTableWidgetRowDisabledTextStyle());
 
+        // Add tooltip to make clear that it is a global header
+        currentItem->setToolTip("[global header] " + currentItem->toolTip());
     }
 
 }
