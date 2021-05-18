@@ -86,551 +86,76 @@
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QGroupBox" name="gbRequest">
-          <property name="title">
-           <string>Request</string>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAsNeeded</enum>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_9">
-             <item>
-              <widget class="QCheckBox" name="cbRequestOverrideMainUrl">
-               <property name="text">
-                <string>Override Main Url:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="leRequestOverrideMainUrl">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
-             <item>
-              <widget class="QLabel" name="label_3">
-               <property name="text">
-                <string>Path:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="lePath">
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="lbFullPath">
-               <property name="text">
-                <string>Full Path:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="leFullPath">
-               <property name="text">
-                <string/>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_6">
-             <property name="title">
-              <string>Type:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <item>
-               <widget class="QComboBox" name="cbRequestType">
-                <item>
-                 <property name="text">
-                  <string>GET</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>POST</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>PUT</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>DELETE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>PATCH</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>HEAD</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>TRACE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>OPTIONS</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSplitter" name="splitter_2">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <widget class="QWidget" name="layoutWidget">
-              <layout class="QHBoxLayout" name="horizontalLayout_11">
-               <item>
-                <widget class="QTabWidget" name="twRequest">
-                 <property name="currentIndex">
-                  <number>0</number>
-                 </property>
-                 <widget class="QWidget" name="tab_4">
-                  <attribute name="title">
-                   <string>Body</string>
-                  </attribute>
-                  <layout class="QVBoxLayout" name="verticalLayout_9">
-                   <item>
-                    <layout class="QFormLayout" name="formLayout">
-                     <item row="0" column="0">
-                      <widget class="QLabel" name="label_6">
-                       <property name="text">
-                        <string>Body Type:</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="0" column="1">
-                      <widget class="QComboBox" name="cbBodyType">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
-                       <item>
-                        <property name="text">
-                         <string>raw</string>
-                        </property>
-                       </item>
-                       <item>
-                        <property name="text">
-                         <string>form-data</string>
-                        </property>
-                       </item>
-                       <item>
-                        <property name="text">
-                         <string>x-form-www-urlencoded</string>
-                        </property>
-                       </item>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item>
-                    <widget class="QPlainTextEdit" name="pteRequestBody">
-                     <property name="enabled">
-                      <bool>false</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_7">
-                     <item>
-                      <widget class="QTableWidget" name="twRequestBodyKeyValue">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
-                       <property name="alternatingRowColors">
-                        <bool>true</bool>
-                       </property>
-                       <attribute name="horizontalHeaderStretchLastSection">
-                        <bool>true</bool>
-                       </attribute>
-                       <column>
-                        <property name="text">
-                         <string>Key</string>
-                        </property>
-                       </column>
-                       <column>
-                        <property name="text">
-                         <string>Value</string>
-                        </property>
-                       </column>
-                       <column>
-                        <property name="text">
-                         <string>Type</string>
-                        </property>
-                       </column>
-                      </widget>
-                     </item>
-                     <item>
-                      <layout class="QVBoxLayout" name="verticalLayout_6">
-                       <item>
-                        <widget class="QToolButton" name="tbRequestBodyKeyValueAdd">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="toolTip">
-                          <string>Add row</string>
-                         </property>
-                         <property name="text">
-                          <string>...</string>
-                         </property>
-                         <property name="icon">
-                          <iconset resource="Resources/resources.qrc">
-                           <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QToolButton" name="tbRequestBodyFile">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="toolTip">
-                          <string>Add file row</string>
-                         </property>
-                         <property name="text">
-                          <string>...</string>
-                         </property>
-                         <property name="icon">
-                          <iconset resource="Resources/resources.qrc">
-                           <normaloff>:/icons/plus_file.png</normaloff>:/icons/plus_file.png</iconset>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QToolButton" name="tbRequestBodyKeyValueRemove">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="toolTip">
-                          <string>Remove selected rows</string>
-                         </property>
-                         <property name="text">
-                          <string>...</string>
-                         </property>
-                         <property name="icon">
-                          <iconset resource="Resources/resources.qrc">
-                           <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </item>
-                  </layout>
-                 </widget>
-                 <widget class="QWidget" name="tab_3">
-                  <attribute name="title">
-                   <string>Headers</string>
-                  </attribute>
-                  <layout class="QVBoxLayout" name="verticalLayout_5">
-                   <item>
-                    <widget class="QComboBox" name="cbResponseChooseHeader">
-                     <item>
-                      <property name="text">
-                       <string>Select a Header to Add</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Content-type: application/json</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Content-type: application/xml</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Content-type: multipart/form-data</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Content-type: application/x-www-form-urlencoded</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_8">
-                     <item>
-                      <widget class="QTableWidget" name="twRequestHeadersKeyValue">
-                       <property name="alternatingRowColors">
-                        <bool>true</bool>
-                       </property>
-                       <property name="wordWrap">
-                        <bool>true</bool>
-                       </property>
-                       <attribute name="horizontalHeaderStretchLastSection">
-                        <bool>true</bool>
-                       </attribute>
-                       <column>
-                        <property name="text">
-                         <string>Key</string>
-                        </property>
-                       </column>
-                       <column>
-                        <property name="text">
-                         <string>Value</string>
-                        </property>
-                       </column>
-                      </widget>
-                     </item>
-                     <item>
-                      <layout class="QVBoxLayout" name="verticalLayout_10">
-                       <item>
-                        <widget class="QToolButton" name="tbRequestHeadersKeyValueAdd">
-                         <property name="toolTip">
-                          <string>Add new row</string>
-                         </property>
-                         <property name="text">
-                          <string>...</string>
-                         </property>
-                         <property name="icon">
-                          <iconset resource="Resources/resources.qrc">
-                           <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QToolButton" name="tbRequestHeadersKeyValueRemove">
-                         <property name="toolTip">
-                          <string>Remove selected rows</string>
-                         </property>
-                         <property name="text">
-                          <string>...</string>
-                         </property>
-                         <property name="icon">
-                          <iconset resource="Resources/resources.qrc">
-                           <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </item>
-                   <item>
-                    <widget class="QCheckBox" name="cbDisableGlobalHeaders">
-                     <property name="toolTip">
-                      <string>Click to disable global headers for THIS request. Useful if you do not want to send them.</string>
-                     </property>
-                     <property name="text">
-                      <string>Disable global headers</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="tbCopyToClipboardRequest">
-                 <property name="toolTip">
-                  <string>Copy to clipboard</string>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="Resources/resources.qrc">
-                   <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
-                 </property>
-                 <property name="autoRaise">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-             <widget class="QGroupBox" name="gbResponse">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>472</width>
+             <height>772</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="QGroupBox" name="gbRequest">
               <property name="title">
-               <string>Response</string>
+               <string>Request</string>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_3">
+              <layout class="QVBoxLayout" name="verticalLayout">
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <layout class="QHBoxLayout" name="horizontalLayout_9">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_5">
-                   <item>
-                    <widget class="QLabel" name="label_5">
-                     <property name="text">
-                      <string>Status Code:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="lbStatus">
-                     <property name="text">
-                      <string/>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  <widget class="QCheckBox" name="cbRequestOverrideMainUrl">
+                   <property name="text">
+                    <string>Override Main Url:</string>
+                   </property>
+                  </widget>
                  </item>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout">
-                   <item>
-                    <widget class="QLabel" name="label">
-                     <property name="text">
-                      <string>Description:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="lbDescription">
-                     <property name="text">
-                      <string/>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_6">
-                   <item>
-                    <widget class="QLabel" name="label_7">
-                     <property name="text">
-                      <string>Time Elapsed:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="lbTimeElapsed">
-                     <property name="text">
-                      <string/>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  <widget class="QLineEdit" name="leRequestOverrideMainUrl">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_10">
+                <layout class="QHBoxLayout" name="horizontalLayout_3">
                  <item>
-                  <widget class="QTabWidget" name="twResponse">
-                   <property name="currentIndex">
-                    <number>0</number>
+                  <widget class="QLabel" name="label_3">
+                   <property name="text">
+                    <string>Path:</string>
                    </property>
-                   <widget class="QWidget" name="tab_2">
-                    <attribute name="title">
-                     <string>Body</string>
-                    </attribute>
-                    <layout class="QVBoxLayout" name="verticalLayout_7">
-                     <item>
-                      <layout class="QHBoxLayout" name="horizontalLayout_12">
-                       <item>
-                        <widget class="QLabel" name="lbResponseBodyWarningIcon">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>16</width>
-                           <height>16</height>
-                          </size>
-                         </property>
-                         <property name="toolTip">
-                          <string>If you pretend to see all the data, increase the value in preferences 
-or alternatively just download the response as file.</string>
-                         </property>
-                         <property name="pixmap">
-                          <pixmap resource="Resources/resources.qrc">:/icons/warning_icon.png</pixmap>
-                         </property>
-                         <property name="scaledContents">
-                          <bool>true</bool>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLabel" name="lbResponseBodyWarningMessage">
-                         <property name="font">
-                          <font>
-                           <pointsize>7</pointsize>
-                          </font>
-                         </property>
-                         <property name="toolTip">
-                          <string>If you pretend to see all the data, increase the value in preferences 
-or alternatively just download the response as file.</string>
-                         </property>
-                         <property name="text">
-                          <string>Return data size is greater than 200 KB, only displaying the first 200 KB.</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                     <item>
-                      <widget class="QPlainTextEdit" name="pteResponseBody">
-                       <property name="readOnly">
-                        <bool>true</bool>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                   <widget class="QWidget" name="tab">
-                    <attribute name="title">
-                     <string>Headers</string>
-                    </attribute>
-                    <layout class="QVBoxLayout" name="verticalLayout_8">
-                     <item>
-                      <widget class="QPlainTextEdit" name="pteResponseHeaders">
-                       <property name="readOnly">
-                        <bool>true</bool>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QToolButton" name="tbCopyToClipboardResponse">
-                   <property name="toolTip">
-                    <string>Copy to clipboard</string>
-                   </property>
+                  <widget class="QLineEdit" name="lePath">
                    <property name="text">
-                    <string>...</string>
+                    <string/>
                    </property>
-                   <property name="icon">
-                    <iconset resource="Resources/resources.qrc">
-                     <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="lbFullPath">
+                   <property name="text">
+                    <string>Full Path:</string>
                    </property>
-                   <property name="autoRaise">
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="leFullPath">
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="readOnly">
                     <bool>true</bool>
                    </property>
                   </widget>
@@ -638,59 +163,556 @@ or alternatively just download the response as file.</string>
                 </layout>
                </item>
                <item>
-                <widget class="QCheckBox" name="cbDownloadResponseAsFile">
+                <widget class="QGroupBox" name="groupBox_6">
+                 <property name="title">
+                  <string>Type:</string>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_2">
+                  <item>
+                   <widget class="QComboBox" name="cbRequestType">
+                    <item>
+                     <property name="text">
+                      <string>GET</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>POST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>PUT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DELETE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>PATCH</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>HEAD</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRACE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>OPTIONS</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSplitter" name="splitter_2">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <widget class="QWidget" name="layoutWidget">
+                  <layout class="QHBoxLayout" name="horizontalLayout_11">
+                   <item>
+                    <widget class="QTabWidget" name="twRequest">
+                     <property name="currentIndex">
+                      <number>0</number>
+                     </property>
+                     <widget class="QWidget" name="tab_4">
+                      <attribute name="title">
+                       <string>Body</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="verticalLayout_9">
+                       <item>
+                        <layout class="QFormLayout" name="formLayout">
+                         <item row="0" column="0">
+                          <widget class="QLabel" name="label_6">
+                           <property name="text">
+                            <string>Body Type:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="1">
+                          <widget class="QComboBox" name="cbBodyType">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <item>
+                            <property name="text">
+                             <string>raw</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>form-data</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>x-form-www-urlencoded</string>
+                            </property>
+                           </item>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <widget class="QPlainTextEdit" name="pteRequestBody">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_7">
+                         <item>
+                          <widget class="QTableWidget" name="twRequestBodyKeyValue">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="alternatingRowColors">
+                            <bool>true</bool>
+                           </property>
+                           <attribute name="horizontalHeaderStretchLastSection">
+                            <bool>true</bool>
+                           </attribute>
+                           <column>
+                            <property name="text">
+                             <string>Key</string>
+                            </property>
+                           </column>
+                           <column>
+                            <property name="text">
+                             <string>Value</string>
+                            </property>
+                           </column>
+                           <column>
+                            <property name="text">
+                             <string>Type</string>
+                            </property>
+                           </column>
+                          </widget>
+                         </item>
+                         <item>
+                          <layout class="QVBoxLayout" name="verticalLayout_6">
+                           <item>
+                            <widget class="QToolButton" name="tbRequestBodyKeyValueAdd">
+                             <property name="enabled">
+                              <bool>false</bool>
+                             </property>
+                             <property name="toolTip">
+                              <string>Add row</string>
+                             </property>
+                             <property name="text">
+                              <string>...</string>
+                             </property>
+                             <property name="icon">
+                              <iconset resource="Resources/resources.qrc">
+                               <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QToolButton" name="tbRequestBodyFile">
+                             <property name="enabled">
+                              <bool>false</bool>
+                             </property>
+                             <property name="toolTip">
+                              <string>Add file row</string>
+                             </property>
+                             <property name="text">
+                              <string>...</string>
+                             </property>
+                             <property name="icon">
+                              <iconset resource="Resources/resources.qrc">
+                               <normaloff>:/icons/plus_file.png</normaloff>:/icons/plus_file.png</iconset>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QToolButton" name="tbRequestBodyKeyValueRemove">
+                             <property name="enabled">
+                              <bool>false</bool>
+                             </property>
+                             <property name="toolTip">
+                              <string>Remove selected rows</string>
+                             </property>
+                             <property name="text">
+                              <string>...</string>
+                             </property>
+                             <property name="icon">
+                              <iconset resource="Resources/resources.qrc">
+                               <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                        </layout>
+                       </item>
+                      </layout>
+                     </widget>
+                     <widget class="QWidget" name="tab_3">
+                      <attribute name="title">
+                       <string>Headers</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="verticalLayout_5">
+                       <item>
+                        <widget class="QComboBox" name="cbResponseChooseHeader">
+                         <item>
+                          <property name="text">
+                           <string>Select a Header to Add</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>Content-type: application/json</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>Content-type: application/xml</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>Content-type: multipart/form-data</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>Content-type: application/x-www-form-urlencoded</string>
+                          </property>
+                         </item>
+                        </widget>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_8">
+                         <item>
+                          <widget class="QTableWidget" name="twRequestHeadersKeyValue">
+                           <property name="alternatingRowColors">
+                            <bool>true</bool>
+                           </property>
+                           <property name="wordWrap">
+                            <bool>true</bool>
+                           </property>
+                           <attribute name="horizontalHeaderStretchLastSection">
+                            <bool>true</bool>
+                           </attribute>
+                           <column>
+                            <property name="text">
+                             <string>Key</string>
+                            </property>
+                           </column>
+                           <column>
+                            <property name="text">
+                             <string>Value</string>
+                            </property>
+                           </column>
+                          </widget>
+                         </item>
+                         <item>
+                          <layout class="QVBoxLayout" name="verticalLayout_10">
+                           <item>
+                            <widget class="QToolButton" name="tbRequestHeadersKeyValueAdd">
+                             <property name="toolTip">
+                              <string>Add new row</string>
+                             </property>
+                             <property name="text">
+                              <string>...</string>
+                             </property>
+                             <property name="icon">
+                              <iconset resource="Resources/resources.qrc">
+                               <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QToolButton" name="tbRequestHeadersKeyValueRemove">
+                             <property name="toolTip">
+                              <string>Remove selected rows</string>
+                             </property>
+                             <property name="text">
+                              <string>...</string>
+                             </property>
+                             <property name="icon">
+                              <iconset resource="Resources/resources.qrc">
+                               <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <widget class="QCheckBox" name="cbDisableGlobalHeaders">
+                         <property name="toolTip">
+                          <string>Click to disable global headers for THIS request. Useful if you do not want to send them.</string>
+                         </property>
+                         <property name="text">
+                          <string>Disable global headers</string>
+                         </property>
+                         <property name="checked">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QToolButton" name="tbCopyToClipboardRequest">
+                     <property name="toolTip">
+                      <string>Copy to clipboard</string>
+                     </property>
+                     <property name="text">
+                      <string>...</string>
+                     </property>
+                     <property name="icon">
+                      <iconset resource="Resources/resources.qrc">
+                       <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
+                     </property>
+                     <property name="autoRaise">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QGroupBox" name="gbResponse">
+                  <property name="title">
+                   <string>Response</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_3">
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_4">
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_5">
+                       <item>
+                        <widget class="QLabel" name="label_5">
+                         <property name="text">
+                          <string>Status Code:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="lbStatus">
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout">
+                       <item>
+                        <widget class="QLabel" name="label">
+                         <property name="text">
+                          <string>Description:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="lbDescription">
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_6">
+                       <item>
+                        <widget class="QLabel" name="label_7">
+                         <property name="text">
+                          <string>Time Elapsed:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="lbTimeElapsed">
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_10">
+                     <item>
+                      <widget class="QTabWidget" name="twResponse">
+                       <property name="currentIndex">
+                        <number>0</number>
+                       </property>
+                       <widget class="QWidget" name="tab_2">
+                        <attribute name="title">
+                         <string>Body</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="verticalLayout_7">
+                         <item>
+                          <layout class="QHBoxLayout" name="horizontalLayout_12">
+                           <item>
+                            <widget class="QLabel" name="lbResponseBodyWarningIcon">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16</width>
+                               <height>16</height>
+                              </size>
+                             </property>
+                             <property name="toolTip">
+                              <string>If you pretend to see all the data, increase the value in preferences 
+or alternatively just download the response as file.</string>
+                             </property>
+                             <property name="pixmap">
+                              <pixmap resource="Resources/resources.qrc">:/icons/warning_icon.png</pixmap>
+                             </property>
+                             <property name="scaledContents">
+                              <bool>true</bool>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QLabel" name="lbResponseBodyWarningMessage">
+                             <property name="font">
+                              <font>
+                               <pointsize>7</pointsize>
+                              </font>
+                             </property>
+                             <property name="toolTip">
+                              <string>If you pretend to see all the data, increase the value in preferences 
+or alternatively just download the response as file.</string>
+                             </property>
+                             <property name="text">
+                              <string>Return data size is greater than 200 KB, only displaying the first 200 KB.</string>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <widget class="QPlainTextEdit" name="pteResponseBody">
+                           <property name="readOnly">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                       <widget class="QWidget" name="tab">
+                        <attribute name="title">
+                         <string>Headers</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="verticalLayout_8">
+                         <item>
+                          <widget class="QPlainTextEdit" name="pteResponseHeaders">
+                           <property name="readOnly">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QToolButton" name="tbCopyToClipboardResponse">
+                       <property name="toolTip">
+                        <string>Copy to clipboard</string>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="Resources/resources.qrc">
+                         <normaloff>:/icons/clipboard_icon.png</normaloff>:/icons/clipboard_icon.png</iconset>
+                       </property>
+                       <property name="autoRaise">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbDownloadResponseAsFile">
+                     <property name="text">
+                      <string>Download Response as File</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </widget>
+               </item>
+               <item>
+                <widget class="Line" name="line">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbSendRequest">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Send the request</string>
+                 </property>
                  <property name="text">
-                  <string>Download Response as File</string>
+                  <string>Send Request</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="Resources/resources.qrc">
+                   <normaloff>:/icons/send_request_icon.png</normaloff>:/icons/send_request_icon.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="shortcut">
+                  <string>Ctrl+Return</string>
                  </property>
                 </widget>
                </item>
               </layout>
              </widget>
-            </widget>
-           </item>
-           <item>
-            <widget class="Line" name="line">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pbSendRequest">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>50</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Send the request</string>
-             </property>
-             <property name="text">
-              <string>Send Request</string>
-             </property>
-             <property name="icon">
-              <iconset resource="Resources/resources.qrc">
-               <normaloff>:/icons/send_request_icon.png</normaloff>:/icons/send_request_icon.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>32</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="shortcut">
-              <string>Ctrl+Return</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -705,7 +727,7 @@ or alternatively just download the response as file.</string>
      <x>0</x>
      <y>0</y>
      <width>803</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
