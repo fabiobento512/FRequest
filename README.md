@@ -23,6 +23,7 @@ The current features of FRequest are:
 - Support for authentication (HTTP Basic authentication and Request based authentication) which can be saved either in the program configuration file (for private use) or the project file itself (for shared use)
 - The FRequest project files are stored in a way which allow easy collaboration via a VCS like Git, Svn or Team Foundation Server
 - Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or adding them manually)
+- Global headers, headers that are applied to every request in the project
 - Network proxy support
 
 FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html).
