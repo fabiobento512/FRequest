@@ -1,6 +1,6 @@
 readme.txt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FRequest v1.1c
+FRequest v1.2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ----------------------------------
@@ -28,6 +28,7 @@ program configuration file (for private use) or the project file itself (for sha
 - The FRequest project files are stored in a way which allow easy collaboration via a VCS like Git, Svn or Team Foundation Server
 - Ability to add any kind of custom HTTP headers to the requests (automatically by taking the type in account or adding them 
 manually)
+- Global headers, headers that are applied to every request in the project
 - Network proxy support
 
 FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html).
@@ -76,6 +77,11 @@ https://github.com/fabiobento512/FRequest
 
 ----------------------------------
 Change Log:
+----------------------------------
+1.2, 18-05-2021
+- Added global headers feature (thanks alevalv)
+- Now request/reponse area is scrollabled (thanks fcolecumberri)
+- Now request/reponse text uses courier new font (monospace) (thanks KaKi87 for the monospace suggestion)
 ----------------------------------
 1.1c, 20-01-2019
 - Added official support for Linux (tests are made in Ubuntu LTS and the program is distributed using an appimage)
