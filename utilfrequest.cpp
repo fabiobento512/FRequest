@@ -252,9 +252,9 @@ void addRequestFormBodyRow(QTableWidget * const myTable, const QString &key, con
 
     // If it is a file, change the row color to blue in order to differentiate
     if(type == UtilFRequest::FormKeyValueType::FILE){
-        myTable->item(tableSize-1, 0)->setTextColor(Qt::blue);
-        myTable->item(tableSize-1, 1)->setTextColor(Qt::blue);
-        addedRowTypeItem->setTextColor(Qt::blue);
+        myTable->item(tableSize-1, 0)->setForeground(Qt::blue);
+        myTable->item(tableSize-1, 1)->setForeground(Qt::blue);
+        addedRowTypeItem->setForeground(Qt::blue);
     }
 }
 
@@ -279,7 +279,7 @@ QString getStringFormattedForSerializationType(const QString &content, const Ser
     case UtilFRequest::SerializationFormatType::XML:
     {
         pugi::xml_document doc;
-        pugi::xml_parse_result result = doc.load_string(QSTR_TO_CSTR(content));
+        pugi::xml_parse_result result = doc.load_string(QSTR_TO_TEMPORARY_CSTR(content));
 
         if(result.status != pugi::xml_parse_status::status_ok){
             QString errorMessage = "An error occurred while formatting the content as XML: " + content.left(10);
@@ -318,7 +318,7 @@ SerializationFormatType getSerializationFormatTypeForString(const QString &conte
     }
 
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_string(QSTR_TO_CSTR(QString(content)));
+    pugi::xml_parse_result result = doc.load_string(QSTR_TO_TEMPORARY_CSTR(content));
 
     if(result.status == pugi::xml_parse_status::status_ok){
         return UtilFRequest::SerializationFormatType::XML;

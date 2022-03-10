@@ -19,6 +19,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "about.h"
+#include "preferences.h"
+#include "utilfrequest.h"
+#include "Widgets/frequesttreewidgetprojectitem.h"
+#include "HttpRequests/posthttprequest.h"
+#include "HttpRequests/puthttprequest.h"
+#include "HttpRequests/gethttprequest.h"
+#include "HttpRequests/deletehttprequest.h"
+#include "HttpRequests/patchhttprequest.h"
+#include "HttpRequests/headhttprequest.h"
+#include "HttpRequests/tracehttprequest.h"
+#include "HttpRequests/optionshttprequest.h"
+#include "XmlParsers/configfilefrequest.h"
+
+#include <QNetworkAccessManager>
+#include <QTreeWidgetItem>
+#include <QStringBuilder>
+#include <QUrlQuery>
+#include <QScreen>
+#include <QUrl>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QTimer>
+#include <QClipboard>
+#include <QUuid>
+#include <QPainter>
+#include <QMap>
+#include <QStyleFactory>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -28,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // We use this appender because it is the native way to have \r\n in windows in plog library
     // example: https://github.com/SergiusTheBest/plog/blob/master/samples/NativeEOL/Main.cpp
     static plog::RollingFileAppender<plog::TxtFormatter, plog::NativeEOLConverter<>> fileAppender
-            (QSTR_TO_CSTR(Util::FileSystem::getAppPath() + "/" + GlobalVars::AppLogFileName), 1024*5 /* 5 Mb max log size */, 3);
+            (QSTR_TO_TEMPORARY_CSTR(Util::FileSystem::getAppPath() + "/" + GlobalVars::AppLogFileName), 1024*5 /* 5 Mb max log size */, 3);
     plog::init(plog::info, &fileAppender);
 
     this->currentSettings = this->configFileManager.getCurrentSettings();
@@ -141,7 +169,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     else{
         // center window if we are not restoring geometry
-        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),qApp->desktop()->availableGeometry()));
+        this->setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),qApp->primaryScreen()->availableGeometry()));
     }
 
     ui->treeWidget->setFocus();

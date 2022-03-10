@@ -21,46 +21,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkAccessManager>
-#include <QUrl>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QTimer>
-#include <QTreeWidgetItem>
-#include <QStringBuilder>
-#include <QUrlQuery>
-#include <QClipboard>
-#include <QUuid>
 #include <QProgressBar>
 #include <QToolButton>
 #include <QLabel>
-#include <QPainter>
-#include <QMap>
-#include <QStyleFactory>
-
 #include <pugixml/pugixml.hpp>
 #include <ConditionalSemaphore/conditionalsemaphore.h>
 
-#include "about.h"
-#include "preferences.h"
 #include "projectproperties.h"
-#include "utilfrequest.h"
 #include "updatechecker.h"
-#include "Widgets/frequesttreewidgetprojectitem.h"
 #include "SyntaxHighlighters/frequestjsonhighlighter.h"
 #include "SyntaxHighlighters/frequestxmlhighlighter.h"
-
 #include "XmlParsers/projectfilefrequest.h"
-#include "XmlParsers/configfilefrequest.h"
-
-#include "HttpRequests/posthttprequest.h"
-#include "HttpRequests/puthttprequest.h"
-#include "HttpRequests/gethttprequest.h"
-#include "HttpRequests/deletehttprequest.h"
-#include "HttpRequests/patchhttprequest.h"
-#include "HttpRequests/headhttprequest.h"
-#include "HttpRequests/tracehttprequest.h"
-#include "HttpRequests/optionshttprequest.h"
 
 namespace Ui {
 class MainWindow;
