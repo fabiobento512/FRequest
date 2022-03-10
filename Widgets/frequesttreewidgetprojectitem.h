@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "frequesttreewidgetrequestitem.h"
 #include "utilfrequest.h"
 
+#include <memory>
+
 class FRequestTreeWidgetProjectItem : public FRequestTreeWidgetItem
 {
 public:

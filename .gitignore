@@ -1,5 +1,5 @@
 # ignore QtCreator user files
-*.pro.user
+*.pro.user*
 
 # ignore MacOS specific files
 *.DS_Store

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PROJECTFILEFREQUEST_H
 
 #include <QUuid>
+#include <memory>
 
 #include "utilfrequest.h"
 #include "Authentications/requestauthentication.h"

@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Authentications/requestauthentication.h"
 #include "Authentications/basicauthentication.h"
 
+#include <memory>
+
 class ConfigFileFRequest
 {
 public:
