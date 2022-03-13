@@ -1,6 +1,6 @@
 readme.txt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FRequest v1.2
+FRequest v1.2a
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ----------------------------------
@@ -34,6 +34,14 @@ manually)
 FRequest is licensed under GPL 3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ----------------------------------
+Supported operating system:
+----------------------------------
+
+- Windows 7 SP1 and above
+- macOS High Sierra (10.13) and above
+- Ubuntu 18.04 and above (other Linux distributions dated similar should likely work but are not tested)
+
+----------------------------------
 Installation:
 ----------------------------------
 
@@ -41,13 +49,13 @@ Windows / macOS:
 Just extract the inner FRequest folder to any place in your computer. Run the executable.
 
 Linux:
-Download the AppImage, make it executable and run the executable.
+Extract the inner FRequest folder to any place in your computer, make it executable (chmod +x) and run the executable.
 
-You may need to install "libssl1.0-dev" package to get the ssl requests to work properly
+You may need to install openssl 1.1.1 to get the ssl requests to work properly
 (and also to check for updates within the program).
 
-In ubuntu you can do it like this:
-sudo apt-get install libssl1.0-dev
+In ubuntu (18.04) you can do it like this:
+sudo apt-get install openssl
 
 ----------------------------------
 Upgrading:
@@ -77,6 +85,12 @@ https://github.com/fabiobento512/FRequest
 
 ----------------------------------
 Change Log:
+----------------------------------
+1.2a, 13-03-2022
+- Upgraded Qt version on all platforms to 15.5.2, this fixes the openssl issue for linux users
+(the problem that 1.0.1 is not the repositories anymore) and provides support for TLS 1.3
+- Added github actions builds, which simplifies the building on the three supported operating systems a lot
+- Minor code refactoring
 ----------------------------------
 1.2, 18-05-2021
 - Added global headers feature (thanks alevalv)
