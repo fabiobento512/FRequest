@@ -35,7 +35,7 @@ void ConfigFileFRequest::createNewConfig(){
     pugi::xml_document doc;
 
     pugi::xml_node rootNode = doc.append_child("FRequestConfig");
-    rootNode.append_attribute("frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersionConfig));
+    rootNode.append_attribute("frequestVersion").set_value(QSTR_TO_TEMPORARY_CSTR(GlobalVars::LastCompatibleVersionConfig));
 
     pugi::xml_node generalNode = rootNode.append_child("General");
 
@@ -51,7 +51,7 @@ void ConfigFileFRequest::createNewConfig(){
     pugi::xml_node recentProjectsNode = rootNode.append_child("RecentProjects");
 
     for(int i=1; i<=GlobalVars::AppRecentProjectsMaxSize; i++){
-        recentProjectsNode.append_child(QSTR_TO_CSTR("RecentProject" + QString::number(i)));
+        recentProjectsNode.append_child(QSTR_TO_TEMPORARY_CSTR("RecentProject" + QString::number(i)));
     }
 
     pugi::xml_node proxyNode = rootNode.append_child("Proxy");
@@ -72,7 +72,7 @@ void ConfigFileFRequest::createNewConfig(){
     pugi::xml_node defaultHeadersNode = rootNode.append_child("DefaultHeaders");
     defaultHeadersNode.append_attribute("useDefaultHeaders").set_value(currentSettings.defaultHeaders.useDefaultHeaders);
 
-    if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+    if(!doc.save_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
 		#ifdef Q_OS_MAC
 			QString errorMessage = "An error ocurred while creating the FRequest config file.<br/>"
 			"Make sure the application is placed on a writable location."
@@ -103,7 +103,7 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
     {
         pugi::xml_document doc;
 
-        doc.load_file(QSTR_TO_CSTR(this->fileFullPath));
+        doc.load_file(QSTR_TO_TEMPORARY_CSTR(this->fileFullPath));
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
@@ -111,22 +111,22 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
 		generalNode.attribute("maxRequestResponseDataSizeToDisplay").set_value(newSettings.maxRequestResponseDataSizeToDisplay);
         generalNode.attribute("onStartupOption").set_value(static_cast<int>(newSettings.onStartupSelectedOption));
 		generalNode.attribute("theme").set_value(static_cast<int>(newSettings.theme));
-        generalNode.attribute("lastProjectPath").set_value(QSTR_TO_CSTR(newSettings.lastProjectPath));
-        generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_CSTR(newSettings.lastResponseFilePath));
+        generalNode.attribute("lastProjectPath").set_value(QSTR_TO_TEMPORARY_CSTR(newSettings.lastProjectPath));
+        generalNode.attribute("lastResponseFilePath").set_value(QSTR_TO_TEMPORARY_CSTR(newSettings.lastResponseFilePath));
         generalNode.attribute("showRequestTypesIcons").set_value(newSettings.showRequestTypesIcons);
         generalNode.attribute("hideProjectSavedDialog").set_value(newSettings.hideProjectSavedDialog);
 
         pugi::xml_node recentProjectsNode = doc.select_single_node("/FRequestConfig/RecentProjects").node();
 
         for(int i=1; i<=GlobalVars::AppRecentProjectsMaxSize && newSettings.recentProjectsPaths.size() >= i; i++){
-            recentProjectsNode.child(QSTR_TO_CSTR("RecentProject" + QString::number(i))).text().set(QSTR_TO_CSTR(newSettings.recentProjectsPaths.at(i-1)));
+            recentProjectsNode.child(QSTR_TO_TEMPORARY_CSTR("RecentProject" + QString::number(i))).text().set(QSTR_TO_TEMPORARY_CSTR(newSettings.recentProjectsPaths.at(i-1)));
         }
 
         pugi::xml_node proxyNode = doc.select_single_node("/FRequestConfig/Proxy").node();
 
         proxyNode.attribute("useProxy").set_value(newSettings.useProxy);
         proxyNode.attribute("proxyType").set_value(static_cast<int>(newSettings.proxySettings.type));
-        proxyNode.attribute("hostName").set_value(QSTR_TO_CSTR(newSettings.proxySettings.hostName));
+        proxyNode.attribute("hostName").set_value(QSTR_TO_TEMPORARY_CSTR(newSettings.proxySettings.hostName));
         proxyNode.attribute("port").set_value(newSettings.proxySettings.portNumber);
 
         pugi::xml_node windowsGeometryNode = doc.select_single_node("/FRequestConfig/WindowsGeometry").node();
@@ -135,9 +135,9 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
 
         pugi::xml_node mainWindowNode = windowsGeometryNode.child("MainWindow");
 
-        mainWindowNode.child("MainWindowGeometry").text().set(QSTR_TO_CSTR(QString(newSettings.windowsGeometry.mainWindow_MainWindowGeometry.toBase64())));
-        mainWindowNode.child("RequestsSplitterState").text().set(QSTR_TO_CSTR(QString(newSettings.windowsGeometry.mainWindow_RequestsSplitterState.toBase64())));
-        mainWindowNode.child("RequestResponseSplitterState").text().set(QSTR_TO_CSTR(QString(newSettings.windowsGeometry.mainWindow_RequestResponseSplitterState.toBase64())));
+        mainWindowNode.child("MainWindowGeometry").text().set(QSTR_TO_TEMPORARY_CSTR(QString(newSettings.windowsGeometry.mainWindow_MainWindowGeometry.toBase64())));
+        mainWindowNode.child("RequestsSplitterState").text().set(QSTR_TO_TEMPORARY_CSTR(QString(newSettings.windowsGeometry.mainWindow_RequestsSplitterState.toBase64())));
+        mainWindowNode.child("RequestResponseSplitterState").text().set(QSTR_TO_TEMPORARY_CSTR(QString(newSettings.windowsGeometry.mainWindow_RequestResponseSplitterState.toBase64())));
 
         pugi::xml_node defaultHeadersNode = doc.select_single_node("/FRequestConfig/DefaultHeaders").node();
 
@@ -151,18 +151,18 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
 
             for(const UtilFRequest::HttpHeader &currentHeader : headers){
                 pugi::xml_node headerNode = rawNode.append_child("Header");
-                headerNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).text().set(QSTR_TO_CSTR(currentHeader.name));
-                headerNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).text().set(QSTR_TO_CSTR(currentHeader.value));
+                headerNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).text().set(QSTR_TO_TEMPORARY_CSTR(currentHeader.name));
+                headerNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).text().set(QSTR_TO_TEMPORARY_CSTR(currentHeader.value));
             }
         };
 
         auto fWriteRequestType = [&fUpdateHeaders, &defaultHeadersNode](const QString &requestText, const std::experimental::optional<ConfigFileFRequest::ProtocolHeader> &requestHeaders, const bool hasBody){
             if(requestHeaders.has_value()){
 
-                pugi::xml_node currentHeaderNode = defaultHeadersNode.child(QSTR_TO_CSTR(requestText));
+                pugi::xml_node currentHeaderNode = defaultHeadersNode.child(QSTR_TO_TEMPORARY_CSTR(requestText));
 
                 if(currentHeaderNode.empty()){
-                    currentHeaderNode = defaultHeadersNode.append_child(QSTR_TO_CSTR(requestText));
+                    currentHeaderNode = defaultHeadersNode.append_child(QSTR_TO_TEMPORARY_CSTR(requestText));
                 }
 
                 if(requestHeaders.value().headers_Raw.has_value()){
@@ -200,8 +200,8 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
             const FRequestAuthentication &authData = *currentConfigAuth.authData;
 
             pugi::xml_node currentAuth = configAuthNode.append_child("Authentication");
-            currentAuth.append_attribute("lastProjectName").set_value(QSTR_TO_CSTR(currentConfigAuth.lastProjectName));
-            currentAuth.append_attribute("projectUuid").set_value(QSTR_TO_CSTR(currentConfigAuth.projectUuid));
+            currentAuth.append_attribute("lastProjectName").set_value(QSTR_TO_TEMPORARY_CSTR(currentConfigAuth.lastProjectName));
+            currentAuth.append_attribute("projectUuid").set_value(QSTR_TO_TEMPORARY_CSTR(currentConfigAuth.projectUuid));
             currentAuth.append_attribute("type").set_value(static_cast<int>(authData.type));
             currentAuth.append_attribute("bRetryLoginIfError").set_value(authData.retryLoginIfError401);
 
@@ -210,20 +210,20 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
             {
                 const RequestAuthentication &requestAuth = static_cast<const RequestAuthentication&>(authData);
 
-                currentAuth.append_attribute("requestUuid").set_value(QSTR_TO_CSTR(requestAuth.requestForAuthenticationUuid));
-                currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.username));
-                currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.passwordSalt));
+                currentAuth.append_attribute("requestUuid").set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.requestForAuthenticationUuid));
+                currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.username));
+                currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.passwordSalt));
                 currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
-                        set_value((QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(requestAuth.passwordSalt, requestAuth.password).toBase64()))));
+                        set_value(QSTR_TO_TEMPORARY_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(requestAuth.passwordSalt, requestAuth.password).toBase64())));
                 break;
             }
             case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
             {
                 const BasicAuthentication &basicAuth = static_cast<const BasicAuthentication&>(authData);
-                currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.username));
-                currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.passwordSalt));
+                currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(basicAuth.username));
+                currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(basicAuth.passwordSalt));
                 currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
-                        set_value(QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(basicAuth.passwordSalt, basicAuth.password).toBase64())));
+                        set_value(QSTR_TO_TEMPORARY_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(basicAuth.passwordSalt, basicAuth.password).toBase64())));
 
                 break;
             }
@@ -236,8 +236,8 @@ void ConfigFileFRequest::saveSettings(ConfigFileFRequest::Settings &newSettings)
             }
             }
         }
-        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'"));
+        if(!doc.save_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+            throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Error while saving: '" + fileFullPath + "'"));
         }
     }
     catch(const std::exception &e)
@@ -257,7 +257,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
 
         pugi::xml_document doc;
 
-        doc.load_file(QSTR_TO_CSTR(this->fileFullPath));
+        doc.load_file(QSTR_TO_TEMPORARY_CSTR(this->fileFullPath));
 
         pugi::xml_node generalNode = doc.select_single_node("/FRequestConfig/General").node();
 
@@ -275,9 +275,9 @@ void ConfigFileFRequest::readSettingsFromFile(){
         this->currentSettings.recentProjectsPaths.clear();
 
         for(int i=1; i<=GlobalVars::AppRecentProjectsMaxSize; i++){
-            if(!recentProjectsNode.child(QSTR_TO_CSTR("RecentProject" + QString::number(i))).empty()){
-                if(!QString(recentProjectsNode.child(QSTR_TO_CSTR("RecentProject" + QString::number(i))).text().as_string()).isEmpty()){
-                    this->currentSettings.recentProjectsPaths.append(recentProjectsNode.child(QSTR_TO_CSTR("RecentProject" + QString::number(i))).text().as_string());
+            if(!recentProjectsNode.child(QSTR_TO_TEMPORARY_CSTR("RecentProject" + QString::number(i))).empty()){
+                if(!QString(recentProjectsNode.child(QSTR_TO_TEMPORARY_CSTR("RecentProject" + QString::number(i))).text().as_string()).isEmpty()){
+                    this->currentSettings.recentProjectsPaths.append(recentProjectsNode.child(QSTR_TO_TEMPORARY_CSTR("RecentProject" + QString::number(i))).text().as_string());
                 }
             }
         }
@@ -297,7 +297,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
 
         auto fReadBase64Setting = [&mainWindowNode](const char * const node) -> QByteArray{
             QByteArray auxBase64Decode;
-            auxBase64Decode.append(QString(mainWindowNode.child(node).text().as_string()));
+            auxBase64Decode.append(QString(mainWindowNode.child(node).text().as_string()).toUtf8());
 
             return QByteArray::fromBase64(auxBase64Decode);
         };
@@ -325,10 +325,10 @@ void ConfigFileFRequest::readSettingsFromFile(){
                 nodeName = "X-form-www-urlencoded";
                 break;
             default:
-                throw std::runtime_error(QSTR_TO_CSTR("Unknown body type " + QString::number(static_cast<int>(bodyType))));
+                throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Unknown body type " + QString::number(static_cast<int>(bodyType))));
             }
 
-            for(const pugi::xml_node &currentNode : currentHeaderNode.child(QSTR_TO_CSTR(nodeName)).children()){
+            for(const pugi::xml_node &currentNode : currentHeaderNode.child(QSTR_TO_TEMPORARY_CSTR(nodeName)).children()){
 
                 if(!requestHeaders.has_value()){
                     requestHeaders = ProtocolHeader();
@@ -347,7 +347,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
                     currentHeaders = &requestHeaders.value().headers_X_form_www_urlencoded;
                     break;
                 default:
-                    throw std::runtime_error(QSTR_TO_CSTR("Unknown body type " + QString::number(static_cast<int>(bodyType))));
+                    throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Unknown body type " + QString::number(static_cast<int>(bodyType))));
                 }
 
                 if(!currentHeaders->has_value()){
@@ -364,7 +364,7 @@ void ConfigFileFRequest::readSettingsFromFile(){
 
         auto fReadRequestType = [&defaultHeadersNode, &fReadHeaders](const QString &requestText, std::experimental::optional<ConfigFileFRequest::ProtocolHeader> &requestHeaders, const bool hasBody){
 
-            pugi::xml_node currentHeaderNode = defaultHeadersNode.child(QSTR_TO_CSTR(requestText));
+            pugi::xml_node currentHeaderNode = defaultHeadersNode.child(QSTR_TO_TEMPORARY_CSTR(requestText));
 
             if(!currentHeaderNode.empty()){
 
@@ -445,8 +445,8 @@ void ConfigFileFRequest::readSettingsFromFile(){
             this->currentSettings.mapOfConfigAuths_UuidToConfigAuth.insert(currProjAuth.projectUuid, currProjAuth);
         }
 
-        if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-            throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'"));
+        if(!doc.save_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+            throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Error while saving: '" + fileFullPath + "'"));
         }
     }
     catch(const std::exception &e)
@@ -522,10 +522,10 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
 
     pugi::xml_document doc;
 
-    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(this->fileFullPath));
+    pugi::xml_parse_result result = doc.load_file(QSTR_TO_TEMPORARY_CSTR(this->fileFullPath));
 
     if(result.status!=pugi::status_ok){
-        throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
+        throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
     }
 
     QString currentConfigVersion = QString(doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").as_string());
@@ -548,13 +548,13 @@ void ConfigFileFRequest::upgradeConfigFileIfNecessary(){
         if(currentConfigVersion == oldVersion){
 
             // Update version
-            doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_CSTR(newVersion));
+            doc.select_single_node("/FRequestConfig").node().attribute("frequestVersion").set_value(QSTR_TO_TEMPORARY_CSTR(newVersion));
 
             // do specific upgrade changes
             upgradeFunction();
 
-            if(!doc.save_file(QSTR_TO_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-                throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + newVersion + " )"));
+            if(!doc.save_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath), PUGIXML_TEXT("\t"), pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+                throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Error while saving: '" + fileFullPath + "'. After file version upgrade. (to version " + newVersion + " )"));
             }
 
             currentConfigVersion = newVersion;

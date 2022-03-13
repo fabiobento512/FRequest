@@ -27,14 +27,14 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
 
     pugi::xml_document doc;
 
-    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(fileFullPath));
+    pugi::xml_parse_result result = doc.load_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath));
 
     if(result.status!=pugi::status_ok){
-        throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
+        throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
     }
 
     if(QString(doc.root().first_child().name()) != "FRequestProject"){
-        throw std::runtime_error(QSTR_TO_CSTR(QString(doc.root().name()) + "The file opened is not a valid FRequestProject file. Load aborted."));
+        throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString(doc.root().name()) + "The file opened is not a valid FRequestProject file. Load aborted."));
     }
 
     QString projFRequestVersion;
@@ -44,7 +44,7 @@ ProjectFileFRequest::ProjectData ProjectFileFRequest::readProjectDataFromFile(co
     }
     catch (const pugi::xpath_exception& e)
     {
-        throw std::runtime_error(QSTR_TO_CSTR(QString("Couldn't find the frequestVersion of the current project. Load aborted.\n") + e.what()));
+        throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString("Couldn't find the frequestVersion of the current project. Load aborted.\n") + e.what()));
     }
 
     if(projFRequestVersion != GlobalVars::LastCompatibleVersionProjects){
@@ -207,15 +207,15 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
     // If file already exists try to read the project file
     if(!isNewFile){
 
-        pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(fileFullPath));
+        pugi::xml_parse_result result = doc.load_file(QSTR_TO_TEMPORARY_CSTR(fileFullPath));
 
         if(result.status!=pugi::status_ok){
-            throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
+            throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
         }
 
         // Try to clear deleted items from projects file if they exist
         for(const QString &currentDeletedItemUuid : uuidsToCleanUp){
-            pugi::xml_node nodeToDelete = doc.select_node(QSTR_TO_CSTR("/FRequestProject/Request[@uuid='" + currentDeletedItemUuid + "']")).node();
+            pugi::xml_node nodeToDelete = doc.select_node(QSTR_TO_TEMPORARY_CSTR("/FRequestProject/Request[@uuid='" + currentDeletedItemUuid + "']")).node();
 
             if(!nodeToDelete.empty()){
                 nodeToDelete.parent().remove_child(nodeToDelete);
@@ -228,10 +228,10 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         rootNode = doc.append_child("FRequestProject"); // create
     }
 
-    createOrGetPugiXmlAttribute(rootNode, "frequestVersion").set_value(QSTR_TO_CSTR(GlobalVars::LastCompatibleVersionProjects));
-    createOrGetPugiXmlAttribute(rootNode, "name").set_value(QSTR_TO_CSTR(newProjectData.projectName));
-    createOrGetPugiXmlAttribute(rootNode, "mainUrl").set_value(QSTR_TO_CSTR(newProjectData.mainUrl));
-    createOrGetPugiXmlAttribute(rootNode, "uuid").set_value(QSTR_TO_CSTR(newProjectData.projectUuid));
+    createOrGetPugiXmlAttribute(rootNode, "frequestVersion").set_value(QSTR_TO_TEMPORARY_CSTR(GlobalVars::LastCompatibleVersionProjects));
+    createOrGetPugiXmlAttribute(rootNode, "name").set_value(QSTR_TO_TEMPORARY_CSTR(newProjectData.projectName));
+    createOrGetPugiXmlAttribute(rootNode, "mainUrl").set_value(QSTR_TO_TEMPORARY_CSTR(newProjectData.mainUrl));
+    createOrGetPugiXmlAttribute(rootNode, "uuid").set_value(QSTR_TO_TEMPORARY_CSTR(newProjectData.projectUuid));
     createOrGetPugiXmlAttribute(rootNode, "saveIdentCharacter").set_value(static_cast<int>(newProjectData.saveIdentCharacter));
 
     // Delete old auth data if exists (we always need to rebuild it
@@ -249,20 +249,20 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         {
             const RequestAuthentication &requestAuth = static_cast<RequestAuthentication&>(*newProjectData.authData.get());
 
-            currentAuth.append_attribute("requestUuid").set_value(QSTR_TO_CSTR(requestAuth.requestForAuthenticationUuid));
-            currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.username));
-            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(requestAuth.passwordSalt));
+            currentAuth.append_attribute("requestUuid").set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.requestForAuthenticationUuid));
+            currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.username));
+            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(requestAuth.passwordSalt));
             currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
-                    set_value((QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(requestAuth.passwordSalt, requestAuth.password).toBase64()))));
+                    set_value(QSTR_TO_TEMPORARY_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(requestAuth.passwordSalt, requestAuth.password).toBase64())));
             break;
         }
         case FRequestAuthentication::AuthenticationType::BASIC_AUTHENTICATION:
         {
             const BasicAuthentication &basicAuth = static_cast<BasicAuthentication&>(*newProjectData.authData.get());
-            currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.username));
-            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_CSTR(basicAuth.passwordSalt));
+            currentAuth.append_child("Username").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(basicAuth.username));
+            currentAuth.append_child("PasswordSalt").append_child(pugi::xml_node_type::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(basicAuth.passwordSalt));
             currentAuth.append_child("Password").append_child(pugi::xml_node_type::node_pcdata).
-                    set_value(QSTR_TO_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(basicAuth.passwordSalt, basicAuth.password).toBase64())));
+                    set_value(QSTR_TO_TEMPORARY_CSTR(QString(UtilFRequest::simpleStringObfuscationDeobfuscation(basicAuth.passwordSalt, basicAuth.password).toBase64())));
 
             break;
         }
@@ -281,7 +281,7 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
 
         pugi::xml_node requestNode;
 
-        pugi::xpath_node xpathRequestNode = doc.select_node(QSTR_TO_CSTR("/FRequestProject/Request[@uuid='" + currentRequest.uuid + "']"));
+        pugi::xpath_node xpathRequestNode = doc.select_node(QSTR_TO_TEMPORARY_CSTR("/FRequestProject/Request[@uuid='" + currentRequest.uuid + "']"));
 
         // if it doesn't exist yet create it
         if(xpathRequestNode.node().empty()){
@@ -291,12 +291,12 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
             requestNode = xpathRequestNode.node();
         }
 
-        createOrGetPugiXmlAttribute(requestNode, "name").set_value(QSTR_TO_CSTR(currentRequest.name));
-        createOrGetPugiXmlAttribute(requestNode, "uuid").set_value(QSTR_TO_CSTR(currentRequest.uuid));
+        createOrGetPugiXmlAttribute(requestNode, "name").set_value(QSTR_TO_TEMPORARY_CSTR(currentRequest.name));
+        createOrGetPugiXmlAttribute(requestNode, "uuid").set_value(QSTR_TO_TEMPORARY_CSTR(currentRequest.uuid));
         createOrGetPugiXmlAttribute(requestNode, "order").set_value(currentRequest.order);
         createOrGetPugiXmlAttribute(requestNode, "bOverridesMainUrl").set_value(currentRequest.bOverridesMainUrl);
-        createOrGetPugiXmlAttribute(requestNode, "overrideMainUrl").set_value(QSTR_TO_CSTR(currentRequest.overrideMainUrl));
-        createOrGetPugiXmlAttribute(requestNode, "path").set_value(QSTR_TO_CSTR(currentRequest.path));
+        createOrGetPugiXmlAttribute(requestNode, "overrideMainUrl").set_value(QSTR_TO_TEMPORARY_CSTR(currentRequest.overrideMainUrl));
+        createOrGetPugiXmlAttribute(requestNode, "path").set_value(QSTR_TO_TEMPORARY_CSTR(currentRequest.path));
         createOrGetPugiXmlAttribute(requestNode, "type").set_value(static_cast<int>(currentRequest.requestType));
         createOrGetPugiXmlAttribute(requestNode, "bDownloadResponseAsFile").set_value(currentRequest.bDownloadResponseAsFile);
         createOrGetPugiXmlAttribute(requestNode, "bDisableGlobalHeaders").set_value(currentRequest.bDisableGlobalHeaders);
@@ -313,16 +313,16 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
             for(const UtilFRequest::HttpFormKeyValueType &currentKeyValue : bodyForm){
                 pugi::xml_node currentFormKeyValueNode = bodyNode.append_child("FormKeyValue");
 
-                currentFormKeyValueNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentKeyValue.key));
-                currentFormKeyValueNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentKeyValue.value));
-                currentFormKeyValueNode.append_child("Type").append_child(pugi::node_pcdata).set_value(QSTR_TO_CSTR(QString::number(static_cast<int>(currentKeyValue.type)))); // TODO check if pugixml accepts int directly
+                currentFormKeyValueNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentKeyValue.key));
+                currentFormKeyValueNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentKeyValue.value));
+                currentFormKeyValueNode.append_child("Type").append_child(pugi::node_pcdata).set_value(QSTR_TO_TEMPORARY_CSTR(QString::number(static_cast<int>(currentKeyValue.type)))); // TODO check if pugixml accepts int directly
             }
         };
 
         switch (currentRequest.bodyType) {
         case UtilFRequest::BodyType::RAW:
         {
-            bodyNode.append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequest.body));
+            bodyNode.append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentRequest.body));
             break;
         }
         case UtilFRequest::BodyType::FORM_DATA:
@@ -349,8 +349,8 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
         for(const UtilFRequest::HttpHeader &currentRequestHeader : currentRequest.headers){
             pugi::xml_node currentRequestHeaderNode = requestHeadersNode.append_child("Header");
 
-            currentRequestHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequestHeader.name));
-            currentRequestHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentRequestHeader.value));
+            currentRequestHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentRequestHeader.name));
+            currentRequestHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentRequestHeader.value));
         }
 
     }
@@ -361,8 +361,8 @@ void ProjectFileFRequest::saveProjectDataToFile(const QString &fileFullPath, con
     for (const UtilFRequest::HttpHeader &currentGlobalHeader: newProjectData.globalHeaders) {
         pugi::xml_node currentGlobalHeaderNode = globalHeadersNode.append_child("Header");
 
-        currentGlobalHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentGlobalHeader.name));
-        currentGlobalHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_CSTR(currentGlobalHeader.value));
+        currentGlobalHeaderNode.append_child("Key").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentGlobalHeader.name));
+        currentGlobalHeaderNode.append_child("Value").append_child(pugi::xml_node_type::node_cdata).set_value(QSTR_TO_TEMPORARY_CSTR(currentGlobalHeader.value));
     }
 
     const pugi::char_t* const identCharacterChar = newProjectData.saveIdentCharacter == UtilFRequest::IdentCharacter::SPACE ? pugiIdentChars::spaceChar : pugiIdentChars::tabChar;
@@ -388,10 +388,10 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
 
     pugi::xml_document doc;
 
-    pugi::xml_parse_result result = doc.load_file(QSTR_TO_CSTR(filePath));
+    pugi::xml_parse_result result = doc.load_file(QSTR_TO_TEMPORARY_CSTR(filePath));
 
     if(result.status!=pugi::status_ok){
-        throw std::runtime_error(QSTR_TO_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
+        throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(QString("An error ocurred while loading project file.\n") + result.description()));
     }
 
     QString currProjectVersion = QString(doc.select_single_node("/FRequestProject").node().attribute("frequestVersion").as_string());
@@ -417,13 +417,13 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
             pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
 
             // Update version
-            projectNode.attribute("frequestVersion").set_value(QSTR_TO_CSTR(newVersion));
+            projectNode.attribute("frequestVersion").set_value(QSTR_TO_TEMPORARY_CSTR(newVersion));
 
             // do specific upgrade changes
             upgradeFunction();
 
-            if(!doc.save_file(QSTR_TO_CSTR(filePath), identChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
-                throw std::runtime_error(QSTR_TO_CSTR("Error while saving: '" + filePath + "'. After file version upgrade. (to version " + newVersion + " )"));
+            if(!doc.save_file(QSTR_TO_TEMPORARY_CSTR(filePath), identChar, pugi::format_default | pugi::format_write_bom, pugi::xml_encoding::encoding_utf8)){
+                throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR("Error while saving: '" + filePath + "'. After file version upgrade. (to version " + newVersion + " )"));
             }
 
             currProjectVersion = newVersion;
@@ -436,7 +436,7 @@ void ProjectFileFRequest::upgradeProjectFileIfNecessary(const QString &filePath)
         pugi::xml_node projectNode = doc.select_single_node("/FRequestProject").node();
 
         // Generate an uuid to the project
-        projectNode.append_attribute("uuid").set_value(QSTR_TO_CSTR(QUuid::createUuid().toString()));
+        projectNode.append_attribute("uuid").set_value(QSTR_TO_TEMPORARY_CSTR(QUuid::createUuid().toString()));
 
         // Add types to form rows
 

@@ -47,12 +47,12 @@ void UpdateChecker::replyFinished(QNetworkReply *reply){
     try{
         if(!this->replyHasFinished){
             if (reply->error()) {
-                throw std::runtime_error(QSTR_TO_CSTR(reply->errorString()));
+                throw std::runtime_error(QSTR_TO_TEMPORARY_CSTR(reply->errorString()));
             }
 
             QString answer = reply->readAll();
 
-            QJsonDocument doc = QJsonDocument::fromJson(QSTR_TO_CSTR(answer));
+            QJsonDocument doc = QJsonDocument::fromJson(answer.toUtf8());
 
             if(!doc.isObject()){
                 throw std::runtime_error("(http api error) json is not an object.");

@@ -1,0 +1,163 @@
+name: FRequest Build
+on: [push]
+jobs:
+  Build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: Check out FRequest code
+        uses: actions/checkout@v3
+        with:
+          path: 'FRequest'
+      - name: Check out CommonLibs
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonLibs
+          path: 'CommonLibs'
+      - name: Check out CommonUtils
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonUtils
+          path: 'CommonUtils'
+      - name: Download Qt SDK and FRequest binaries
+        run: |
+         $files_url="https://github.com/${{ github.event.repository.owner.login }}/Files/releases/download"
+         Invoke-WebRequest "$files_url/frequestwindows/Qt5.15.2.7z" -OutFile Qt5.15.2.7z
+         Invoke-WebRequest "$files_url/frequestwindows/FRequestBinaries.7z" -OutFile FRequestBinaries.7z
+         7z.exe x -mmt=4 Qt5.15.2.7z -o"Qt5.15.2"
+         7z.exe x -mmt=4 FRequestBinaries.7z -o"FRequestBinaries"
+      - name: Set Enviroments variables for SDK
+        run: |
+         # https://stackoverflow.com/a/64831469
+         echo "${{ github.workspace }}\Qt5.15.2\5.15.2\mingw81_32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+         echo "${{ github.workspace }}\Qt5.15.2\Tools\mingw810_32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Compile code
+        run: |
+         mkdir output
+         cd output
+         qmake ../${{ github.event.repository.name }}/FRequest.pro "CONFIG+=release"
+         mingw32-make -j
+         cd ..
+      - name: Copy executable / dependencies / readme / license to final folder
+        run: |
+         Invoke-WebRequest "https://github.com/${{ github.event.repository.owner.login }}/Files/releases/download/common/get_zip_name.py" -OutFile get_zip_name.py
+         $zip_name=python3 get_zip_name.py ${{ github.event.repository.owner.login }} ${{ github.event.repository.name }}
+         mkdir distributable
+         mkdir distributable\FRequest
+         cp output\release\FRequest.exe distributable\FRequest
+         xcopy FRequestBinaries distributable\FRequest /e
+         cp ${{ github.event.repository.name }}\readme.txt distributable\FRequest
+         cp ${{ github.event.repository.name }}\LICENSE distributable\FRequest
+         7z a -tzip -mmt=4 "distributable\$zip_name.zip" "${{ github.workspace }}\distributable\FRequest"
+      - name: Archive the final folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: FRequest-windows
+          path: distributable/*.zip
+  Build-macos:
+    runs-on: macos-10.15
+    steps:
+      - name: Check out FRequest code
+        uses: actions/checkout@v3
+        with:
+          path: 'FRequest'
+      - name: Check out CommonLibs
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonLibs
+          path: 'CommonLibs'
+      - name: Check out CommonUtils
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonUtils
+          path: 'CommonUtils'
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.15.2
+          target: desktop
+          modules: none
+      # - name: Download and Install Qt SDK (alternative)
+        # # https://superuser.com/a/422785
+        # run: |
+         # brew install qt@5
+         # brew link qt@5
+      - name: Compile code
+        run: |
+         mkdir output
+         cd output
+         qmake ../${{ github.event.repository.name }}/FRequest.pro "CONFIG+=release" 
+         make -j
+         cd ..
+      - name: Copy app bundle / readme / license to final folder
+        run: |
+         wget "https://github.com/${{ github.event.repository.owner.login }}/Files/releases/download/common/get_zip_name.py"
+         zip_name=$(python3 get_zip_name.py ${{ github.event.repository.owner.login }} ${{ github.event.repository.name }})
+         macdeployqt output/FRequest.app
+         mkdir distributable
+         mkdir distributable/FRequest
+         cp -R output/FRequest.app distributable/FRequest
+         cp ${{ github.event.repository.name }}/readme.txt distributable/FRequest
+         cp ${{ github.event.repository.name }}/LICENSE distributable/FRequest
+         7z a -tzip -mmt=4 distributable/$zip_name.zip ${{ github.workspace }}/distributable/FRequest
+      - name: Archive the final folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: FRequest-macos
+          path: distributable/*.zip
+  Build-linux:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out FRequest code
+        uses: actions/checkout@v3
+        with:
+          path: 'FRequest'
+      - name: Check out CommonLibs
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonLibs
+          path: 'CommonLibs'
+      - name: Check out CommonUtils
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.owner.login }}/CommonUtils
+          path: 'CommonUtils'
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.15.2
+          target: desktop
+          modules: none
+      - name: Download and Set linuxdeployqt
+        run: |
+         wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+         chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+      - name: Compile code
+        run: |
+         mkdir output
+         cd output
+         qmake ../${{ github.event.repository.name }}/FRequest.pro "CONFIG+=release"
+         make -j
+         cd ..
+      - name: Generate AppImage
+        run: |
+         mkdir AppImage
+         cp output/FRequest AppImage
+         cp ${{ github.event.repository.name }}/LinuxAppImageDeployment/*.* AppImage
+         cd AppImage
+         ${{ github.workspace }}/linuxdeployqt-continuous-x86_64.AppImage frequest.desktop -no-translations -appimage
+         cd ..
+      - name: Copy AppImage / readme / license to final folder
+        run: |
+         wget "https://github.com/${{ github.event.repository.owner.login }}/Files/releases/download/common/get_zip_name.py"
+         zip_name=$(python3 get_zip_name.py ${{ github.event.repository.owner.login }} ${{ github.event.repository.name }})
+         mkdir distributable
+         mkdir distributable/FRequest
+         cp ${{ github.event.repository.name }}/readme.txt distributable/FRequest
+         cp ${{ github.event.repository.name }}/LICENSE distributable/FRequest
+         cp AppImage/FRequest-x86_64.AppImage distributable/FRequest
+         7z a -tzip -mmt=4 distributable/$zip_name ${{ github.workspace }}/distributable/FRequest
+      - name: Archive the final folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: FRequest-linux
+          path: distributable/*.zip
